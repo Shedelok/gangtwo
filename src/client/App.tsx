@@ -8,8 +8,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: '20px',
+    justifyContent: 'flex-start',
+    padding: '60px 20px 40px',
   },
   status: {
     color: '#888',

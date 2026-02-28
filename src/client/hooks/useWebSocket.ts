@@ -9,6 +9,7 @@ export function useWebSocket() {
   const [status, setStatus] = useState<Status>('connecting');
   const wsRef = useRef<WebSocket | null>(null);
   const retriesRef = useRef(0);
+  const intentionalCloseRef = useRef(false);
   const MAX_RETRIES = 3;
 
   const connect = useCallback(() => {
@@ -32,6 +33,10 @@ export function useWebSocket() {
     };
 
     ws.onclose = () => {
+      if (intentionalCloseRef.current) {
+        intentionalCloseRef.current = false;
+        return;
+      }
       setStatus('disconnected');
       if (retriesRef.current < MAX_RETRIES) {
         retriesRef.current++;
@@ -48,6 +53,7 @@ export function useWebSocket() {
   useEffect(() => {
     connect();
     return () => {
+      intentionalCloseRef.current = true;
       wsRef.current?.close();
     };
   }, [connect]);

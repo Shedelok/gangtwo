@@ -10,74 +10,86 @@ const SUIT_SYMBOLS: Record<string, string> = {
 
 const RED_SUITS = new Set(['hearts', 'diamonds']);
 
-const s: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    gap: '12px',
-    justifyContent: 'center',
-  },
-  card: {
-    width: '80px',
-    height: '120px',
-    background: 'white',
-    borderRadius: '8px',
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '8px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
-    userSelect: 'none',
-  },
-  topLeft: {
-    display: 'flex',
-    flexDirection: 'column',
-    lineHeight: '1',
-  },
-  rank: {
-    fontSize: '18px',
-    fontWeight: 'bold',
-  },
-  suit: {
-    fontSize: '14px',
-  },
-  centerSuit: {
-    flex: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '32px',
-  },
-};
-
-function PlayingCard({ card }: { card: Card }) {
+function PlayingCard({ card, small }: { card: Card; small: boolean }) {
   const color = RED_SUITS.has(card.suit) ? '#c0392b' : '#1a1a2e';
   const symbol = SUIT_SYMBOLS[card.suit];
+  const w = small ? 52 : 80;
+  const h = small ? 78 : 120;
   return (
-    <div style={s.card}>
-      <div style={{ ...s.topLeft, color }}>
-        <span style={s.rank}>{card.rank}</span>
-        <span style={s.suit}>{symbol}</span>
+    <div style={{
+      width: w, height: h,
+      background: 'white',
+      borderRadius: small ? 5 : 8,
+      display: 'flex',
+      flexDirection: 'column',
+      padding: small ? 4 : 8,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+      userSelect: 'none',
+      flexShrink: 0,
+    }}>
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color }}>
+        <span style={{ fontSize: small ? 12 : 18, fontWeight: 'bold' }}>{card.rank}</span>
+        <span style={{ fontSize: small ? 10 : 14 }}>{symbol}</span>
       </div>
-      <div style={{ ...s.centerSuit, color }}>{symbol}</div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: small ? 20 : 32, color }}>
+        {symbol}
+      </div>
+    </div>
+  );
+}
+
+function CardBack({ small }: { small: boolean }) {
+  const w = small ? 52 : 80;
+  const h = small ? 78 : 120;
+  return (
+    <div style={{
+      width: w, height: h,
+      background: '#1a3a6e',
+      borderRadius: small ? 5 : 8,
+      border: '2px solid #2255aa',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+    }}>
+      <div style={{
+        width: w - 14, height: h - 14,
+        borderRadius: 3,
+        border: '2px solid #3366cc',
+        background: 'repeating-linear-gradient(45deg, #1a3a6e 0px, #1a3a6e 4px, #1e42a0 4px, #1e42a0 8px)',
+      }} />
     </div>
   );
 }
 
 interface Props {
   cards: [Card, Card] | null;
+  faceDown?: boolean;
+  small?: boolean;
 }
 
-export default function PlayerHand({ cards }: Props) {
+export default function PlayerHand({ cards, faceDown = false, small = false }: Props) {
+  const gap = small ? 6 : 12;
+  if (faceDown) {
+    return (
+      <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
+        <CardBack small={small} />
+        <CardBack small={small} />
+      </div>
+    );
+  }
   if (!cards) {
     return (
-      <div style={s.container}>
-        <div style={{ color: '#666', fontSize: '14px' }}>No cards dealt</div>
+      <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
+        <div style={{ color: '#555', fontSize: 12 }}>—</div>
       </div>
     );
   }
   return (
-    <div style={s.container}>
-      <PlayingCard card={cards[0]} />
-      <PlayingCard card={cards[1]} />
+    <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
+      <PlayingCard card={cards[0]} small={small} />
+      <PlayingCard card={cards[1]} small={small} />
     </div>
   );
 }
