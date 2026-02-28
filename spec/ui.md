@@ -33,3 +33,7 @@ a moving animation is played that lasts 1 second and moves the chip from its ori
 
 The players can only see their own checkbox for being ready for the next round and don't see whether other players have
 their checkbox checked or not.
+
+## Volume
+
+Each player has a bar to control the volume of all sounds in the game.
