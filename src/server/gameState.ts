@@ -16,6 +16,7 @@ interface ServerGameState {
   currentRound: RoundNumber;
   middleChips: Chip[];
   deck: Card[];
+  revealedPlayers: Set<string>;
   socketToPlayerId: Map<string, string>;
   playerIdToSocketId: Map<string, string>;
 }
@@ -28,6 +29,7 @@ const state: ServerGameState = {
   currentRound: 1,
   middleChips: [],
   deck: [],
+  revealedPlayers: new Set(),
   socketToPlayerId: new Map(),
   playerIdToSocketId: new Map(),
 };
@@ -200,6 +202,31 @@ export function setReady(socketId: string, ready: boolean): string | null {
   return null;
 }
 
+export function revealCards(socketId: string): string | null {
+  if (state.phase !== 'finished') return 'Not in finished phase';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  state.revealedPlayers.add(playerId);
+  return null;
+}
+
+export function restartGame(): string | null {
+  // Collect all currently connected players (socket → name)
+  const socketNames: Array<{ socketId: string; name: string }> = [];
+  for (const player of state.players) {
+    const socketId = state.playerIdToSocketId.get(player.id);
+    if (socketId) socketNames.push({ socketId, name: player.name });
+  }
+  if (socketNames.length < 2) return 'Need at least 2 players to restart';
+
+  finishGame();
+
+  for (const { socketId, name } of socketNames) {
+    addPlayer(socketId, name);
+  }
+  return startGame();
+}
+
 export function finishGame(): void {
   state.phase = 'lobby';
   state.players = [];
@@ -208,6 +235,7 @@ export function finishGame(): void {
   state.currentRound = 1;
   state.middleChips = [];
   state.deck = [];
+  state.revealedPlayers = new Set();
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
     state.socketToPlayerId.set(socketId, '');
@@ -218,8 +246,12 @@ export function finishGame(): void {
 export function buildClientState(socketId: string): ClientGameState {
   const playerId = state.socketToPlayerId.get(socketId) ?? '';
   const myHoleCards = playerId && state.holeCards[playerId] ? state.holeCards[playerId] : null;
-  const revealedHoleCards: Record<string, [Card, Card]> =
-    state.phase === 'finished' ? { ...state.holeCards } : {};
+  const revealedHoleCards: Record<string, [Card, Card]> = {};
+  if (state.phase === 'finished') {
+    for (const pid of state.revealedPlayers) {
+      if (state.holeCards[pid]) revealedHoleCards[pid] = state.holeCards[pid];
+    }
+  }
 
   return {
     phase: state.phase,

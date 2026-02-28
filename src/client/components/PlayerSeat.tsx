@@ -21,13 +21,14 @@ interface Props {
   iHaveCurrentRoundChip: boolean;
   sendAction: (a: ClientAction) => void;
   readOnly: boolean;
+  myCardsRevealed: boolean;
   style?: React.CSSProperties;
 }
 
 export default function PlayerSeat({
   player, isMe, holeCards, showFaceDown,
   currentRound, iHaveCurrentRoundChip,
-  sendAction, readOnly, style,
+  sendAction, readOnly, myCardsRevealed, style,
 }: Props) {
   // Sort by round asc, then number asc within the same round
   const sortedChips = [...player.chips].sort((a, b) =>
@@ -79,6 +80,14 @@ export default function PlayerSeat({
             );
           })}
         </div>
+      )}
+
+      {/* Reveal cards button — shown to self in finished phase until revealed */}
+      {readOnly && isMe && !myCardsRevealed && (
+        <button style={{ ...btn, background: '#166534', color: '#bbf7d0' }}
+          onClick={() => sendAction({ type: 'REVEAL_CARDS' })}>
+          Reveal cards
+        </button>
       )}
 
       {/* Ready — only shown to the player themselves */}

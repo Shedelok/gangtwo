@@ -11,6 +11,7 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: ['asley-gasometrical-macy.ngrok-free.dev'],
     proxy: {
       '/ws': {
         target: 'ws://localhost:3001',

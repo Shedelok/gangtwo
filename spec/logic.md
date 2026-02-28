@@ -32,8 +32,9 @@ color are fixed until the end of the game, the checkbox automatically unchecks f
 At the end of first round, 3 common cards are placed on the table. At the end of second and third rounds 1 more card is
 placed on the table. Players cannot interact with the common cards.
 
-Once the 4th round is over, all cards of all players are revealed. Players can still see the chips, cards, etc. but
-can't interact with any of them anymore.
+Once the 4th round is over, each player gets a button "reveal cards" which, when pressed, shows their cards to everyone.
+Players can still see the chips, cards, etc. but can't interact with any of them anymore.
 
 All the time each player has a button "Stop the game", which stops the current game immediately and resets the app to
-the "Lobby" phase.
+the "Lobby" phase. All the time, players also have a button "Restart" which starts the game with the same set of players,
+effectively this should be equivalent to pressing "stop the game", entering with all the same names and starting a game.

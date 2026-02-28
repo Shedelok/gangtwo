@@ -79,6 +79,8 @@ interface Props {
   readOnly: boolean;
 }
 
+function getScale() { return (window.innerWidth * 0.6) / CONTAINER_W; }
+
 export default function Table({ state, sendAction, readOnly }: Props) {
   const currentRound = (state.currentRound ?? 1) as RoundNumber;
   const myIndex = state.players.findIndex(p => p.id === state.myId);
@@ -88,6 +90,17 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   const myPlayer = state.players.find(p => p.id === state.myId);
   const iHaveCurrentRoundChip = !!myPlayer?.chips.some(c => c.round === currentRound);
   const n = rotated.length;
+
+  // ── Responsive scale (60vw) ──────────────────────────────────────────────────
+  const [scale, setScale] = useState(getScale);
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
+
+  useEffect(() => {
+    const onResize = () => setScale(getScale());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   // ── Animation bookkeeping ────────────────────────────────────────────────────
   const containerRef = useRef<HTMLDivElement>(null);
@@ -106,7 +119,8 @@ export default function Table({ state, sendAction, readOnly }: Props) {
     const c = containerRef.current;
     if (!c) return null;
     const er = el.getBoundingClientRect(), cr = c.getBoundingClientRect();
-    return { x: er.left - cr.left + er.width / 2, y: er.top - cr.top + er.height / 2 };
+    const s = scaleRef.current;
+    return { x: (er.left - cr.left + er.width / 2) / s, y: (er.top - cr.top + er.height / 2) / s };
   }
 
   useLayoutEffect(() => {
@@ -153,7 +167,8 @@ export default function Table({ state, sendAction, readOnly }: Props) {
 
   return (
     <ChipAnimContext.Provider value={ctxValue}>
-      <div ref={containerRef} style={{ position: 'relative', width: CONTAINER_W, height: CONTAINER_H }}>
+      <div style={{ width: CONTAINER_W * scale, height: CONTAINER_H * scale }}>
+      <div ref={containerRef} style={{ position: 'relative', width: CONTAINER_W, height: CONTAINER_H, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
 
         {/* Green oval */}
         <div style={{
@@ -196,14 +211,16 @@ export default function Table({ state, sendAction, readOnly }: Props) {
         {rotated.map((player, i) => {
           const { x, y } = getSeatPos(i, n);
           const isMe = player.id === state.myId;
-          const holeCards = readOnly
-            ? (state.revealedHoleCards[player.id] ?? null)
-            : isMe ? state.myHoleCards : null;
+          // In finished phase: show own cards to self always; others only if they revealed
+          const holeCards = isMe
+            ? state.myHoleCards
+            : readOnly ? (state.revealedHoleCards[player.id] ?? null) : null;
+          const myCardsRevealed = !!state.revealedHoleCards[state.myId];
           return (
             <PlayerSeat key={player.id} player={player} isMe={isMe}
               holeCards={holeCards} showFaceDown={!readOnly && !isMe}
               currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip}
-              sendAction={sendAction} readOnly={readOnly}
+              sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
               style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );
@@ -217,6 +234,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
           }} />
         ))}
 
+      </div>
       </div>
     </ChipAnimContext.Provider>
   );

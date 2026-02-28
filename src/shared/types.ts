@@ -20,7 +20,7 @@ export interface ClientGameState {
   players: PlayerPublicState[];
   myId: string;               // '' if not yet joined
   myHoleCards: [Card, Card] | null;
-  revealedHoleCards: Record<string, [Card, Card]>; // populated for all players in 'finished' phase
+  revealedHoleCards: Record<string, [Card, Card]>; // populated per player after they press "reveal cards"
   communityCards: Card[];
   currentRound: RoundNumber | null;
   middleChips: Chip[];        // current-round chips in the middle only
@@ -34,6 +34,8 @@ export type ClientAction =
   | { type: 'TAKE_FROM_MIDDLE'; chipNumber: number }
   | { type: 'STEAL_CHIP'; fromPlayerId: string; chipNumber: number }
   | { type: 'SET_READY'; ready: boolean }
+  | { type: 'REVEAL_CARDS' }
+  | { type: 'RESTART_GAME' }
   | { type: 'FINISH_GAME' };
 
 // Server → Client messages

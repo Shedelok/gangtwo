@@ -8,6 +8,10 @@ sees the current player counter-clockwise next to themself).
 
 For each player there is their name, cards and chips that are displayed where the player seats.
 
+## Table
+
+The table should take roughly 60% of the player's screen width.
+
 ## Cards
 
 The cards are displayed face up for the current player and face down for everyone else.

@@ -13,6 +13,8 @@ import {
   takeFromMiddle,
   stealChip,
   setReady,
+  revealCards,
+  restartGame,
   finishGame,
   buildClientState,
 } from './gameState';
@@ -72,6 +74,12 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'SET_READY':
       error = setReady(socketId, action.ready);
+      break;
+    case 'REVEAL_CARDS':
+      error = revealCards(socketId);
+      break;
+    case 'RESTART_GAME':
+      error = restartGame();
       break;
     case 'FINISH_GAME':
       finishGame();

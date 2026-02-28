@@ -37,6 +37,19 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontWeight: 'bold',
   },
+  restartButton: {
+    position: 'fixed',
+    top: '16px',
+    right: '140px',
+    padding: '8px 18px',
+    fontSize: '13px',
+    background: '#1a4731',
+    color: '#bbf7d0',
+    border: '1px solid #166534',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
 };
 
 
@@ -61,6 +74,9 @@ export default function App() {
 
   return (
     <div style={styles.container}>
+      <button style={styles.restartButton} onClick={() => sendAction({ type: 'RESTART_GAME' })}>
+        Restart
+      </button>
       <button style={styles.stopButton} onClick={() => sendAction({ type: 'FINISH_GAME' })}>
         Stop the game
       </button>
