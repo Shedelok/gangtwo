@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useContext, useCallback } from 'react';
 import type { Chip } from '@shared/types';
+import { ChipAnimContext } from './ChipAnimContext';
 
 const COLORS: Record<number, { bg: string; border: string; text: string }> = {
   1: { bg: '#e8e8e8', border: '#aaa',    text: '#222' },
@@ -15,9 +16,17 @@ interface Props {
 }
 
 export default function ChipCircle({ chip, dim = false, size = 32 }: Props) {
+  const { register, hiding } = useContext(ChipAnimContext);
+  const key = `${chip.round}-${chip.number}`;
+
+  const ref = useCallback((el: HTMLDivElement | null) => {
+    register(key, el);
+  }, [register, key]);
+
   const c = dim ? { bg: '#333', border: '#555', text: '#555' } : COLORS[chip.round];
+
   return (
-    <div style={{
+    <div ref={ref} style={{
       width: size,
       height: size,
       borderRadius: '50%',
@@ -31,6 +40,7 @@ export default function ChipCircle({ chip, dim = false, size = 32 }: Props) {
       fontSize: Math.round(size * 0.38),
       userSelect: 'none',
       flexShrink: 0,
+      opacity: hiding.has(key) ? 0 : 1,
     }}>
       {chip.number}
     </div>
