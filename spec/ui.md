@@ -34,6 +34,10 @@ a moving animation is played that lasts 1 second and moves the chip from its ori
 The players can only see their own checkbox for being ready for the next round and don't see whether other players have
 their checkbox checked or not.
 
-## Volume
+## Sound Bar
 
 Each player has a bar to control the volume of all sounds in the game.
+
+Each player has a button that opens/closes a panel in which for each sound in the game the player has a drop-down box
+of all mp3 files available (from spec/resources/ folder). The player can assing any of the mp3 files to any of the
+sounds (one mp3 can be used any number of times).

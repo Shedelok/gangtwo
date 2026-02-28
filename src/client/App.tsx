@@ -4,14 +4,30 @@ import Lobby from './components/Lobby';
 import Game from './components/Game';
 import type { ClientGameState } from '@shared/types';
 
-function playSound(src: string, speed: number, masterVolume: number): void {
+const AVAILABLE_MP3S = ['bell-1.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'punch-1.mp3', 'punch-2.mp3'];
+
+type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE';
+const SOUND_DEFAULTS: Record<SoundKey, string> = {
+  STEAL_FROM_YOU: 'bell-1.mp3',
+  CHIP_MOVE: 'fast-woosh.mp3',
+};
+const SOUND_LABELS: Record<SoundKey, string> = {
+  STEAL_FROM_YOU: 'Steal from you',
+  CHIP_MOVE: 'Chip move',
+};
+const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
+  STEAL_FROM_YOU: 1,
+  CHIP_MOVE: 0.2,
+};
+
+function playSound(file: string, masterVolume: number, multiplier: number): void {
   try {
-    const audio = new Audio(src);
-    audio.volume = masterVolume;
-    audio.playbackRate = speed;
+    const audio = new Audio(`/${file}`);
+    audio.volume = Math.min(1, masterVolume * multiplier);
     audio.play().catch(() => {});
   } catch { /* audio not supported */ }
 }
+
 const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
@@ -60,24 +76,52 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontWeight: 'bold',
   },
-  volumeControl: {
+  soundBar: {
     position: 'fixed',
     top: '16px',
     left: '16px',
     display: 'flex',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     gap: '8px',
     fontSize: '12px',
     color: '#aaa',
   },
+  soundBarRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  soundPanel: {
+    background: '#1a2030',
+    border: '1px solid #2a3a4a',
+    borderRadius: '8px',
+    padding: '10px 14px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    marginTop: '4px',
+  },
+  soundPanelRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '12px',
+    color: '#ccc',
+  },
 };
-
 
 export default function App() {
   const { state, sendAction, lastError, status } = useWebSocket();
   const [volume, setVolume] = useState(1);
   const volumeRef = useRef(volume);
   volumeRef.current = volume;
+
+  const [soundFiles, setSoundFiles] = useState<Record<SoundKey, string>>(SOUND_DEFAULTS);
+  const soundFilesRef = useRef(soundFiles);
+  soundFilesRef.current = soundFiles;
+
+  const [soundPanelOpen, setSoundPanelOpen] = useState(false);
 
   const prevStateRef = useRef<ClientGameState | null>(null);
 
@@ -89,7 +133,6 @@ export default function App() {
     const currentRound = state.currentRound;
     if (!currentRound) return;
 
-    // Collect all chip locations in prev and current state
     function chipLocs(s: ClientGameState): Map<string, string> {
       const m = new Map<string, string>();
       for (const c of s.middleChips) m.set(`${c.round}-${c.number}`, 'middle');
@@ -112,8 +155,10 @@ export default function App() {
       }
     }
 
-    if (stolenFromMe) playSound('/honk-honk.mp3', 1.8, volumeRef.current);
-    else if (anyMoved) playSound('/fast-woosh.mp3', 1, volumeRef.current * 0.2);
+    const files = soundFilesRef.current;
+    const vol = volumeRef.current;
+    if (stolenFromMe) playSound(files.STEAL_FROM_YOU, vol, SOUND_VOLUME_MULTIPLIER.STEAL_FROM_YOU);
+    else if (anyMoved) playSound(files.CHIP_MOVE, vol, SOUND_VOLUME_MULTIPLIER.CHIP_MOVE);
   }, [state]);
 
   if (status === 'disconnected' && !state) {
@@ -134,11 +179,35 @@ export default function App() {
 
   return (
     <div style={styles.container}>
-      <div style={styles.volumeControl}>
-        <span>Volume</span>
-        <input type="range" min={0} max={1} step={0.01} value={volume}
-          onChange={e => setVolume(parseFloat(e.target.value))}
-          style={{ width: 80 }} />
+      <div style={styles.soundBar}>
+        <div style={styles.soundBarRow}>
+          <span>Volume</span>
+          <input type="range" min={0} max={1} step={0.01} value={volume}
+            onChange={e => setVolume(parseFloat(e.target.value))}
+            style={{ width: 80 }} />
+          <button
+            onClick={() => setSoundPanelOpen(o => !o)}
+            style={{ padding: '2px 8px', fontSize: 11, cursor: 'pointer', borderRadius: 4, border: '1px solid #444', background: '#2a3a4a', color: '#ccc' }}>
+            {soundPanelOpen ? 'Close sounds' : 'Sounds'}
+          </button>
+        </div>
+        {soundPanelOpen && (
+          <div style={styles.soundPanel}>
+            {(Object.keys(SOUND_DEFAULTS) as SoundKey[]).map(key => (
+              <div key={key} style={styles.soundPanelRow}>
+                <span style={{ minWidth: 110 }}>{SOUND_LABELS[key]}</span>
+                <select
+                  value={soundFiles[key]}
+                  onChange={e => setSoundFiles(prev => ({ ...prev, [key]: e.target.value }))}
+                  style={{ background: '#1a2030', color: '#ccc', border: '1px solid #444', borderRadius: 4, fontSize: 11 }}>
+                  {AVAILABLE_MP3S.map(f => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <button style={styles.restartButton} onClick={() => sendAction({ type: 'RESTART_GAME' })}>
         Restart
