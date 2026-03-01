@@ -51,10 +51,14 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '16px',
     fontSize: '14px',
   },
-  stopButton: {
+  topRightButtons: {
     position: 'fixed',
     top: '16px',
     right: '16px',
+    display: 'flex',
+    gap: '8px',
+  },
+  stopButton: {
     padding: '8px 18px',
     fontSize: '13px',
     background: '#7f1c1c',
@@ -65,9 +69,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 'bold',
   },
   restartButton: {
-    position: 'fixed',
-    top: '16px',
-    right: '140px',
     padding: '8px 18px',
     fontSize: '13px',
     background: '#1a4731',
@@ -290,12 +291,14 @@ export default function App() {
           </div>
         )}
       </div>
-      <button style={styles.restartButton} onClick={() => sendAction({ type: 'RESTART_GAME' })}>
-        Restart
-      </button>
-      <button style={styles.stopButton} onClick={() => sendAction({ type: 'FINISH_GAME' })}>
-        Stop the game
-      </button>
+      <div style={styles.topRightButtons}>
+        <button style={styles.restartButton} onClick={() => sendAction({ type: 'RESTART_GAME' })}>
+          Restart
+        </button>
+        <button style={styles.stopButton} onClick={() => sendAction({ type: 'FINISH_GAME' })}>
+          Stop the game
+        </button>
+      </div>
       {lastError && <div style={styles.error}>{lastError}</div>}
       {state.phase === 'lobby' && <Lobby state={state} sendAction={sendAction} />}
       {state.phase === 'game' && <Game state={state} sendAction={sendAction} />}
