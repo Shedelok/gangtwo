@@ -42,7 +42,7 @@ export default function PlayerSeat({
       border: `2px solid ${isMe ? '#3a6090' : '#2a3a4a'}`,
       borderRadius: 10,
       padding: '8px 10px',
-      width: 148,
+      width: 160,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -59,7 +59,7 @@ export default function PlayerSeat({
 
       {/* Chips — sorted by round asc, number asc */}
       {sortedChips.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center' }}>
           {sortedChips.map(chip => {
             const isCurrent = chip.round === currentRound;
             const isBlack = blackNumbers.includes(chip.number);
