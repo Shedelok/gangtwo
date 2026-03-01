@@ -8,6 +8,7 @@
 - "Move to next round": replace checkbox+label with a proper button. Fix in `PlayerSeat.tsx`.
 - Add animation and sound for when more common cards are revealed.
 - When your chip is stolen, the "Move to next round" checkbox should be unchecked.
+- Add hint with poker hand rankings.
 
 ## Addons
 
@@ -38,3 +39,6 @@
 19. Everyone sees their cards as well as the cards of the player to their left
 20. At preflop you give one of your cards to the person to your left
 21. At preflop you look at your cards and then all hands are randomly shuffled and redistributed.
+22. Somewhere in the middle of the game the hand rankings are random shuffled, shown to all players and these new
+    rankings
+    are used for the rest of the game.
