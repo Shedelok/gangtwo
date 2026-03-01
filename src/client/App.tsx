@@ -3,7 +3,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
 import type { ClientGameState } from '@shared/types';
-import { ADDONS } from './addons';
+import { ADDONS, type AddonDef } from './addons';
 
 const AVAILABLE_MP3S = ['bell-1.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
@@ -99,7 +99,6 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     fontSize: '12px',
     color: '#aaa',
-    maxWidth: '220px',
   },
   soundBarRow: {
     display: 'flex',
@@ -241,6 +240,32 @@ export default function App() {
 
   const isLobby = state.phase === 'lobby';
   const visibleAddons = isLobby ? ADDONS : ADDONS.filter(a => state.enabledAddons.includes(a.id));
+  const negativeAddons = visibleAddons.filter(a => a.type === 'negative');
+  const positiveAddons = visibleAddons.filter(a => a.type === 'positive');
+
+  const renderAddon = (addon: AddonDef) => {
+    const enabled = state.enabledAddons.includes(addon.id);
+    const hovered = hoveredAddon === addon.id;
+    return (
+      <div
+        key={addon.id}
+        style={{ ...styles.addonItem, ...(hovered ? styles.addonItemHovered : {}) }}
+        onMouseEnter={() => setHoveredAddon(addon.id)}
+        onMouseLeave={() => setHoveredAddon(null)}
+      >
+        {isLobby && (
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={() => sendAction({ type: 'TOGGLE_ADDON', addonId: addon.id })}
+            style={{ marginTop: '2px', flexShrink: 0, cursor: 'pointer' }}
+          />
+        )}
+        <span style={styles.addonShort}>{addon.short}</span>
+        {hovered && <div style={styles.addonTooltip}>{addon.long}</div>}
+      </div>
+    );
+  };
 
   return (
     <div style={styles.container}>
@@ -276,29 +301,20 @@ export default function App() {
         {visibleAddons.length > 0 && (
           <div style={styles.addonPanel}>
             <div style={styles.addonTitle}>Addons</div>
-            {visibleAddons.map((addon) => {
-              const enabled = state.enabledAddons.includes(addon.id);
-              const hovered = hoveredAddon === addon.id;
-              return (
-                <div
-                  key={addon.id}
-                  style={{ ...styles.addonItem, ...(hovered ? styles.addonItemHovered : {}) }}
-                  onMouseEnter={() => setHoveredAddon(addon.id)}
-                  onMouseLeave={() => setHoveredAddon(null)}
-                >
-                  {isLobby && (
-                    <input
-                      type="checkbox"
-                      checked={enabled}
-                      onChange={() => sendAction({ type: 'TOGGLE_ADDON', addonId: addon.id })}
-                      style={{ marginTop: '2px', flexShrink: 0, cursor: 'pointer' }}
-                    />
-                  )}
-                  <span style={styles.addonShort}>{addon.short}</span>
-                  {hovered && <div style={styles.addonTooltip}>{addon.long}</div>}
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'flex-start' }}>
+              {negativeAddons.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#2d1515', borderRadius: 6, padding: '4px 6px', width: '15vw' }}>
+                  <div style={{ fontSize: 10, color: '#a05050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>Negative</div>
+                  {negativeAddons.map(renderAddon)}
                 </div>
-              );
-            })}
+              )}
+              {positiveAddons.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#152d15', borderRadius: 6, padding: '4px 6px', width: '15vw' }}>
+                  <div style={{ fontSize: 10, color: '#50a050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>Positive</div>
+                  {positiveAddons.map(renderAddon)}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

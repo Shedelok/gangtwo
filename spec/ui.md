@@ -1,13 +1,21 @@
 # UI Details
 
+## About This File
+
 This file describes the UI aspects of the application.
 
 ## Lobby
 
 One the player joins the lobby, they see the full list of players and "Start Game" button.
 
-On the left, all players see full list of available addons as a side-panel under the sound control elements. The order
-of the addons is exactly the same as the order they are described in spec/addons.md. Each addon
+### Addons
+
+On the left, all players see full list of available addons as a side-panel under the sound control elements.
+First, there is a list of all negative addons, then next to it is a list of all positive addons. Each of the 2 lists
+has a header and its own background. The negative addons have subtle red background, the positive addons have subtle
+green background. Each list should take 15% of the entire screen in width. The overall left side-panel should adapt its
+width accordingly.
+The order of the addons is exactly the same as the order they are described in spec/addons.md. Each addon
 is displayed as a checkbox and
 short description
 of the addon. When hovering an addon in this list, full description of it is displayed. Players can enable/disable
@@ -23,8 +31,15 @@ sees the current player counter-clockwise next to themself).
 
 For each player there is their name, cards and chips that are displayed where the player seats.
 
+### Addons
+
 On the left, players can see the full list of addons that take part in the game as a side-panel under the sound control
-elements. The order of the addons is exactly the same as the order they are described in spec/addons.md.
+elements.
+First, there is a list of all negative addons, then next to it is a list of all positive addons. Each of the 2 lists
+has a header and its own background. The negative addons have subtle red background, the positive addons have subtle
+green background. Each list should take 15% of the entire screen in width. The overall left side-panel should adapt its
+width accordingly.
+The order of the addons is exactly the same as the order they are described in spec/addons.md.
 The players see the list of short names
 of the addons. If they hover over an addon, they see the full description of it.
 

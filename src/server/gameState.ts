@@ -266,11 +266,25 @@ export function buildClientState(socketId: string): ClientGameState {
     }
   }
 
+  const neighborHoleCards: Record<string, [Card, Card]> = {};
+  if (state.phase === 'game' && playerId && state.enabledAddons.has('see-neighbors-cards')) {
+    const myIdx = state.players.findIndex((p) => p.id === playerId);
+    if (myIdx >= 0) {
+      const n = state.players.length;
+      const leftNeighbor = state.players[(myIdx - 1 + n) % n];
+      const rightNeighbor = state.players[(myIdx + 1) % n];
+      for (const neighbor of [leftNeighbor, rightNeighbor]) {
+        if (state.holeCards[neighbor.id]) neighborHoleCards[neighbor.id] = state.holeCards[neighbor.id];
+      }
+    }
+  }
+
   return {
     phase: state.phase,
     players: state.players.map((p) => ({ ...p, chips: [...p.chips] })),
     myId: playerId,
     myHoleCards,
+    neighborHoleCards,
     revealedHoleCards,
     communityCards: [...state.communityCards],
     currentRound: state.phase === 'lobby' ? null : state.currentRound,
