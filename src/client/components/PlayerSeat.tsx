@@ -22,13 +22,14 @@ interface Props {
   sendAction: (a: ClientAction) => void;
   readOnly: boolean;
   myCardsRevealed: boolean;
+  blackNumbers?: number[];
   style?: React.CSSProperties;
 }
 
 export default function PlayerSeat({
   player, isMe, holeCards, showFaceDown,
   currentRound, iHaveCurrentRoundChip,
-  sendAction, readOnly, myCardsRevealed, style,
+  sendAction, readOnly, myCardsRevealed, blackNumbers = [], style,
 }: Props) {
   // Sort by round asc, then number asc within the same round
   const sortedChips = [...player.chips].sort((a, b) =>
@@ -61,16 +62,17 @@ export default function PlayerSeat({
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'center' }}>
           {sortedChips.map(chip => {
             const isCurrent = chip.round === currentRound;
+            const isBlack = blackNumbers.includes(chip.number);
             return (
               <div key={`${chip.round}-${chip.number}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <ChipCircle chip={chip} />
-                {!readOnly && isCurrent && isMe && (
+                <ChipCircle chip={chip} blackInside={isBlack} />
+                {!readOnly && isCurrent && isMe && !isBlack && (
                   <button style={{ ...btn, background: '#7f1c1c', color: '#fca5a5' }}
                     onClick={() => sendAction({ type: 'DISCARD_CHIP', chipNumber: chip.number })}>
                     Return
                   </button>
                 )}
-                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && (
+                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && (
                   <button style={{ ...btn, background: '#5b21b6', color: '#ddd6fe' }}
                     onClick={() => sendAction({ type: 'STEAL_CHIP', fromPlayerId: player.id, chipNumber: chip.number })}>
                     Steal

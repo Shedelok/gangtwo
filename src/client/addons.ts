@@ -25,4 +25,14 @@ export const ADDONS: AddonDef[] = [
     short: "Clubs=Spades, Diamonds=Hearth",
     long: "Instead of 4 logical suits, there are only 2: black (represented by clubs and spades) and red (represented by diamonds and hearths).",
   },
+  {
+    id: 'ones-are-black',
+    short: "Ones are Black",
+    long: "All chips of value 1 become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time.",
+  },
+  {
+    id: 'ns-are-black',
+    short: "Ns are Black",
+    long: "The highest value chips (value equal to the number of players) become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time.",
+  },
 ];

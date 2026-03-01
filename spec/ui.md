@@ -6,7 +6,8 @@ This file describes the UI aspects of the application.
 
 One the player joins the lobby, they see the full list of players and "Start Game" button.
 
-On the left, all players see full list of available addons as a side-panel under the sound control elements. Each addon
+On the left, all players see full list of available addons as a side-panel under the sound control elements. The order
+of the addons is exactly the same as the order they are described in spec/addons.md. Each addon
 is displayed as a checkbox and
 short description
 of the addon. When hovering an addon in this list, full description of it is displayed. Players can enable/disable
@@ -23,7 +24,8 @@ sees the current player counter-clockwise next to themself).
 For each player there is their name, cards and chips that are displayed where the player seats.
 
 On the left, players can see the full list of addons that take part in the game as a side-panel under the sound control
-elements. They see the list of short names
+elements. The order of the addons is exactly the same as the order they are described in spec/addons.md.
+The players see the list of short names
 of the addons. If they hover over an addon, they see the full description of it.
 
 ### Table

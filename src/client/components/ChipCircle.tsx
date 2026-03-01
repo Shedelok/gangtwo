@@ -44,7 +44,7 @@ function starPolygonPoints(cx: number, cy: number, outerR: number): string {
   }).join(' ');
 }
 
-function Stars({ count, size }: { count: number; size: number }) {
+function Stars({ count, size, fill }: { count: number; size: number; fill: string }) {
   if (count === 0) return null;
   const outerR = size * 0.13;
   const positions = starPositions(count, size);
@@ -54,7 +54,7 @@ function Stars({ count, size }: { count: number; size: number }) {
         <polygon
           key={i}
           points={starPolygonPoints(x, y, outerR)}
-          fill="black"
+          fill={fill}
         />
       ))}
     </svg>
@@ -65,9 +65,10 @@ interface Props {
   chip: Chip;
   dim?: boolean;
   size?: number;
+  blackInside?: boolean;
 }
 
-export default function ChipCircle({ chip, dim = false, size = 32 }: Props) {
+export default function ChipCircle({ chip, dim = false, size = 32, blackInside = false }: Props) {
   const { register, hiding } = useContext(ChipAnimContext);
   const key = `${chip.round}-${chip.number}`;
 
@@ -76,20 +77,22 @@ export default function ChipCircle({ chip, dim = false, size = 32 }: Props) {
   }, [register, key]);
 
   const c = dim ? { bg: '#333', border: '#555' } : COLORS[chip.round];
+  const bg = blackInside ? '#000' : c.bg;
+  const starFill = blackInside ? 'white' : 'black';
 
   return (
     <div ref={ref} style={{
       width: size,
       height: size,
       borderRadius: '50%',
-      background: c.bg,
+      background: bg,
       border: `2px solid ${c.border}`,
       position: 'relative',
       userSelect: 'none',
       flexShrink: 0,
       opacity: hiding.has(key) ? 0 : 1,
     }}>
-      <Stars count={chip.number} size={size} />
+      <Stars count={chip.number} size={size} fill={starFill} />
     </div>
   );
 }

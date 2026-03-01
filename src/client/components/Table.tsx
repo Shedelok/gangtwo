@@ -42,7 +42,7 @@ function findChip(s: ClientGameState, key: string): Chip | undefined {
 }
 
 // ── Flying chip overlay (animates from old position to new) ───────────────────
-interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to: { x: number; y: number }; }
+interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to: { x: number; y: number }; blackInside: boolean; }
 
 const noopCtx: ChipAnimCtxValue = { register: () => {}, hiding: new Set() };
 
@@ -66,7 +66,7 @@ function FlyingChip({ entry, onDone }: { entry: AnimEntry; onDone: () => void })
         pointerEvents: 'none',
         zIndex: 200,
       }}>
-        <ChipCircle chip={entry.chip} size={32} />
+        <ChipCircle chip={entry.chip} size={32} blackInside={entry.blackInside} />
       </div>
     </ChipAnimContext.Provider>
   );
@@ -90,6 +90,9 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   const myPlayer = state.players.find(p => p.id === state.myId);
   const iHaveCurrentRoundChip = !!myPlayer?.chips.some(c => c.round === currentRound);
   const n = rotated.length;
+  const blackNumbers: number[] = [];
+  if (state.enabledAddons.includes('ones-are-black')) blackNumbers.push(1);
+  if (state.enabledAddons.includes('ns-are-black')) blackNumbers.push(n);
 
   // ── Responsive scale (60vw) ──────────────────────────────────────────────────
   const [scale, setScale] = useState(getScale);
@@ -141,7 +144,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
           const currPos = relCenter(currEl);
           const chip    = findChip(state, key);
           if (currPos && chip) {
-            newAnims.push({ id: `${key}-${Date.now()}`, chip, from: prevPos, to: currPos });
+            newAnims.push({ id: `${key}-${Date.now()}`, chip, from: prevPos, to: currPos, blackInside: blackNumbers.includes(chip.number) });
             newHiding.push(key);
           }
         }
@@ -193,7 +196,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
                 {[...state.middleChips].sort((a, b) => a.number - b.number).map(chip => (
                   <div key={chip.number} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <ChipCircle chip={chip} size={30} />
+                    <ChipCircle chip={chip} size={30} blackInside={blackNumbers.includes(chip.number)} />
                     {!readOnly && !iHaveCurrentRoundChip && (
                       <button onClick={() => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number })}
                         style={{ padding: '2px 7px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0' }}>
@@ -221,6 +224,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               holeCards={holeCards} showFaceDown={!readOnly && !isMe}
               currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip}
               sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
+              blackNumbers={blackNumbers}
               style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );
