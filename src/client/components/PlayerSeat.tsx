@@ -42,7 +42,6 @@ export default function PlayerSeat({
       border: `2px solid ${isMe ? '#3a6090' : '#2a3a4a'}`,
       borderRadius: 10,
       padding: '8px 10px',
-      width: 160,
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -50,7 +49,7 @@ export default function PlayerSeat({
       ...style,
     }}>
       {/* Name */}
-      <div style={{ fontSize: 12, fontWeight: 'bold', color: isMe ? '#90c0ff' : '#bbb', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+      <div style={{ fontSize: 12, fontWeight: 'bold', color: isMe ? '#90c0ff' : '#bbb', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
         {player.name}{isMe ? ' (you)' : ''}
       </div>
 
