@@ -1,8 +1,7 @@
 {
   "name": "gang-game",
   "version": "1.0.0",
-  "type": "module",
-  "scripts": {
+"scripts": {
     "dev": "concurrently \"tsx watch src/server/index.ts\" \"vite\"",
     "build": "vite build && tsc -p tsconfig.server.json",
     "start": "node dist/server/index.js"
