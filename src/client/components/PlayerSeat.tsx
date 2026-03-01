@@ -41,11 +41,12 @@ export default function PlayerSeat({
       background: isMe ? '#1a3050' : '#16213e',
       border: `2px solid ${isMe ? '#3a6090' : '#2a3a4a'}`,
       borderRadius: 10,
-      padding: '8px 10px',
+      padding: !readOnly && isMe ? '8px 10px 30px' : '8px 10px',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       gap: 5,
+      position: 'relative',
       ...style,
     }}>
       {/* Name */}
@@ -91,14 +92,15 @@ export default function PlayerSeat({
         </button>
       )}
 
-      {/* Ready — only shown to the player themselves */}
+      {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size */}
       {!readOnly && isMe && (
         <button
           style={{
             ...btn,
+            position: 'absolute',
+            bottom: 8,
             background: player.readyForNextRound ? '#166534' : '#1d4ed8',
             color: '#fff',
-            minWidth: 110,
           }}
           onClick={() => sendAction({ type: 'SET_READY', ready: !player.readyForNextRound })}>
           {player.readyForNextRound ? 'Ready!' : 'Move to next round'}
