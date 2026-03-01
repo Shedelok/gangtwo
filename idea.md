@@ -11,6 +11,7 @@
 - Add hint with poker hand rankings.
 - Add hash for lobby settings for an easy "just paste" setup.
 - Addons should not just apply, they should be randomized.
+- Restart should keep addons
 
 ## Addons
 
