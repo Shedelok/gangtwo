@@ -139,7 +139,7 @@ export function discardChip(socketId: string, chipNumber: number): string | null
 
   const [chip] = player.chips.splice(idx, 1);
   state.middleChips.push(chip);
-  // No round-complete check after discard
+  player.readyForNextRound = false;
   return null;
 }
 

@@ -64,9 +64,9 @@ a moving animation is played that lasts 1 second and moves the chip from its ori
 
 Each player has a button to indicate they are ready to move to the next round. The button is only visible to the player
 themselves. The button has two states: ready and not ready. Initially the player is not ready. When not ready, the
-button reads "Move to next round" and is styled neutrally. When ready, the button reads "Ready!" and is styled green.
-Clicking the button toggles the state. When the player's current round chip is stolen, their state resets to not
-ready.
+button reads "Move to next round" and is styled prominently to draw attention. When ready, the button reads "Ready!"
+and is styled green. Clicking the button toggles the state. When the player's current round chip is stolen or
+discarded, their state resets to not ready.
 
 ### Sound Bar
 

@@ -96,8 +96,8 @@ export default function PlayerSeat({
         <button
           style={{
             ...btn,
-            background: player.readyForNextRound ? '#166534' : '#2a3a4a',
-            color: player.readyForNextRound ? '#bbf7d0' : '#aaa',
+            background: player.readyForNextRound ? '#166534' : '#1d4ed8',
+            color: '#fff',
           }}
           onClick={() => sendAction({ type: 'SET_READY', ready: !player.readyForNextRound })}>
           {player.readyForNextRound ? 'Ready!' : 'Move to next round'}
