@@ -6,8 +6,26 @@ This file describes the addons (toggleable modifications of the base game).
 
 Short description: "Guess Highest Red Chip's Hand Rank"
 
-Long description: Before the player with the highest value red chip reveals their hand, players must collectively agree
-on what hand rank that player has (pair/two pairs/street/etc.).
+Long description: Before the player with the highest value red chip reveals their hand, other players must collectively
+agree on what hand rank that player has (pair/two pairs/street/etc.).
+
+Functionality: This addon doesn't change the functionality of the game in any way. The effect of this addon is fully
+applied to the player's communications outside the application.
+
+## Guess 2nd Highest Red Chip's Hand Rank
+
+Same as "Guess Highest Red Chip's Hand Rank", but for second-highest red chip instead of the highest one.
+
+## Guess Lowest Red Chip's Hand Rank
+
+Same as "Guess Highest Red Chip's Hand Rank", but for the lowest red chip instead of the highest one.
+
+## Clubs=Spades, Diamonds=Hearth
+
+Short description: "Clubs=Spades, Diamonds=Hearth"
+
+Long description: Instead of 4 logical suits, there are only 2: black (represented by clubs and spades) and red (
+represented by diamonds and hearths).
 
 Functionality: This addon doesn't change the functionality of the game in any way. The effect of this addon is fully
 applied to the player's communications outside the application.
