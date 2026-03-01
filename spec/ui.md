@@ -28,7 +28,7 @@ elements. The order of the addons is exactly the same as the order they are desc
 The players see the list of short names
 of the addons. If they hover over an addon, they see the full description of it.
 
-The Stop Game and Restart buttons are displayed side by side with equal spacing between them.
+The Stop Game and Restart buttons are displayed side by side with a gap between them.
 
 ### Table
 
