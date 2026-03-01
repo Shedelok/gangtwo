@@ -187,7 +187,7 @@ export function stealChip(
   if (idx === -1) return 'Target does not hold that chip for this round';
 
   const [chip] = victim.chips.splice(idx, 1);
-  // Victim's readyForNextRound is NOT reset (per spec)
+  victim.readyForNextRound = false;
   player.chips.push(chip);
 
   // No round-complete check after steal (victim just lost their chip)

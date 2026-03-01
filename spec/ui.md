@@ -60,10 +60,13 @@ All chips belonging to a player are always displayed in a single horizontal row.
 Every time a chip is moved (by a move of one of the players, etc.), visually it doesn't teleport immediately, but rather
 a moving animation is played that lasts 1 second and moves the chip from its origin to destination.
 
-### Checkbox
+### Ready Button
 
-The players can only see their own checkbox for being ready for the next round and don't see whether other players have
-their checkbox checked or not.
+Each player has a button to indicate they are ready to move to the next round. The button is only visible to the player
+themselves. The button has two states: ready and not ready. Initially the player is not ready. When not ready, the
+button reads "Move to next round" and is styled neutrally. When ready, the button reads "Ready!" and is styled green.
+Clicking the button toggles the state. When the player's current round chip is stolen, their state resets to not
+ready.
 
 ### Sound Bar
 

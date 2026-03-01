@@ -93,11 +93,15 @@ export default function PlayerSeat({
 
       {/* Ready — only shown to the player themselves */}
       {!readOnly && isMe && (
-        <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 11, color: '#aaa' }}>
-          <input type="checkbox" checked={player.readyForNextRound}
-            onChange={e => sendAction({ type: 'SET_READY', ready: e.target.checked })} />
-          Move to next round
-        </label>
+        <button
+          style={{
+            ...btn,
+            background: player.readyForNextRound ? '#166534' : '#2a3a4a',
+            color: player.readyForNextRound ? '#bbf7d0' : '#aaa',
+          }}
+          onClick={() => sendAction({ type: 'SET_READY', ready: !player.readyForNextRound })}>
+          {player.readyForNextRound ? 'Ready!' : 'Move to next round'}
+        </button>
       )}
     </div>
   );
