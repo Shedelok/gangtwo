@@ -1,5 +1,7 @@
 # Gang Game
 
+This file describes the base logic of the game.
+
 ## Lobby
 
 This is a very simple web-based game. Exactly 1 lobby exists at any time.

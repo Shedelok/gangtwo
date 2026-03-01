@@ -1,5 +1,9 @@
 # UI Details
 
+This file describes the UI aspects of the application.
+
+## General
+
 The table is displayed as a green oval in the center of the screen. Each player sees themself at the bottom and all
 other
 players are seated clockwise, but the order is the same for everyone (meaning the player who seats clockwise to the

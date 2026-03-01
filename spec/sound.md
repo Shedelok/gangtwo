@@ -1,5 +1,9 @@
 # Sound Details
 
+This file describes the sounds used in the game.
+
+## Sounds
+
 When someone steals the chip from the current player, the current player hears the sound "STEAL_FROM_YOU" which defaults
 to spec/resources/bell-1.mp3.
 
