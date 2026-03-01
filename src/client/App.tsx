@@ -3,6 +3,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
 import type { ClientGameState } from '@shared/types';
+import { ADDONS } from './addons';
 
 const AVAILABLE_MP3S = ['bell-1.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
@@ -76,7 +77,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     fontWeight: 'bold',
   },
-  soundBar: {
+  leftPanel: {
     position: 'fixed',
     top: '16px',
     left: '16px',
@@ -86,6 +87,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     fontSize: '12px',
     color: '#aaa',
+    maxWidth: '220px',
   },
   soundBarRow: {
     display: 'flex',
@@ -109,6 +111,53 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: '#ccc',
   },
+  addonPanel: {
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    marginTop: '4px',
+  },
+  addonTitle: {
+    color: '#666',
+    fontSize: '11px',
+    marginBottom: '4px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  addonItem: {
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '6px',
+    padding: '5px 6px',
+    borderRadius: '5px',
+    cursor: 'default',
+  },
+  addonItemHovered: {
+    background: '#1e2d4a',
+  },
+  addonShort: {
+    fontSize: '12px',
+    color: '#ccc',
+    lineHeight: '1.4',
+  },
+  addonTooltip: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    marginTop: '4px',
+    background: '#0f1a2e',
+    border: '1px solid #2a3a4a',
+    borderRadius: '6px',
+    padding: '8px 10px',
+    fontSize: '12px',
+    color: '#aaa',
+    lineHeight: '1.5',
+    zIndex: 10,
+    whiteSpace: 'normal',
+  },
 };
 
 export default function App() {
@@ -122,6 +171,7 @@ export default function App() {
   soundFilesRef.current = soundFiles;
 
   const [soundPanelOpen, setSoundPanelOpen] = useState(false);
+  const [hoveredAddon, setHoveredAddon] = useState<string | null>(null);
 
   const prevStateRef = useRef<ClientGameState | null>(null);
 
@@ -177,9 +227,12 @@ export default function App() {
     );
   }
 
+  const isLobby = state.phase === 'lobby';
+  const visibleAddons = isLobby ? ADDONS : ADDONS.filter(a => state.enabledAddons.includes(a.id));
+
   return (
     <div style={styles.container}>
-      <div style={styles.soundBar}>
+      <div style={styles.leftPanel}>
         <div style={styles.soundBarRow}>
           <span>Volume</span>
           <input type="range" min={0} max={1} step={0.01} value={volume}
@@ -206,6 +259,34 @@ export default function App() {
                 </select>
               </div>
             ))}
+          </div>
+        )}
+        {visibleAddons.length > 0 && (
+          <div style={styles.addonPanel}>
+            <div style={styles.addonTitle}>Addons</div>
+            {visibleAddons.map((addon) => {
+              const enabled = state.enabledAddons.includes(addon.id);
+              const hovered = hoveredAddon === addon.id;
+              return (
+                <div
+                  key={addon.id}
+                  style={{ ...styles.addonItem, ...(hovered ? styles.addonItemHovered : {}) }}
+                  onMouseEnter={() => setHoveredAddon(addon.id)}
+                  onMouseLeave={() => setHoveredAddon(null)}
+                >
+                  {isLobby && (
+                    <input
+                      type="checkbox"
+                      checked={enabled}
+                      onChange={() => sendAction({ type: 'TOGGLE_ADDON', addonId: addon.id })}
+                      style={{ marginTop: '2px', flexShrink: 0, cursor: 'pointer' }}
+                    />
+                  )}
+                  <span style={styles.addonShort}>{addon.short}</span>
+                  {hovered && <div style={styles.addonTooltip}>{addon.long}</div>}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -2,7 +2,17 @@
 
 This file describes the UI aspects of the application.
 
-## General
+## Lobby
+
+One the player joins the lobby, they see the full list of players and "Start Game" button.
+
+On the left, all players see full list of available addons as a side-panel under the sound control elements. Each addon
+is displayed as a checkbox and
+short description
+of the addon. When hovering an addon in this list, full description of it is displayed. Players can enable/disable
+addons. When the game starts, list of enabled addons is fixed, and they are used in the game.
+
+## In-game
 
 The table is displayed as a green oval in the center of the screen. Each player sees themself at the bottom and all
 other
@@ -12,15 +22,20 @@ sees the current player counter-clockwise next to themself).
 
 For each player there is their name, cards and chips that are displayed where the player seats.
 
-## Table
+On the left, players can see the full list of addons that take part in the game as a side-panel under the sound control
+elements. They see the list of short names
+of the addons. If they hover over an addon, they see the full description of it.
 
-The table should take roughly 60% of the player's screen width.
+### Table
 
-## Cards
+The table should be horizontally centered on the screen regardless of whether there are or are not any side panels on
+the left or right. The table should take roughly 60% of the player's screen width.
+
+### Cards
 
 The cards are displayed face up for the current player and face down for everyone else.
 
-## Chips
+### Chips
 
 The chips are displayed as circles of the designated color. The color of the chips should
 always stay the same, even after the corresponding round is over, chips remain their color. Each chip has black
@@ -39,12 +54,12 @@ other.
 Every time a chip is moved (by a move of one of the players, etc.), visually it doesn't teleport immediately, but rather
 a moving animation is played that lasts 1 second and moves the chip from its origin to destination.
 
-## Checkbox
+### Checkbox
 
 The players can only see their own checkbox for being ready for the next round and don't see whether other players have
 their checkbox checked or not.
 
-## Sound Bar
+### Sound Bar
 
 Each player has a bar to control the volume of all sounds in the game. The default value of the volume is 0.5.
 

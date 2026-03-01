@@ -24,12 +24,14 @@ export interface ClientGameState {
   communityCards: Card[];
   currentRound: RoundNumber | null;
   middleChips: Chip[];        // current-round chips in the middle only
+  enabledAddons: string[];
 }
 
 // Client → Server actions
 export type ClientAction =
   | { type: 'JOIN_LOBBY'; name: string }
   | { type: 'START_GAME' }
+  | { type: 'TOGGLE_ADDON'; addonId: string }
   | { type: 'DISCARD_CHIP'; chipNumber: number }
   | { type: 'TAKE_FROM_MIDDLE'; chipNumber: number }
   | { type: 'STEAL_CHIP'; fromPlayerId: string; chipNumber: number }

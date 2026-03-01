@@ -16,6 +16,7 @@ import {
   revealCards,
   restartGame,
   finishGame,
+  toggleAddon,
   buildClientState,
 } from './gameState';
 
@@ -62,6 +63,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'START_GAME':
       error = startGame();
+      break;
+    case 'TOGGLE_ADDON':
+      error = toggleAddon(action.addonId);
       break;
     case 'DISCARD_CHIP':
       error = discardChip(socketId, action.chipNumber);

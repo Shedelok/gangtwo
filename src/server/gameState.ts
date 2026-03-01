@@ -17,6 +17,7 @@ interface ServerGameState {
   middleChips: Chip[];
   deck: Card[];
   revealedPlayers: Set<string>;
+  enabledAddons: Set<string>;
   socketToPlayerId: Map<string, string>;
   playerIdToSocketId: Map<string, string>;
 }
@@ -30,6 +31,7 @@ const state: ServerGameState = {
   middleChips: [],
   deck: [],
   revealedPlayers: new Set(),
+  enabledAddons: new Set(),
   socketToPlayerId: new Map(),
   playerIdToSocketId: new Map(),
 };
@@ -227,6 +229,16 @@ export function restartGame(): string | null {
   return startGame();
 }
 
+export function toggleAddon(addonId: string): string | null {
+  if (state.phase !== 'lobby') return 'Cannot change addons after game started';
+  if (state.enabledAddons.has(addonId)) {
+    state.enabledAddons.delete(addonId);
+  } else {
+    state.enabledAddons.add(addonId);
+  }
+  return null;
+}
+
 export function finishGame(): void {
   state.phase = 'lobby';
   state.players = [];
@@ -236,6 +248,7 @@ export function finishGame(): void {
   state.middleChips = [];
   state.deck = [];
   state.revealedPlayers = new Set();
+  state.enabledAddons = new Set();
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
     state.socketToPlayerId.set(socketId, '');
@@ -262,5 +275,6 @@ export function buildClientState(socketId: string): ClientGameState {
     communityCards: [...state.communityCards],
     currentRound: state.phase === 'lobby' ? null : state.currentRound,
     middleChips: [...state.middleChips],
+    enabledAddons: [...state.enabledAddons],
   };
 }
