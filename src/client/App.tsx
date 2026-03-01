@@ -113,7 +113,7 @@ const styles: Record<string, React.CSSProperties> = {
 
 export default function App() {
   const { state, sendAction, lastError, status } = useWebSocket();
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(0.5);
   const volumeRef = useRef(volume);
   volumeRef.current = volume;
 

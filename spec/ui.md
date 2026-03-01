@@ -18,8 +18,14 @@ The cards are displayed face up for the current player and face down for everyon
 
 ## Chips
 
-The chips are displayed as circles of the designated color with a digit in the middle. The color of the chips should
-always stay the same, even after the corresponding round is over, chips remain their color.
+The chips are displayed as circles of the designated color. The color of the chips should
+always stay the same, even after the corresponding round is over, chips remain their color. Each chip has black
+five-pointed stars on it that are of number equal to the chips value. If a chip has 1
+star, it should be exactly in the middle, visually, meaning that the center of the star is exactly in the center of the
+chip (circle) vertically and horizontally. If a chip has 2 stars, they should be on the same horizontal line. If a chip
+has 3 or more stars they should form a circle. If a chip has 3 stars, one star is at the top and two are at the bottom
+left and right corners. If a chip has 4 stars, they are at the top left, top right, bottom left and bottom right
+corners.
 
 The chips of the same color are always sorted by value ascending when are put next to each other.
 
@@ -36,8 +42,8 @@ their checkbox checked or not.
 
 ## Sound Bar
 
-Each player has a bar to control the volume of all sounds in the game.
+Each player has a bar to control the volume of all sounds in the game. The default value of the volume is 0.5.
 
 Each player has a button that opens/closes a panel in which for each sound in the game the player has a drop-down box
-of all mp3 files available (from spec/resources/ folder). The player can assing any of the mp3 files to any of the
+of all mp3 files available (from spec/resources/ folder). The player can assign any of the mp3 files to any of the
 sounds (one mp3 can be used any number of times).
