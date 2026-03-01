@@ -55,7 +55,9 @@ The chips of the same color are always sorted by value ascending when are put ne
 The chips of different colors are always sorted by their corresponding round number ascending when are put next to each
 other.
 
-All chips belonging to a player are always displayed in a single horizontal row.
+All chips belonging to a player are always displayed in a single horizontal row. The chip area in each player's seat
+always occupies the same vertical space regardless of whether the player currently holds any chips, so the seat does
+not resize when a chip is taken or returned.
 
 Every time a chip is moved (by a move of one of the players, etc.), visually it doesn't teleport immediately, but rather
 a moving animation is played that lasts 1 second and moves the chip from its origin to destination.

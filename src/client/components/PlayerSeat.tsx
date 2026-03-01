@@ -57,10 +57,9 @@ export default function PlayerSeat({
       {/* Cards */}
       <PlayerHand cards={holeCards} faceDown={showFaceDown} small />
 
-      {/* Chips — sorted by round asc, number asc */}
-      {sortedChips.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center' }}>
-          {sortedChips.map(chip => {
+      {/* Chips — sorted by round asc, number asc; always rendered to reserve height */}
+      <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center', minHeight: 54 }}>
+        {sortedChips.map(chip => {
             const isCurrent = chip.round === currentRound;
             const isBlack = blackNumbers.includes(chip.number);
             return (
@@ -80,9 +79,8 @@ export default function PlayerSeat({
                 )}
               </div>
             );
-          })}
-        </div>
-      )}
+        })}
+      </div>
 
       {/* Reveal cards button — shown to self in finished phase until revealed */}
       {readOnly && isMe && !myCardsRevealed && (
