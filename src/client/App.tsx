@@ -21,9 +21,20 @@ const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   CHIP_MOVE: 0.2,
 };
 
-function playSound(file: string, masterVolume: number, multiplier: number): void {
+const preloadedAudio: Record<string, HTMLAudioElement> = {};
+for (const file of AVAILABLE_MP3S) {
   try {
     const audio = new Audio(`/${file}`);
+    audio.preload = 'auto';
+    preloadedAudio[file] = audio;
+  } catch { /* audio not supported */ }
+}
+
+function playSound(file: string, masterVolume: number, multiplier: number): void {
+  try {
+    const audio = preloadedAudio[file];
+    if (!audio) return;
+    audio.currentTime = 0;
     audio.volume = Math.min(1, masterVolume * multiplier);
     audio.play().catch(() => {});
   } catch { /* audio not supported */ }
