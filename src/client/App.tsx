@@ -185,6 +185,7 @@ export default function App() {
   soundFilesRef.current = soundFiles;
 
   const [soundPanelOpen, setSoundPanelOpen] = useState(false);
+  const [handHintVisible, setHandHintVisible] = useState(false);
   const [hoveredAddon, setHoveredAddon] = useState<string | null>(null);
 
   const prevStateRef = useRef<ClientGameState | null>(null);
@@ -287,6 +288,15 @@ export default function App() {
             style={{ padding: '2px 8px', fontSize: 11, cursor: 'pointer', borderRadius: 4, border: '1px solid #444', background: '#2a3a4a', color: '#ccc' }}>
             {soundPanelOpen ? 'Close sounds' : 'Sounds'}
           </button>
+          <div style={{ position: 'relative', display: 'inline-block' }}
+            onMouseEnter={() => setHandHintVisible(true)}
+            onMouseLeave={() => setHandHintVisible(false)}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: '50%', border: '1px solid #555', color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none' }}>?</span>
+            {handHintVisible && (
+              <img src="/hand-ranking.png" alt="Hand rankings"
+                style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, maxWidth: 320, borderRadius: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.6)', zIndex: 100 }} />
+            )}
+          </div>
         </div>
         {soundPanelOpen && (
           <div style={styles.soundPanel}>

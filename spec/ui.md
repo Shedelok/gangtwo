@@ -102,3 +102,8 @@ Each player has a bar to control the volume of all sounds in the game. The defau
 Each player has a button that opens/closes a panel in which for each sound in the game the player has a drop-down box
 of all mp3 files available (from spec/resources/ folder). The player can assign any of the mp3 files to any of the
 sounds (one mp3 can be used any number of times).
+
+### Hand Rankings Hint
+
+To the right of the sound control elements there is a question mark icon. When hovered over that icon,
+spec/resources/hand-ranking.png is displayed to the user.
