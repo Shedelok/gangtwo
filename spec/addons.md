@@ -49,6 +49,11 @@ black). There's no steal or drop option for a black chip.
 Same as "Black 1s", but the highest value (equal to the number of players) chips become black instead of the chips
 with the value 1.
 
+### Black Xs
+
+Same as "Black 1s", but instead of chips with value 1, a random number X (from 1 to N) is determined at the beginning of
+the game and chips with number X become black. X stays the same through all rounds.
+
 ## Positive Addons
 
 ### See 1 Neighbor's Cards

@@ -28,6 +28,7 @@ interface ServerGameState {
   deck: Card[];
   revealedPlayers: Set<string>;
   enabledAddons: Set<string>;
+  blackXValue: number | null;
   addonPool: Set<string>;
   negativeAddonCount: number;
   positiveAddonCount: number;
@@ -45,6 +46,7 @@ const state: ServerGameState = {
   deck: [],
   revealedPlayers: new Set(),
   enabledAddons: new Set(),
+  blackXValue: null,
   addonPool: new Set(ADDONS.map((a) => a.id)),
   negativeAddonCount: 0,
   positiveAddonCount: 0,
@@ -142,6 +144,11 @@ export function startGame(): string | null {
     ...pickRandom(negativePool, state.negativeAddonCount),
     ...pickRandom(positivePool, state.positiveAddonCount),
   ]);
+  if (state.enabledAddons.has('xs-are-black')) {
+    state.blackXValue = Math.floor(Math.random() * state.players.length) + 1;
+  } else {
+    state.blackXValue = null;
+  }
 
   const deck = createShuffledDeck();
   const playerIds = state.players.map((p) => p.id);
@@ -299,6 +306,7 @@ export function finishGame(): void {
   state.deck = [];
   state.revealedPlayers = new Set();
   state.enabledAddons = new Set();
+  state.blackXValue = null;
   state.addonPool = new Set(ADDONS.map((a) => a.id));
   state.negativeAddonCount = 0;
   state.positiveAddonCount = 0;
@@ -347,6 +355,7 @@ export function buildClientState(socketId: string): ClientGameState {
     currentRound: state.phase === 'lobby' ? null : state.currentRound,
     middleChips: [...state.middleChips],
     enabledAddons: [...state.enabledAddons],
+    blackXValue: state.blackXValue,
     addonPool: [...state.addonPool],
     negativeAddonCount: state.negativeAddonCount,
     positiveAddonCount: state.positiveAddonCount,

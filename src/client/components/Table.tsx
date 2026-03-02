@@ -93,6 +93,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   const blackNumbers: number[] = [];
   if (state.enabledAddons.includes('ones-are-black')) blackNumbers.push(1);
   if (state.enabledAddons.includes('ns-are-black')) blackNumbers.push(n);
+  if (state.enabledAddons.includes('xs-are-black') && state.blackXValue !== null) blackNumbers.push(state.blackXValue);
 
   // ── Responsive scale (60vw) ──────────────────────────────────────────────────
   const [scale, setScale] = useState(getScale);

@@ -26,6 +26,7 @@ export interface ClientGameState {
   currentRound: RoundNumber | null;
   middleChips: Chip[];        // current-round chips in the middle only
   enabledAddons: string[];
+  blackXValue: number | null; // value of X for 'xs-are-black' addon, null otherwise
   addonPool: string[];        // addon IDs in the random selection pool (lobby only)
   negativeAddonCount: number; // how many negative addons to pick randomly
   positiveAddonCount: number; // how many positive addons to pick randomly

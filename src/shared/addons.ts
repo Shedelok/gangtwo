@@ -43,6 +43,12 @@ export const ADDONS: AddonDef[] = [
     type: 'negative',
   },
   {
+    id: 'xs-are-black',
+    short: "Black Xs",
+    long: "A random number X from 1 to N is determined at the start of the game. Chips with value X become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time. X stays the same through all rounds.",
+    type: 'negative',
+  },
+  {
     id: 'see-1-neighbor-cards',
     short: "See 1 Neighbor's Cards",
     long: "Besides your own cards you can also see pocket cards of the player next to your left.",
