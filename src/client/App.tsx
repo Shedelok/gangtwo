@@ -44,6 +44,35 @@ function playSound(file: string, masterVolume: number, multiplier: number): void
   } catch { /* audio not supported */ }
 }
 
+const ADDON_COUNT_BITS = 3; // covers 0–6 negative addons
+const POS_COUNT_BITS = 1;  // covers 0–1 positive addons
+
+function encodeSetup(addonPool: string[], negativeAddonCount: number, positiveAddonCount: number): string {
+  let bits = '';
+  for (const addon of ADDONS) {
+    bits += addonPool.includes(addon.id) ? '1' : '0';
+  }
+  bits += Math.min(negativeAddonCount, (1 << ADDON_COUNT_BITS) - 1).toString(2).padStart(ADDON_COUNT_BITS, '0');
+  bits += Math.min(positiveAddonCount, (1 << POS_COUNT_BITS) - 1).toString(2).padStart(POS_COUNT_BITS, '0');
+  return parseInt(bits, 2).toString(32).toUpperCase();
+}
+
+function decodeSetup(code: string): { addonPool: string[]; negativeAddonCount: number; positiveAddonCount: number } | null {
+  if (!code) return null;
+  const num = parseInt(code, 32);
+  if (isNaN(num) || num < 0) return null;
+  const totalBits = ADDONS.length + ADDON_COUNT_BITS + POS_COUNT_BITS;
+  const bits = num.toString(2).padStart(totalBits, '0');
+  if (bits.length > totalBits) return null;
+  const addonPool: string[] = [];
+  for (let i = 0; i < ADDONS.length; i++) {
+    if (bits[i] === '1') addonPool.push(ADDONS[i].id);
+  }
+  const negCount = parseInt(bits.slice(ADDONS.length, ADDONS.length + ADDON_COUNT_BITS), 2);
+  const posCount = parseInt(bits.slice(ADDONS.length + ADDON_COUNT_BITS), 2);
+  return { addonPool, negativeAddonCount: negCount, positiveAddonCount: posCount };
+}
+
 const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: '100vh',
@@ -188,8 +217,16 @@ export default function App() {
   const [soundPanelOpen, setSoundPanelOpen] = useState(false);
   const [handHintVisible, setHandHintVisible] = useState(false);
   const [hoveredAddon, setHoveredAddon] = useState<string | null>(null);
+  const [codeInput, setCodeInput] = useState('');
+  const [codeFocused, setCodeFocused] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
   const handHintRef = useRef<HTMLDivElement>(null);
   const [handHintPos, setHandHintPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!state || state.phase !== 'lobby' || codeFocused) return;
+    setCodeInput(encodeSetup(state.addonPool, state.negativeAddonCount, state.positiveAddonCount));
+  }, [state, codeFocused]);
 
   const prevStateRef = useRef<ClientGameState | null>(null);
 
@@ -254,9 +291,30 @@ export default function App() {
   const negativeAddons = visibleAddons.filter(a => a.type === 'negative');
   const positiveAddons = visibleAddons.filter(a => a.type === 'positive');
 
+  const currentCode = encodeSetup(state.addonPool, state.negativeAddonCount, state.positiveAddonCount);
+
   const adjustCount = (addonType: 'negative' | 'positive', delta: number) => {
     const current = addonType === 'negative' ? state.negativeAddonCount : state.positiveAddonCount;
     sendAction({ type: 'SET_ADDON_COUNT', addonType, count: Math.max(0, current + delta) });
+  };
+
+  const applySetupCode = (code: string) => {
+    setCodeInput(code);
+    const decoded = decodeSetup(code);
+    if (!decoded) return;
+    for (const addon of ADDONS) {
+      const shouldBeInPool = decoded.addonPool.includes(addon.id);
+      const isInPool = state.addonPool.includes(addon.id);
+      if (shouldBeInPool !== isInPool) {
+        sendAction({ type: 'TOGGLE_ADDON', addonId: addon.id });
+      }
+    }
+    if (decoded.negativeAddonCount !== state.negativeAddonCount) {
+      sendAction({ type: 'SET_ADDON_COUNT', addonType: 'negative', count: decoded.negativeAddonCount });
+    }
+    if (decoded.positiveAddonCount !== state.positiveAddonCount) {
+      sendAction({ type: 'SET_ADDON_COUNT', addonType: 'positive', count: decoded.positiveAddonCount });
+    }
   };
 
   const renderAddon = (addon: AddonDef) => {
@@ -330,10 +388,39 @@ export default function App() {
         )}
         {visibleAddons.length > 0 && (
           <div style={styles.addonPanel}>
-            <div style={styles.addonTitle}>Addons</div>
+            <div style={{ ...styles.addonTitle, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>Addons</span>
+              {isLobby ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <input
+                    value={codeInput}
+                    onChange={e => applySetupCode(e.target.value)}
+                    onFocus={() => setCodeFocused(true)}
+                    onBlur={() => { setCodeFocused(false); setCodeInput(currentCode); }}
+                    spellCheck={false}
+                    style={{ width: 48, fontSize: 10, fontFamily: 'monospace', background: '#1a2030', color: '#aaa', border: '1px solid #444', borderRadius: 3, padding: '1px 4px' }}
+                    placeholder="code"
+                  />
+                  <button
+                    onClick={() => navigator.clipboard.writeText(currentCode).then(() => { setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); }).catch(() => {})}
+                    style={{ padding: '1px 5px', fontSize: 10, cursor: 'pointer', borderRadius: 3, border: '1px solid #444', background: '#2a3a4a', color: '#aaa', position: 'relative' }}
+                    title="Copy setup code"
+                  ><span style={{ visibility: 'hidden' }}>Copy</span><span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{codeCopied ? '✓' : 'Copy'}</span></button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 10, color: '#aaa' }}>{currentCode}</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(currentCode).then(() => { setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); }).catch(() => {})}
+                    style={{ padding: '1px 5px', fontSize: 10, cursor: 'pointer', borderRadius: 3, border: '1px solid #444', background: '#2a3a4a', color: '#aaa', position: 'relative' }}
+                    title="Copy setup code"
+                  ><span style={{ visibility: 'hidden' }}>Copy</span><span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{codeCopied ? '✓' : 'Copy'}</span></button>
+                </div>
+              )}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'flex-start' }}>
               {negativeAddons.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#2d1515', borderRadius: 6, padding: '4px 6px', width: '15vw' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#2d1515', borderRadius: 6, padding: '4px 6px', width: '14vw' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: '#a05050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
                     <span>Negative</span>
                     {isLobby && (
@@ -348,7 +435,7 @@ export default function App() {
                 </div>
               )}
               {positiveAddons.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#152d15', borderRadius: 6, padding: '4px 6px', width: '15vw' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#152d15', borderRadius: 6, padding: '4px 6px', width: '14vw' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: '#50a050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
                     <span>Positive</span>
                     {isLobby && (

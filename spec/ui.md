@@ -16,7 +16,7 @@ On the left, all players see full list of available addons as a side-panel under
 
 First, there is a list of all negative addons, then next to it is a list of all positive addons. Each of the 2 lists
 has its own background. The negative addons have subtle red background, the positive addons have subtle
-green background. Each list should take 15% of the entire screen in width. The overall left side-panel should adapt its
+green background. Each list should take 14% of the entire screen in width. The overall left side-panel should adapt its
 width accordingly.
 The order of the addons is exactly the same as the order they are described in spec/addons.md. Each addon
 is displayed as a checkbox and
@@ -30,6 +30,26 @@ are used in the game.
 Players can uncheck the checkbox next to each addon to remove them from the pool which is used when making the
 random selection. If the number of requested addons is bigger than the number of enabled checkboxes, the game cannot
 start.
+
+#### Setup Code
+
+At the top of the addons side-panel right next to the word "Addons" (also on the left side of the panel) there's a code
+corresponding to the current addons setup.
+
+Players can copy the code to reuse in future games. The "Copy" button's text changes to a tick after the copy was
+successfully done. Changing the text to tick should not modify the size (neither height nor width) of the button in any
+way so that it doesn't seem disturbing.
+
+Players can paste the code to set up all the checkboxes and numbers
+of addons per type requested. Code, checkboxes and the numbers are always in sync meaning that if the code changes,
+checkboxes and numbers change accordingly and vice versa.
+
+The idea of the code is to be a human-readable Base32 serialization of the game setup so that the players don't have
+to set up the game again and again. The sequence of the checkboxes is converted in a sequence of 1s and 0s, then
+number of negative addons requested and number of positive addons requested is appended to in binary format. After that
+this whole sequence is converted to Base32 code as a number.
+
+The encoding/decoding logic can assume that the list of addons will never change.
 
 ## In-game
 
@@ -47,11 +67,15 @@ On the left, players can see the full list of addons that take part in the game 
 elements.
 First, there is a list of all negative addons, then next to it is a list of all positive addons. Each of the 2 lists
 has a header and its own background. The negative addons have subtle red background, the positive addons have subtle
-green background. Each list should take 15% of the entire screen in width. The overall left side-panel should adapt its
+green background. Each list should take 14% of the entire screen in width. The overall left side-panel should adapt its
 width accordingly.
 The order of the addons is exactly the same as the order they are described in spec/addons.md.
 The players see the list of short names
 of the addons. If they hover over an addon, they see the full description of it.
+
+The players can also see the code of the current addons setup.
+
+### Stop and Restart Buttons
 
 The Stop Game and Restart buttons are displayed side by side with a gap between them.
 
@@ -62,7 +86,7 @@ the left or right. The table should take roughly 60% of the player's screen widt
 
 ### Common Cards
 
-Сommon cards are displayed on the table.
+Common cards are displayed on the table.
 
 When new common cards are revealed, they first appear face down and then there's an animation of them flipping that
 lasts 1 second and turns the cards face up. The animation is played for all players at the same time. If a player was in

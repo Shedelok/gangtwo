@@ -2,11 +2,11 @@
 
 ## General
 
-- Add hash for lobby settings for an easy "just paste" setup.
 - Get rid of spec duplication ("copy-paste") in the description of the list of the addons in lobby and in the game.
 - Black & Red addon should actually make 2 pairs of suits look the same
 - Restart should work similar to "move to next round", all players must press it to restart
 - "Guess..." addons should force players to "guess" so that they don't forget about this addon
+- "Stop the game" should keep the addons code instead of resetting it to the default one.
 
 ## Addons
 
