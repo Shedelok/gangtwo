@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import type { ClientGameState, ClientAction } from '@shared/types';
+import { ADDONS } from '@shared/addons';
+
+const negativeAddons = ADDONS.filter((a) => a.type === 'negative');
+const positiveAddons = ADDONS.filter((a) => a.type === 'positive');
 
 const s: Record<string, React.CSSProperties> = {
   container: {
@@ -68,6 +72,7 @@ const s: Record<string, React.CSSProperties> = {
   disabledButton: {
     opacity: 0.5,
     cursor: 'not-allowed',
+    background: '#888',
   },
   playerList: {
     listStyle: 'none',
@@ -105,7 +110,14 @@ export default function Lobby({ state, sendAction }: Props) {
   const [nameInput, setNameInput] = useState('');
 
   const hasJoined = state.myId !== '';
-  const canStart = state.players.length >= 2;
+
+  const negativePoolCount = negativeAddons.filter((a) => state.addonPool.includes(a.id)).length;
+  const positivePoolCount = positiveAddons.filter((a) => state.addonPool.includes(a.id)).length;
+
+  const canStart =
+    state.players.length >= 2 &&
+    state.negativeAddonCount <= negativePoolCount &&
+    state.positiveAddonCount <= positivePoolCount;
 
   function handleJoin(e: React.FormEvent) {
     e.preventDefault();
@@ -152,12 +164,18 @@ export default function Lobby({ state, sendAction }: Props) {
           </ul>
           <button
             style={{ ...s.startButton, ...(canStart ? {} : s.disabledButton) }}
-            onClick={() => sendAction({ type: 'START_GAME' })}
+            onClick={() => canStart && sendAction({ type: 'START_GAME' })}
             disabled={!canStart}
           >
             Start Game
           </button>
-          {!canStart && <div style={s.hint}>Need at least 2 players to start</div>}
+          {!canStart && (
+            <div style={s.hint}>
+              {state.players.length < 2
+                ? 'Need at least 2 players to start'
+                : 'Too many addons requested for the selected pool'}
+            </div>
+          )}
         </div>
       )}
     </div>

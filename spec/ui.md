@@ -6,20 +6,30 @@ This file describes the UI aspects of the application.
 
 ## Lobby
 
-One the player joins the lobby, they see the full list of players and "Start Game" button.
+One the player joins the lobby, they see the full list of players and "Start Game" button. If the game cannot start for
+any logical reason (for example because too many addons are requested), the "Start Game" button appears gray and cannot
+be pressed.
 
 ### Addons
 
 On the left, all players see full list of available addons as a side-panel under the sound control elements.
+
 First, there is a list of all negative addons, then next to it is a list of all positive addons. Each of the 2 lists
-has a header and its own background. The negative addons have subtle red background, the positive addons have subtle
+has its own background. The negative addons have subtle red background, the positive addons have subtle
 green background. Each list should take 15% of the entire screen in width. The overall left side-panel should adapt its
 width accordingly.
 The order of the addons is exactly the same as the order they are described in spec/addons.md. Each addon
 is displayed as a checkbox and
 short description
-of the addon. When hovering an addon in this list, full description of it is displayed. Players can enable/disable
-addons. When the game starts, list of enabled addons is fixed, and they are used in the game.
+of the addon. When hovering an addon in this list, full description of it is displayed.
+
+Each of the 2 lists has a header and controls to specify the number of addons of the corresponding type to be used.
+Once the game starts, the specified number of negative and specified number of positive addons are randomly selected and
+are used in the game.
+
+Players can uncheck the checkbox next to each addon to remove them from the pool which is used when making the
+random selection. If the number of requested addons is bigger than the number of enabled checkboxes, the game cannot
+start.
 
 ## In-game
 

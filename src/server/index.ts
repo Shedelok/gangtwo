@@ -17,6 +17,7 @@ import {
   restartGame,
   finishGame,
   toggleAddon,
+  setAddonCount,
   buildClientState,
 } from './gameState';
 
@@ -66,6 +67,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'TOGGLE_ADDON':
       error = toggleAddon(action.addonId);
+      break;
+    case 'SET_ADDON_COUNT':
+      error = setAddonCount(action.addonType, action.count);
       break;
     case 'DISCARD_CHIP':
       error = discardChip(socketId, action.chipNumber);

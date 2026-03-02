@@ -4,10 +4,6 @@
 
 This file describes the addons (toggleable modifications of the base game).
 
-## General
-
-Each addon is of one of two types: negative or positive (depending on whether it makes the game harder or easier).
-
 ## Negative Addons
 
 ### Guess Rank Highest

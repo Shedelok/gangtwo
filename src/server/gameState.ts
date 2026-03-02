@@ -6,7 +6,17 @@ import {
   isRoundComplete,
   drawCards,
 } from './gameLogic';
+import { ADDONS } from '../shared/addons';
 import { randomUUID } from 'crypto';
+
+function pickRandom<T>(arr: T[], n: number): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a.slice(0, n);
+}
 
 interface ServerGameState {
   phase: GamePhase;
@@ -18,6 +28,9 @@ interface ServerGameState {
   deck: Card[];
   revealedPlayers: Set<string>;
   enabledAddons: Set<string>;
+  addonPool: Set<string>;
+  negativeAddonCount: number;
+  positiveAddonCount: number;
   socketToPlayerId: Map<string, string>;
   playerIdToSocketId: Map<string, string>;
 }
@@ -32,6 +45,9 @@ const state: ServerGameState = {
   deck: [],
   revealedPlayers: new Set(),
   enabledAddons: new Set(),
+  addonPool: new Set(ADDONS.map((a) => a.id)),
+  negativeAddonCount: 0,
+  positiveAddonCount: 0,
   socketToPlayerId: new Map(),
   playerIdToSocketId: new Map(),
 };
@@ -109,6 +125,23 @@ export function removePlayer(socketId: string): void {
 export function startGame(): string | null {
   if (state.phase !== 'lobby') return 'Game already running';
   if (state.players.length < 2) return 'Need at least 2 players';
+
+  const negativePool = ADDONS
+    .filter((a) => a.type === 'negative' && state.addonPool.has(a.id))
+    .map((a) => a.id);
+  const positivePool = ADDONS
+    .filter((a) => a.type === 'positive' && state.addonPool.has(a.id))
+    .map((a) => a.id);
+
+  if (state.negativeAddonCount > negativePool.length)
+    return 'Not enough negative addons in pool';
+  if (state.positiveAddonCount > positivePool.length)
+    return 'Not enough positive addons in pool';
+
+  state.enabledAddons = new Set([
+    ...pickRandom(negativePool, state.negativeAddonCount),
+    ...pickRandom(positivePool, state.positiveAddonCount),
+  ]);
 
   const deck = createShuffledDeck();
   const playerIds = state.players.map((p) => p.id);
@@ -221,9 +254,13 @@ export function restartGame(): string | null {
   }
   if (socketNames.length < 2) return 'Need at least 2 players to restart';
 
-  const savedAddons = new Set(state.enabledAddons);
+  const savedAddonPool = new Set(state.addonPool);
+  const savedNegativeCount = state.negativeAddonCount;
+  const savedPositiveCount = state.positiveAddonCount;
   finishGame();
-  state.enabledAddons = savedAddons;
+  state.addonPool = savedAddonPool;
+  state.negativeAddonCount = savedNegativeCount;
+  state.positiveAddonCount = savedPositiveCount;
 
   for (const { socketId, name } of socketNames) {
     addPlayer(socketId, name);
@@ -233,10 +270,21 @@ export function restartGame(): string | null {
 
 export function toggleAddon(addonId: string): string | null {
   if (state.phase !== 'lobby') return 'Cannot change addons after game started';
-  if (state.enabledAddons.has(addonId)) {
-    state.enabledAddons.delete(addonId);
+  if (state.addonPool.has(addonId)) {
+    state.addonPool.delete(addonId);
   } else {
-    state.enabledAddons.add(addonId);
+    state.addonPool.add(addonId);
+  }
+  return null;
+}
+
+export function setAddonCount(addonType: 'negative' | 'positive', count: number): string | null {
+  if (state.phase !== 'lobby') return 'Cannot change addons after game started';
+  if (count < 0) return 'Count cannot be negative';
+  if (addonType === 'negative') {
+    state.negativeAddonCount = count;
+  } else {
+    state.positiveAddonCount = count;
   }
   return null;
 }
@@ -251,6 +299,9 @@ export function finishGame(): void {
   state.deck = [];
   state.revealedPlayers = new Set();
   state.enabledAddons = new Set();
+  state.addonPool = new Set(ADDONS.map((a) => a.id));
+  state.negativeAddonCount = 0;
+  state.positiveAddonCount = 0;
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
     state.socketToPlayerId.set(socketId, '');
@@ -292,5 +343,8 @@ export function buildClientState(socketId: string): ClientGameState {
     currentRound: state.phase === 'lobby' ? null : state.currentRound,
     middleChips: [...state.middleChips],
     enabledAddons: [...state.enabledAddons],
+    addonPool: [...state.addonPool],
+    negativeAddonCount: state.negativeAddonCount,
+    positiveAddonCount: state.positiveAddonCount,
   };
 }

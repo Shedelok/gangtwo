@@ -8,7 +8,13 @@ This file describes the base logic of the game.
 
 This is a very simple web-based game. Exactly 1 lobby exists at any time.
 Initially, when the game is not started yet, any player opening the home page joins the lobby.
+
 In the lobby, there's a "Start Game" button that any player can press at any time.
+
+If any addons are defined, there's also a mechanism for selecting which addons to play the game with. Players specify
+the addons collectively. Addons can be of two types: negative and positive. For each type players can choose number of
+addons. Once the game starts (or restarts) the specified number of addons are randomly chosen for each of the types.
+Players can also de-select some of the addons to prevent them from being randomly chosen if they don't want them at all.
 
 ## Game
 

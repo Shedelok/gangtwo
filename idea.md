@@ -3,7 +3,6 @@
 ## General
 
 - Add hash for lobby settings for an easy "just paste" setup.
-- Addons should not just apply, they should be randomized.
 - Get rid of spec duplication ("copy-paste") in the description of the list of the addons in lobby and in the game.
 - Black & Red addon should actually make 2 pairs of suits look the same
 - Restart should work similar to "move to next round", all players must press it to restart

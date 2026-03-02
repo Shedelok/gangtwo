@@ -26,6 +26,9 @@ export interface ClientGameState {
   currentRound: RoundNumber | null;
   middleChips: Chip[];        // current-round chips in the middle only
   enabledAddons: string[];
+  addonPool: string[];        // addon IDs in the random selection pool (lobby only)
+  negativeAddonCount: number; // how many negative addons to pick randomly
+  positiveAddonCount: number; // how many positive addons to pick randomly
 }
 
 // Client → Server actions
@@ -33,6 +36,7 @@ export type ClientAction =
   | { type: 'JOIN_LOBBY'; name: string }
   | { type: 'START_GAME' }
   | { type: 'TOGGLE_ADDON'; addonId: string }
+  | { type: 'SET_ADDON_COUNT'; addonType: 'negative' | 'positive'; count: number }
   | { type: 'DISCARD_CHIP'; chipNumber: number }
   | { type: 'TAKE_FROM_MIDDLE'; chipNumber: number }
   | { type: 'STEAL_CHIP'; fromPlayerId: string; chipNumber: number }

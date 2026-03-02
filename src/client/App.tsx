@@ -254,8 +254,13 @@ export default function App() {
   const negativeAddons = visibleAddons.filter(a => a.type === 'negative');
   const positiveAddons = visibleAddons.filter(a => a.type === 'positive');
 
+  const adjustCount = (addonType: 'negative' | 'positive', delta: number) => {
+    const current = addonType === 'negative' ? state.negativeAddonCount : state.positiveAddonCount;
+    sendAction({ type: 'SET_ADDON_COUNT', addonType, count: Math.max(0, current + delta) });
+  };
+
   const renderAddon = (addon: AddonDef) => {
-    const enabled = state.enabledAddons.includes(addon.id);
+    const inPool = state.addonPool.includes(addon.id);
     const hovered = hoveredAddon === addon.id;
     return (
       <div
@@ -267,7 +272,7 @@ export default function App() {
         {isLobby && (
           <input
             type="checkbox"
-            checked={enabled}
+            checked={inPool}
             onChange={() => sendAction({ type: 'TOGGLE_ADDON', addonId: addon.id })}
             style={{ marginTop: '2px', flexShrink: 0, cursor: 'pointer' }}
           />
@@ -329,13 +334,31 @@ export default function App() {
             <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'flex-start' }}>
               {negativeAddons.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#2d1515', borderRadius: 6, padding: '4px 6px', width: '15vw' }}>
-                  <div style={{ fontSize: 10, color: '#a05050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>Negative</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: '#a05050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
+                    <span>Negative</span>
+                    {isLobby && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <button onClick={() => adjustCount('negative', -1)} style={{ width: 16, height: 16, padding: 0, fontSize: 12, lineHeight: 1, cursor: 'pointer', borderRadius: 3, border: '1px solid #7a3030', background: '#3d1a1a', color: '#a05050' }}>−</button>
+                        <span style={{ minWidth: 14, textAlign: 'center', color: '#ccc' }}>{state.negativeAddonCount}</span>
+                        <button onClick={() => adjustCount('negative', 1)} style={{ width: 16, height: 16, padding: 0, fontSize: 12, lineHeight: 1, cursor: 'pointer', borderRadius: 3, border: '1px solid #7a3030', background: '#3d1a1a', color: '#a05050' }}>+</button>
+                      </div>
+                    )}
+                  </div>
                   {negativeAddons.map(renderAddon)}
                 </div>
               )}
               {positiveAddons.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#152d15', borderRadius: 6, padding: '4px 6px', width: '15vw' }}>
-                  <div style={{ fontSize: 10, color: '#50a050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>Positive</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: '#50a050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
+                    <span>Positive</span>
+                    {isLobby && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <button onClick={() => adjustCount('positive', -1)} style={{ width: 16, height: 16, padding: 0, fontSize: 12, lineHeight: 1, cursor: 'pointer', borderRadius: 3, border: '1px solid #307a30', background: '#1a3d1a', color: '#50a050' }}>−</button>
+                        <span style={{ minWidth: 14, textAlign: 'center', color: '#ccc' }}>{state.positiveAddonCount}</span>
+                        <button onClick={() => adjustCount('positive', 1)} style={{ width: 16, height: 16, padding: 0, fontSize: 12, lineHeight: 1, cursor: 'pointer', borderRadius: 3, border: '1px solid #307a30', background: '#1a3d1a', color: '#50a050' }}>+</button>
+                      </div>
+                    )}
+                  </div>
                   {positiveAddons.map(renderAddon)}
                 </div>
               )}
