@@ -106,4 +106,5 @@ sounds (one mp3 can be used any number of times).
 ### Hand Rankings Hint
 
 To the right of the sound control elements there is a question mark icon. When hovered over that icon,
-spec/resources/hand-ranking.png is displayed to the user.
+spec/resources/hand-ranking.png is displayed to the user. The hand ranking should be displayed on top of any other
+UI element (including table and players), so it's fully visible and nothing blocks it.
