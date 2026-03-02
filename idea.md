@@ -5,6 +5,9 @@
 - Add hash for lobby settings for an easy "just paste" setup.
 - Addons should not just apply, they should be randomized.
 - Get rid of spec duplication ("copy-paste") in the description of the list of the addons in lobby and in the game.
+- Black & Red addon should actually make 2 pairs of suits look the same
+- Restart should work similar to "move to next round", all players must press it to restart
+- "Guess..." addons should force players to "guess" so that they don't forget about this addon
 
 ## Addons
 
@@ -31,3 +34,4 @@
 17. Somewhere in the middle of the game the hand rankings are random shuffled, shown to all players and these new
     rankings
     are used for the rest of the game.
+18. You get 3 cards on preflop, but on flop you have to discard one of them.
