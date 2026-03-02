@@ -51,13 +51,14 @@ with the value 1.
 
 ## Positive Addons
 
-### See Neighbors' Cards
+### See 1 Neighbor's Cards
 
-Short description: "See Neighbors' Cards"
+Short description: "See 1 Neighbor's Cards"
 
-Long description: Besides your own cards you can also see pocket cards of the players next to your left and right.
+Long description: Besides your own cards you can also see pocket cards of the player next to your left.
 
-Functionality: During the game each player sees the cards of 2 of their immediate neighbors face up.
+Functionality: During the game each player sees the cards of their immediate neighbors on the left face up.
 
+### See 2 Neighbors' Cards
 
-
+Same as "See 1 Neighbor's Cards" but you can also see cards of the person right next to your right, not only left.

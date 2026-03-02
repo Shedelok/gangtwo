@@ -27,10 +27,9 @@
 11. After the flop is over, a random card from it is rerolled
 12. One player doesn't see one of their cards
 13. You can see all other players' pocket hands, but you can't see yours
-14. Everyone sees their cards as well as the cards of the player to their left
-15. At preflop you give one of your cards to the person to your left
-16. At preflop you look at your cards and then all hands are randomly shuffled and redistributed.
-17. Somewhere in the middle of the game the hand rankings are random shuffled, shown to all players and these new
+14. At preflop you give one of your cards to the person to your left
+15. At preflop you look at your cards and then all hands are randomly shuffled and redistributed.
+16. Somewhere in the middle of the game the hand rankings are random shuffled, shown to all players and these new
     rankings
     are used for the rest of the game.
-18. You get 3 cards on preflop, but on flop you have to discard one of them.
+17. You get 3 cards on preflop, but on flop you have to discard one of them.

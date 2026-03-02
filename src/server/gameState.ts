@@ -320,14 +320,18 @@ export function buildClientState(socketId: string): ClientGameState {
   }
 
   const neighborHoleCards: Record<string, [Card, Card]> = {};
-  if (state.phase === 'game' && playerId && state.enabledAddons.has('see-neighbors-cards')) {
+  if (state.phase === 'game' && playerId) {
     const myIdx = state.players.findIndex((p) => p.id === playerId);
     if (myIdx >= 0) {
       const n = state.players.length;
       const leftNeighbor = state.players[(myIdx - 1 + n) % n];
       const rightNeighbor = state.players[(myIdx + 1) % n];
-      for (const neighbor of [leftNeighbor, rightNeighbor]) {
-        if (state.holeCards[neighbor.id]) neighborHoleCards[neighbor.id] = state.holeCards[neighbor.id];
+      if (state.enabledAddons.has('see-2-neighbors-cards')) {
+        for (const neighbor of [leftNeighbor, rightNeighbor]) {
+          if (state.holeCards[neighbor.id]) neighborHoleCards[neighbor.id] = state.holeCards[neighbor.id];
+        }
+      } else if (state.enabledAddons.has('see-1-neighbor-cards')) {
+        if (state.holeCards[leftNeighbor.id]) neighborHoleCards[leftNeighbor.id] = state.holeCards[leftNeighbor.id];
       }
     }
   }

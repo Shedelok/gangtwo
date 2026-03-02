@@ -45,7 +45,7 @@ function playSound(file: string, masterVolume: number, multiplier: number): void
 }
 
 const ADDON_COUNT_BITS = 3; // covers 0–6 negative addons
-const POS_COUNT_BITS = 1;  // covers 0–1 positive addons
+const POS_COUNT_BITS = 2;  // covers 0–2 positive addons
 
 function encodeSetup(addonPool: string[], negativeAddonCount: number, positiveAddonCount: number): string {
   let bits = '';

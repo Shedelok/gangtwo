@@ -215,7 +215,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
           const { x, y } = getSeatPos(i, n);
           const isMe = player.id === state.myId;
           // In finished phase: show own cards to self always; others only if they revealed
-          // During game with 'see-neighbors-cards' addon: show neighbor cards face up
+          // During game with neighbor-cards addons: show neighbor cards face up
           const holeCards = isMe
             ? state.myHoleCards
             : readOnly
