@@ -16,5 +16,9 @@ to spec/resources/bell-1.mp3.
 
 ## Chip Move
 
-When any chip moves, all players hear "CHIP_MOVE" sound at which defaults to spec/resources/fast-woosh.mp3. The volume
+When any chip moves, all players hear "CHIP_MOVE" sound which defaults to spec/resources/fast-woosh.mp3. The volume
 of CHIP_MOVE sound is multiplied by 0.2.
+
+## Card Flip
+
+When a card is flipped, all players hear "CARD_FLIP" sound which defaults to spec/resources/card-flip.mp3.
