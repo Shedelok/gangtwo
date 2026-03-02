@@ -189,7 +189,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
             </div>
 
             {/* Community cards */}
-            {state.communityCards.length > 0 && <CommunityCards cards={state.communityCards} />}
+            <CommunityCards cards={state.communityCards} />
 
             {/* Middle chips */}
             {state.middleChips.length > 0 && (

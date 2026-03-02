@@ -50,7 +50,18 @@ The Stop Game and Restart buttons are displayed side by side with a gap between 
 The table should be horizontally centered on the screen regardless of whether there are or are not any side panels on
 the left or right. The table should take roughly 60% of the player's screen width.
 
-### Cards
+### Common Cards
+
+Сommon cards are displayed on the table.
+
+When new common cards are revealed, they first appear face down and then there's an animation of them flipping that
+lasts 1 second and turns the cards face up. The animation is played for all players at the same time. If a player was in
+a different tab when the animation was played, they just won't see it, they would see the card(s) already face up. When
+there are multiple common cards revealed together, their animations are played at the same time (they all flip
+together). The animation is also played for the revealed cards when the cards being revealed are first common cards
+and there were no common cards before, the animation still plays as normal.
+
+### Pocket Cards
 
 The cards are displayed face up for the current player and face down for everyone else.
 

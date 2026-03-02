@@ -1,0 +1,54 @@
+.cc-flip-container {
+  width: 46px;
+  height: 66px;
+  perspective: 400px;
+  flex-shrink: 0;
+}
+
+.cc-flipper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1s ease-in-out;
+}
+
+.cc-face {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+}
+
+.cc-back {
+  background: #1a3a6e;
+  border: 2px solid #2255aa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotateY(0deg);
+}
+
+.cc-back::after {
+  content: '';
+  display: block;
+  width: calc(100% - 10px);
+  height: calc(100% - 10px);
+  border-radius: 3px;
+  border: 2px solid #3366cc;
+  background: repeating-linear-gradient(45deg, #1a3a6e 0px, #1a3a6e 4px, #1e42a0 4px, #1e42a0 8px);
+}
+
+.cc-front {
+  transform: rotateY(180deg);
+  background: white;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  user-select: none;
+}
