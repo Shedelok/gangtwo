@@ -10,9 +10,9 @@ Each addon is of one of two types: negative or positive (depending on whether it
 
 ## Negative Addons
 
-### Guess Highest Red Chip's Hand Rank
+### Guess Rank Highest
 
-Short description: "Guess Highest Red Chip's Hand Rank"
+Short description: "Guess Rank Highest"
 
 Long description: Before the player with the highest value red chip reveals their hand, other players must collectively
 agree on what hand rank that player has (pair/two pairs/street/etc.).
@@ -20,17 +20,17 @@ agree on what hand rank that player has (pair/two pairs/street/etc.).
 Functionality: This addon doesn't change the functionality of the game in any way. The effect of this addon is fully
 applied to the player's communications outside the application.
 
-### Guess 2nd Highest Red Chip's Hand Rank
+### Guess Rank 2nd Highest
 
-Same as "Guess Highest Red Chip's Hand Rank", but for second-highest red chip instead of the highest one.
+Same as "Guess Rank Highest", but for second-highest red chip instead of the highest one.
 
-### Guess Lowest Red Chip's Hand Rank
+### Guess Rank Lowest
 
-Same as "Guess Highest Red Chip's Hand Rank", but for the lowest red chip instead of the highest one.
+Same as "Guess Rank Highest", but for the lowest red chip instead of the highest one.
 
-### Clubs=Spades, Diamonds=Hearths
+### Black & Red
 
-Short description: "Clubs=Spades, Diamonds=Hearths"
+Short description: "Black & Red"
 
 Long description: Instead of 4 logical suits, there are only 2: black (represented by clubs and spades) and red (
 represented by diamonds and hearths).
@@ -38,9 +38,9 @@ represented by diamonds and hearths).
 Functionality: This addon doesn't change the functionality of the game in any way. The effect of this addon is fully
 applied to the player's communications outside the application.
 
-### Ones are Black
+### Black 1s
 
-Short description: "Ones are Black"
+Short description: "Black 1s"
 
 Long description: All chips of value 1 become black. A black chip can't move (can't be stolen or dropped) after it's
 taken from the middle of the table for the first time.
@@ -48,9 +48,9 @@ taken from the middle of the table for the first time.
 Functionality: All chips of value 1 have black circle inside them (the border is still of their color, but the middle is
 black). There's no steal or drop option for a black chip.
 
-### Ns are Black
+### Black Ns
 
-Same as "Ones are Black", but the highest value (equal to the number of players) chips become black instead of the chips
+Same as "Black 1s", but the highest value (equal to the number of players) chips become black instead of the chips
 with the value 1.
 
 ## Positive Addons
