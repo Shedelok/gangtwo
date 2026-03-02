@@ -28,9 +28,9 @@ Same as "Guess Highest Red Chip's Hand Rank", but for second-highest red chip in
 
 Same as "Guess Highest Red Chip's Hand Rank", but for the lowest red chip instead of the highest one.
 
-### Clubs=Spades, Diamonds=Hearth
+### Clubs=Spades, Diamonds=Hearths
 
-Short description: "Clubs=Spades, Diamonds=Hearth"
+Short description: "Clubs=Spades, Diamonds=Hearths"
 
 Long description: Instead of 4 logical suits, there are only 2: black (represented by clubs and spades) and red (
 represented by diamonds and hearths).
@@ -59,7 +59,7 @@ with the value 1.
 
 Short description: "See Neighbors' Cards"
 
-Long description: Besides your own cards you can only see pocket cards of the players next to your left and right.
+Long description: Besides your own cards you can also see pocket cards of the players next to your left and right.
 
 Functionality: During the game each player sees the cards of 2 of their immediate neighbors face up.
 
