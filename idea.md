@@ -4,7 +4,6 @@
 
 - Add hash for lobby settings for an easy "just paste" setup.
 - Addons should not just apply, they should be randomized.
-- Restart should keep addons
 - Get rid of spec duplication ("copy-paste") in the description of the list of the addons in lobby and in the game.
 
 ## Addons

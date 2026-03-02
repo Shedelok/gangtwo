@@ -221,7 +221,9 @@ export function restartGame(): string | null {
   }
   if (socketNames.length < 2) return 'Need at least 2 players to restart';
 
+  const savedAddons = new Set(state.enabledAddons);
   finishGame();
+  state.enabledAddons = savedAddons;
 
   for (const { socketId, name } of socketNames) {
     addPlayer(socketId, name);

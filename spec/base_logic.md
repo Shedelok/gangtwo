@@ -43,5 +43,4 @@ Players can still see the chips, cards, etc. but can't interact with any of them
 
 All the time each player has a button "Stop the game", which stops the current game immediately and resets the app to
 the "Lobby" phase. All the time, players also have a button "Restart" which starts the game with the same set of
-players,
-effectively this should be equivalent to pressing "stop the game", entering with all the same names and starting a game.
+players and any other settings (including addons).
