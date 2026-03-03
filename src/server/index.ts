@@ -14,7 +14,7 @@ import {
   stealChip,
   setReady,
   revealCards,
-  restartGame,
+  toggleRestartVote,
   finishGame,
   toggleAddon,
   setAddonCount,
@@ -86,8 +86,8 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
     case 'REVEAL_CARDS':
       error = revealCards(socketId);
       break;
-    case 'RESTART_GAME':
-      error = restartGame();
+    case 'TOGGLE_RESTART_VOTE':
+      error = toggleRestartVote(socketId);
       break;
     case 'FINISH_GAME':
       finishGame(true, true);

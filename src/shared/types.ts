@@ -31,6 +31,8 @@ export interface ClientGameState {
   negativeAddonCount: number; // how many negative addons to pick randomly
   positiveAddonCount: number; // how many positive addons to pick randomly
   prefilledName: string | null; // name pre-filled for rejoining after Stop the game
+  restartVotes: number;       // how many players have voted to restart
+  myRestartVote: boolean;     // whether the current player has voted to restart
 }
 
 // Client → Server actions
@@ -44,7 +46,7 @@ export type ClientAction =
   | { type: 'STEAL_CHIP'; fromPlayerId: string; chipNumber: number }
   | { type: 'SET_READY'; ready: boolean }
   | { type: 'REVEAL_CARDS' }
-  | { type: 'RESTART_GAME' }
+  | { type: 'TOGGLE_RESTART_VOTE' }
   | { type: 'FINISH_GAME' };
 
 // Server → Client messages

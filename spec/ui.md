@@ -83,6 +83,10 @@ The Stop Game and Restart buttons are displayed side by side with a gap between 
 Pressing the Stop Game button sets up the new lobby exactly as the previous one that was just over, meaning it shoud
 have the same addons code.
 
+The Restart button works similar to the "Move to the next round" button. All players must press it for it to take
+effect. Each player can press and unpress it. Players can only see how many of them have this button pressed at the
+moment.
+
 ### Table
 
 The table should be horizontally centered on the screen regardless of whether there are or are not any side panels on

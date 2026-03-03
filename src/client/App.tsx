@@ -453,8 +453,10 @@ export default function App() {
         )}
       </div>
       <div style={styles.topRightButtons}>
-        <button style={styles.restartButton} onClick={() => sendAction({ type: 'RESTART_GAME' })}>
-          Restart
+        <button
+          style={{ ...styles.restartButton, ...(state.myRestartVote ? { background: '#166534', borderColor: '#15803d' } : {}) }}
+          onClick={() => sendAction({ type: 'TOGGLE_RESTART_VOTE' })}>
+          Restart ({state.restartVotes}/{state.players.length})
         </button>
         <button style={styles.stopButton} onClick={() => sendAction({ type: 'FINISH_GAME' })}>
           Stop the game

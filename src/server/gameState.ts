@@ -35,6 +35,7 @@ interface ServerGameState {
   socketToPlayerId: Map<string, string>;
   playerIdToSocketId: Map<string, string>;
   prefillNames: Map<string, string>;
+  restartVoters: Set<string>;
 }
 
 const state: ServerGameState = {
@@ -54,6 +55,7 @@ const state: ServerGameState = {
   socketToPlayerId: new Map(),
   playerIdToSocketId: new Map(),
   prefillNames: new Map(),
+  restartVoters: new Set(),
 };
 
 function getPlayerBySocket(socketId: string): PlayerPublicState | undefined {
@@ -127,6 +129,7 @@ export function removePlayer(socketId: string): void {
   }
   state.socketToPlayerId.delete(socketId);
   state.playerIdToSocketId.delete(playerId);
+  state.restartVoters.delete(playerId);
   if (state.phase === 'lobby') {
     state.players = state.players.filter((p) => p.id !== playerId);
   }
@@ -315,6 +318,20 @@ export function setAddonCount(addonType: 'negative' | 'positive', count: number)
   return null;
 }
 
+export function toggleRestartVote(socketId: string): string | null {
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  if (state.restartVoters.has(playerId)) {
+    state.restartVoters.delete(playerId);
+  } else {
+    state.restartVoters.add(playerId);
+    if (state.players.length >= 2 && state.restartVoters.size === state.players.length) {
+      return restartGame();
+    }
+  }
+  return null;
+}
+
 export function finishGame(keepNames = false, keepAddons = false): void {
   if (keepNames) {
     for (const player of state.players) {
@@ -338,6 +355,7 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
   state.negativeAddonCount = savedNegativeCount;
   state.positiveAddonCount = savedPositiveCount;
+  state.restartVoters = new Set();
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
     state.socketToPlayerId.set(socketId, '');
@@ -388,5 +406,7 @@ export function buildClientState(socketId: string): ClientGameState {
     negativeAddonCount: state.negativeAddonCount,
     positiveAddonCount: state.positiveAddonCount,
     prefilledName: state.prefillNames.get(socketId) ?? null,
+    restartVotes: state.restartVoters.size,
+    myRestartVote: playerId ? state.restartVoters.has(playerId) : false,
   };
 }
