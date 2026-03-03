@@ -25,6 +25,7 @@ export interface ClientGameState {
   communityCards: Card[];
   currentRound: RoundNumber | null;
   middleChips: Chip[];        // current-round chips in the middle only
+  gameId: string;             // changes every time a new game starts
   enabledAddons: string[];
   blackXValue: number | null; // value of X for 'xs-are-black' addon, null otherwise
   addonPool: string[];        // addon IDs in the random selection pool (lobby only)

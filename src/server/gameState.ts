@@ -36,6 +36,7 @@ interface ServerGameState {
   playerIdToSocketId: Map<string, string>;
   prefillNames: Map<string, string>;
   restartVoters: Set<string>;
+  gameId: string;
 }
 
 const state: ServerGameState = {
@@ -56,6 +57,7 @@ const state: ServerGameState = {
   playerIdToSocketId: new Map(),
   prefillNames: new Map(),
   restartVoters: new Set(),
+  gameId: '',
 };
 
 function getPlayerBySocket(socketId: string): PlayerPublicState | undefined {
@@ -175,6 +177,7 @@ export function startGame(): string | null {
     player.chips = [];
     player.readyForNextRound = false;
   }
+  state.gameId = randomUUID();
   state.phase = 'game';
   return null;
 }
@@ -392,6 +395,7 @@ export function buildClientState(socketId: string): ClientGameState {
 
   return {
     phase: state.phase,
+    gameId: state.gameId,
     players: state.players.map((p) => ({ ...p, chips: [...p.chips] })),
     myId: playerId,
     myHoleCards,

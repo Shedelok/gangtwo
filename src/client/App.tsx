@@ -6,23 +6,26 @@ import Game from './components/Game';
 import type { ClientGameState } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 
-const AVAILABLE_MP3S = ['bell-1.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'punch-1.mp3', 'punch-2.mp3'];
+const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
-type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP';
+type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START';
 const SOUND_DEFAULTS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'bell-1.mp3',
   CHIP_MOVE: 'fast-woosh.mp3',
   CARD_FLIP: 'card-flip.mp3',
+  GAME_START: 'car-engine-start.mp3',
 };
 const SOUND_LABELS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'Steal from you',
   CHIP_MOVE: 'Chip move',
   CARD_FLIP: 'Card flip',
+  GAME_START: 'Game start',
 };
 const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   STEAL_FROM_YOU: 1,
   CHIP_MOVE: 0.2,
   CARD_FLIP: 1,
+  GAME_START: 1,
 };
 
 const preloadedAudio: Record<string, HTMLAudioElement> = {};
@@ -261,6 +264,13 @@ export default function App() {
 
     const files = soundFilesRef.current;
     const vol = volumeRef.current;
+
+    const gameJustStarted = state.phase === 'game' && state.gameId !== prev.gameId;
+    if (gameJustStarted) {
+      playSound(files.GAME_START, vol, SOUND_VOLUME_MULTIPLIER.GAME_START);
+      return;
+    }
+
     if (stolenFromMe) playSound(files.STEAL_FROM_YOU, vol, SOUND_VOLUME_MULTIPLIER.STEAL_FROM_YOU);
     else if (anyMoved) playSound(files.CHIP_MOVE, vol, SOUND_VOLUME_MULTIPLIER.CHIP_MOVE);
 
