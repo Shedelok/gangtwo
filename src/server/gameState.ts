@@ -315,13 +315,16 @@ export function setAddonCount(addonType: 'negative' | 'positive', count: number)
   return null;
 }
 
-export function finishGame(keepNames = false): void {
+export function finishGame(keepNames = false, keepAddons = false): void {
   if (keepNames) {
     for (const player of state.players) {
       const socketId = state.playerIdToSocketId.get(player.id);
       if (socketId) state.prefillNames.set(socketId, player.name);
     }
   }
+  const savedAddonPool = keepAddons ? new Set(state.addonPool) : null;
+  const savedNegativeCount = keepAddons ? state.negativeAddonCount : 0;
+  const savedPositiveCount = keepAddons ? state.positiveAddonCount : 0;
   state.phase = 'lobby';
   state.players = [];
   state.holeCards = {};
@@ -332,9 +335,9 @@ export function finishGame(keepNames = false): void {
   state.revealedPlayers = new Set();
   state.enabledAddons = new Set();
   state.blackXValue = null;
-  state.addonPool = new Set(ADDONS.map((a) => a.id));
-  state.negativeAddonCount = 0;
-  state.positiveAddonCount = 0;
+  state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
+  state.negativeAddonCount = savedNegativeCount;
+  state.positiveAddonCount = savedPositiveCount;
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
     state.socketToPlayerId.set(socketId, '');

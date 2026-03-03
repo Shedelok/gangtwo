@@ -6,7 +6,6 @@
 - Black & Red addon should actually make 2 pairs of suits look the same
 - Restart should work similar to "move to next round", all players must press it to restart
 - "Guess..." addons should force players to "guess" so that they don't forget about this addon
-- "Stop the game" should keep the addons code instead of resetting it to the default one.
 - Hovering over an addon description should remove it (so that going up to down with your cursor touches all addons)
 
 ## Addons

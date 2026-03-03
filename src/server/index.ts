@@ -90,7 +90,7 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       error = restartGame();
       break;
     case 'FINISH_GAME':
-      finishGame(true);
+      finishGame(true, true);
       break;
     default:
       error = 'Unknown action';

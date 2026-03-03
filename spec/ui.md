@@ -80,6 +80,9 @@ The players can also see the code of the current addons setup.
 
 The Stop Game and Restart buttons are displayed side by side with a gap between them.
 
+Pressing the Stop Game button sets up the new lobby exactly as the previous one that was just over, meaning it shoud
+have the same addons code.
+
 ### Table
 
 The table should be horizontally centered on the screen regardless of whether there are or are not any side panels on
