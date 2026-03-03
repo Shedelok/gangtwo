@@ -163,11 +163,10 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: '4px',
   },
   addonTitle: {
-    color: '#666',
-    fontSize: '11px',
+    color: '#aaa',
+    fontSize: '12px',
     marginBottom: '4px',
     textTransform: 'uppercase',
-    letterSpacing: '0.5px',
   },
   addonItem: {
     position: 'relative',

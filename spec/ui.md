@@ -12,7 +12,8 @@ be pressed.
 
 ### Addons
 
-On the left, all players see full list of available addons as a side-panel under the sound control elements.
+On the left, all players see full list of available addons as a side-panel under the sound control elements. At the top
+of this panel there's a header "Addons" in the same style and color as "Volume" text above it, but in uppercase.
 
 First, there is a list of all negative addons, then next to it is a list of all positive addons. Each of the 2 lists
 has its own background. The negative addons have subtle red background, the positive addons have subtle
