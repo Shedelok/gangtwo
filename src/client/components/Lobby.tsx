@@ -107,7 +107,7 @@ interface Props {
 }
 
 export default function Lobby({ state, sendAction }: Props) {
-  const [nameInput, setNameInput] = useState('');
+  const [nameInput, setNameInput] = useState(state.prefilledName ?? '');
 
   const hasJoined = state.myId !== '';
 

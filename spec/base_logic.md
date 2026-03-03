@@ -7,7 +7,8 @@ This file describes the base logic of the game.
 ## Lobby
 
 This is a very simple web-based game. Exactly 1 lobby exists at any time.
-Initially, when the game is not started yet, any player opening the home page joins the lobby.
+Initially, when the game is not started yet, any player opening the home page joins the lobby. To join the lobby, a
+player must type in their lobby-unique name.
 
 In the lobby, there's a "Start Game" button that any player can press at any time.
 
@@ -48,5 +49,7 @@ Once the 4th round is over, each player gets a button "reveal cards" which, when
 Players can still see the chips, cards, etc. but can't interact with any of them anymore.
 
 All the time each player has a button "Stop the game", which stops the current game immediately and resets the app to
-the "Lobby" phase. All the time, players also have a button "Restart" which starts the game with the same set of
-players and any other settings (including addons).
+the "Lobby" phase. For each of the players who participated in the game that was stopped by pressing "Stop the game",
+their name is pre-typed into the input field for the name for the next game to allow them to join the next lobby in
+just one click without having to retype their name. All the time, players also have a button "Restart" which starts the
+game with the same set of players and any other settings (including addons).

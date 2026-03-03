@@ -7,7 +7,6 @@
 - Restart should work similar to "move to next round", all players must press it to restart
 - "Guess..." addons should force players to "guess" so that they don't forget about this addon
 - "Stop the game" should keep the addons code instead of resetting it to the default one.
-- "Stop the game" should pre-type the previous nickname into the field for the new one.
 - Hovering over an addon description should remove it (so that going up to down with your cursor touches all addons)
 
 ## Addons

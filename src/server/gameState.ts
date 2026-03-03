@@ -34,6 +34,7 @@ interface ServerGameState {
   positiveAddonCount: number;
   socketToPlayerId: Map<string, string>;
   playerIdToSocketId: Map<string, string>;
+  prefillNames: Map<string, string>;
 }
 
 const state: ServerGameState = {
@@ -52,6 +53,7 @@ const state: ServerGameState = {
   positiveAddonCount: 0,
   socketToPlayerId: new Map(),
   playerIdToSocketId: new Map(),
+  prefillNames: new Map(),
 };
 
 function getPlayerBySocket(socketId: string): PlayerPublicState | undefined {
@@ -107,6 +109,7 @@ export function addPlayer(socketId: string, name: string): string | null {
   const playerId = randomUUID();
   state.socketToPlayerId.set(socketId, playerId);
   state.playerIdToSocketId.set(playerId, socketId);
+  state.prefillNames.delete(socketId);
   state.players.push({
     id: playerId,
     name: trimmed,
@@ -312,7 +315,13 @@ export function setAddonCount(addonType: 'negative' | 'positive', count: number)
   return null;
 }
 
-export function finishGame(): void {
+export function finishGame(keepNames = false): void {
+  if (keepNames) {
+    for (const player of state.players) {
+      const socketId = state.playerIdToSocketId.get(player.id);
+      if (socketId) state.prefillNames.set(socketId, player.name);
+    }
+  }
   state.phase = 'lobby';
   state.players = [];
   state.holeCards = {};
@@ -375,5 +384,6 @@ export function buildClientState(socketId: string): ClientGameState {
     addonPool: [...state.addonPool],
     negativeAddonCount: state.negativeAddonCount,
     positiveAddonCount: state.positiveAddonCount,
+    prefilledName: state.prefillNames.get(socketId) ?? null,
   };
 }

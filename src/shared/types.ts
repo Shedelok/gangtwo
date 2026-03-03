@@ -30,6 +30,7 @@ export interface ClientGameState {
   addonPool: string[];        // addon IDs in the random selection pool (lobby only)
   negativeAddonCount: number; // how many negative addons to pick randomly
   positiveAddonCount: number; // how many positive addons to pick randomly
+  prefilledName: string | null; // name pre-filled for rejoining after Stop the game
 }
 
 // Client → Server actions
