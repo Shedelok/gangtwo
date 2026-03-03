@@ -227,6 +227,16 @@ export function stealChip(
   if (!victim) return 'Target player not found';
   if (victim.id === player.id) return 'Cannot steal from yourself';
 
+  if (state.enabledAddons.has('only-neighbors-steal')) {
+    const myIdx = state.players.findIndex((p) => p.id === player.id);
+    const n = state.players.length;
+    const leftId  = state.players[(myIdx - 1 + n) % n].id;
+    const rightId = state.players[(myIdx + 1) % n].id;
+    if (victim.id !== leftId && victim.id !== rightId) {
+      return 'Can only steal from neighbors with this addon';
+    }
+  }
+
   const idx = victim.chips.findIndex(
     (c) => c.round === state.currentRound && c.number === chipNumber
   );

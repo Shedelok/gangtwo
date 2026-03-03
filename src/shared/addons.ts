@@ -55,6 +55,12 @@ export const ADDONS: AddonDef[] = [
     type: 'negative',
   },
   {
+    id: 'only-neighbors-steal',
+    short: "Only Neighbors Steal",
+    long: "You can only steal chips from players sitting next to your left and right (neighbors).",
+    type: 'negative',
+  },
+  {
     id: 'see-1-neighbor-cards',
     short: "See 1 Neighbor's Cards",
     long: "Besides your own cards you can also see pocket cards of the player next to your left.",

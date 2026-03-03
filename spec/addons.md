@@ -64,6 +64,15 @@ and player cannot see them.
 Functionality: When a new round starts and chips for this new round are placed on the table, all chips from the previous
 round are removed as if they were never in the game.
 
+### Only Neighbors Steal
+
+Short description: "Only Neighbors Steal"
+
+Long description: You can only steal chips from players sitting next to your left and right (neighbors).
+
+Functionality: The "Steal" option is not available for the chips that are currently at players that are not neighbors
+of the current player.
+
 ## Positive Addons
 
 ### See 1 Neighbor's Cards

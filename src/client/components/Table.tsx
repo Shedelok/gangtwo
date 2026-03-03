@@ -94,6 +94,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   if (state.enabledAddons.includes('ones-are-black')) blackNumbers.push(1);
   if (state.enabledAddons.includes('ns-are-black')) blackNumbers.push(n);
   if (state.enabledAddons.includes('xs-are-black') && state.blackXValue !== null) blackNumbers.push(state.blackXValue);
+  const onlyNeighborsSteal = state.enabledAddons.includes('only-neighbors-steal');
 
   // ── Responsive scale (60vw) ──────────────────────────────────────────────────
   const [scale, setScale] = useState(getScale);
@@ -230,6 +231,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip}
               sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
               blackNumbers={blackNumbers}
+              canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
               style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );

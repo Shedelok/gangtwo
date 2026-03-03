@@ -23,13 +23,14 @@ interface Props {
   readOnly: boolean;
   myCardsRevealed: boolean;
   blackNumbers?: number[];
+  canStealFrom?: boolean;
   style?: React.CSSProperties;
 }
 
 export default function PlayerSeat({
   player, isMe, holeCards, showFaceDown,
   currentRound, iHaveCurrentRoundChip,
-  sendAction, readOnly, myCardsRevealed, blackNumbers = [], style,
+  sendAction, readOnly, myCardsRevealed, blackNumbers = [], canStealFrom = true, style,
 }: Props) {
   // Sort by round asc, then number asc within the same round
   const sortedChips = [...player.chips].sort((a, b) =>
@@ -71,7 +72,7 @@ export default function PlayerSeat({
                     Return
                   </button>
                 )}
-                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && (
+                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && canStealFrom && (
                   <button style={{ ...btn, background: '#5b21b6', color: '#ddd6fe' }}
                     onClick={() => sendAction({ type: 'STEAL_CHIP', fromPlayerId: player.id, chipNumber: chip.number })}>
                     Steal
