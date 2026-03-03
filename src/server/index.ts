@@ -14,6 +14,7 @@ import {
   stealChip,
   setReady,
   revealCards,
+  submitRankGuess,
   toggleRestartVote,
   finishGame,
   toggleAddon,
@@ -85,6 +86,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'REVEAL_CARDS':
       error = revealCards(socketId);
+      break;
+    case 'SUBMIT_RANK_GUESS':
+      error = submitRankGuess(socketId, action.addonId, action.rank);
       break;
     case 'TOGGLE_RESTART_VOTE':
       error = toggleRestartVote(socketId);

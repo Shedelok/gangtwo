@@ -13,16 +13,24 @@ Short description: "Guess Rank Highest"
 Long description: Before the player with the highest value red chip reveals their hand, other players must collectively
 agree on what hand rank that player has (pair/two pairs/street/etc.).
 
-Functionality: This addon doesn't change the functionality of the game in any way. The effect of this addon is fully
-applied to the player's communications outside the application.
+Functionality: Here, let's call the player with the highest value red chip HRC. Once it's HRC's turn to reveal the
+cards, they can't do so until all other players submit votes for their hand rank. Each other player has to submit a
+vote, the voting is over once all votes are submitted. Once it's HRC's turn to reveal their cards, every other player
+sees a button "Guess Rank" under HRC's chips. If a player presses that button, a list of all ranks pops up. The ranks
+are, top-to-down: Royal Flush, Straight Flush, Four of a Kind, Full House, Flush, Straight, Three of a Kind, Two Pair,
+One Pair, High Card. If the player presses one of these options, the list disappears and the chosen rank is displayed
+where the "Guess Rank" button was. The player can click the chosen rank to change their vote. Once the player made a
+guess everyone else sees their guess above them in a style of a text a dialogue cloud. Once everyone has made a guess,
+the guesses are fixed and HRC can reveal their cards as normal. 5 seconds after HRC reveals their cards, all the guesses
+disappear.
 
 ### Guess Rank 2nd Highest
 
-Same as "Guess Rank Highest", but for second-highest red chip instead of the highest one.
+Same as "Guess Rank Highest" (including the functionality), but for second-highest red chip instead of the highest one.
 
 ### Guess Rank Lowest
 
-Same as "Guess Rank Highest", but for the lowest red chip instead of the highest one.
+Same as "Guess Rank Highest" (including the functionality), but for the lowest red chip instead of the highest one.
 
 ### Black & Red
 

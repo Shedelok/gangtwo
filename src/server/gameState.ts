@@ -36,6 +36,7 @@ interface ServerGameState {
   playerIdToSocketId: Map<string, string>;
   prefillNames: Map<string, string>;
   restartVoters: Set<string>;
+  rankGuesses: Map<string, Map<string, string>>; // addonId → (voterId → rank)
   gameId: string;
 }
 
@@ -57,8 +58,31 @@ const state: ServerGameState = {
   playerIdToSocketId: new Map(),
   prefillNames: new Map(),
   restartVoters: new Set(),
+  rankGuesses: new Map(),
   gameId: '',
 };
+
+const GUESS_RANK_ADDON_IDS = [
+  'guess-highest-red-chip-hand-rank',
+  'guess-2nd-highest-red-chip-hand-rank',
+  'guess-lowest-red-chip-hand-rank',
+] as const;
+
+function findGuessRankTargetId(addonId: string, players: PlayerPublicState[]): string | null {
+  const sorted = [...players]
+    .map(p => ({ id: p.id, num: p.chips.find(c => c.round === 4)?.number ?? -1 }))
+    .filter(x => x.num >= 0)
+    .sort((a, b) => a.num - b.num);
+  if (addonId === 'guess-lowest-red-chip-hand-rank') return sorted[0]?.id ?? null;
+  if (addonId === 'guess-highest-red-chip-hand-rank') return sorted[sorted.length - 1]?.id ?? null;
+  if (addonId === 'guess-2nd-highest-red-chip-hand-rank') return sorted[sorted.length - 2]?.id ?? null;
+  return null;
+}
+
+const VALID_RANKS = new Set([
+  'Royal Flush', 'Straight Flush', 'Four of a Kind', 'Full House',
+  'Flush', 'Straight', 'Three of a Kind', 'Two Pair', 'One Pair', 'High Card',
+]);
 
 function getPlayerBySocket(socketId: string): PlayerPublicState | undefined {
   const playerId = state.socketToPlayerId.get(socketId);
@@ -287,7 +311,35 @@ export function revealCards(socketId: string): string | null {
     }
   }
 
+  for (const addonId of GUESS_RANK_ADDON_IDS) {
+    if (!state.enabledAddons.has(addonId)) continue;
+    const targetId = findGuessRankTargetId(addonId, state.players);
+    if (playerId !== targetId) continue;
+    const addonVotes = state.rankGuesses.get(addonId) ?? new Map<string, string>();
+    const nonTargetPlayers = state.players.filter((p) => p.id !== targetId);
+    if (nonTargetPlayers.length > 0 && !nonTargetPlayers.every((p) => addonVotes.has(p.id))) {
+      return 'Wait for all players to guess your hand rank first';
+    }
+  }
+
   state.revealedPlayers.add(playerId);
+  return null;
+}
+
+export function submitRankGuess(socketId: string, addonId: string, rank: string): string | null {
+  if (state.phase !== 'finished') return 'Not in finished phase';
+  if (!(GUESS_RANK_ADDON_IDS as readonly string[]).includes(addonId)) return 'Invalid addon';
+  if (!state.enabledAddons.has(addonId)) return 'Addon not active';
+  if (!VALID_RANKS.has(rank)) return 'Invalid rank';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  const targetId = findGuessRankTargetId(addonId, state.players);
+  if (playerId === targetId) return 'Target player cannot vote for themselves';
+  const addonVotes = state.rankGuesses.get(addonId) ?? new Map<string, string>();
+  const nonTargetPlayers = state.players.filter((p) => p.id !== targetId);
+  if (nonTargetPlayers.every((p) => addonVotes.has(p.id))) return 'Voting is locked';
+  addonVotes.set(playerId, rank);
+  state.rankGuesses.set(addonId, addonVotes);
   return null;
 }
 
@@ -367,6 +419,7 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.middleChips = [];
   state.deck = [];
   state.revealedPlayers = new Set();
+  state.rankGuesses = new Map();
   state.enabledAddons = new Set();
   state.blackXValue = null;
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
@@ -426,5 +479,8 @@ export function buildClientState(socketId: string): ClientGameState {
     prefilledName: state.prefillNames.get(socketId) ?? null,
     restartVotes: state.restartVoters.size,
     myRestartVote: playerId ? state.restartVoters.has(playerId) : false,
+    rankGuesses: state.phase === 'finished'
+      ? Object.fromEntries([...state.rankGuesses].map(([aid, votes]) => [aid, Object.fromEntries(votes)]))
+      : {},
   };
 }

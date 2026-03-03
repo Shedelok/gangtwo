@@ -34,6 +34,7 @@ export interface ClientGameState {
   prefilledName: string | null; // name pre-filled for rejoining after Stop the game
   restartVotes: number;       // how many players have voted to restart
   myRestartVote: boolean;     // whether the current player has voted to restart
+  rankGuesses: Record<string, Record<string, string>>; // addonId → (voterId → rank); populated during guess-rank addons
 }
 
 // Client → Server actions
@@ -47,6 +48,7 @@ export type ClientAction =
   | { type: 'STEAL_CHIP'; fromPlayerId: string; chipNumber: number }
   | { type: 'SET_READY'; ready: boolean }
   | { type: 'REVEAL_CARDS' }
+  | { type: 'SUBMIT_RANK_GUESS'; addonId: string; rank: string }
   | { type: 'TOGGLE_RESTART_VOTE' }
   | { type: 'FINISH_GAME' };
 

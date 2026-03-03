@@ -96,6 +96,61 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   if (state.enabledAddons.includes('xs-are-black') && state.blackXValue !== null) blackNumbers.push(state.blackXValue);
   const onlyNeighborsSteal = state.enabledAddons.includes('only-neighbors-steal');
 
+  // ── Guess-rank addons: per-addon target/voting state ─────────────────────────
+  const GUESS_RANK_ADDON_IDS = [
+    'guess-highest-red-chip-hand-rank',
+    'guess-2nd-highest-red-chip-hand-rank',
+    'guess-lowest-red-chip-hand-rank',
+  ] as const;
+
+  function findGuessRankTarget(addonId: string, players: typeof state.players): string | null {
+    const sorted = [...players]
+      .map(p => ({ id: p.id, num: p.chips.find(c => c.round === 4)?.number ?? -1 }))
+      .filter(x => x.num >= 0).sort((a, b) => a.num - b.num);
+    if (addonId === 'guess-lowest-red-chip-hand-rank') return sorted[0]?.id ?? null;
+    if (addonId === 'guess-highest-red-chip-hand-rank') return sorted[sorted.length - 1]?.id ?? null;
+    if (addonId === 'guess-2nd-highest-red-chip-hand-rank') return sorted[sorted.length - 2]?.id ?? null;
+    return null;
+  }
+
+  // Per-addon info: target, voting locked, target's chip-order canReveal, target revealed
+  const activeGuessRankAddons = GUESS_RANK_ADDON_IDS.filter(id => state.enabledAddons.includes(id));
+  type AddonInfo = { targetId: string | null; locked: boolean; targetCanReveal: boolean; targetRevealed: boolean };
+  const guessRankInfo = new Map<string, AddonInfo>();
+  for (const addonId of activeGuessRankAddons) {
+    const targetId = readOnly ? findGuessRankTarget(addonId, state.players) : null;
+    const addonVotes = state.rankGuesses[addonId] ?? {};
+    const nonTargetPlayers = targetId ? state.players.filter(p => p.id !== targetId) : [];
+    const locked = nonTargetPlayers.length > 0 && nonTargetPlayers.every(p => !!addonVotes[p.id]);
+    const targetPlayer = targetId ? state.players.find(p => p.id === targetId) : null;
+    const targetChip = targetPlayer?.chips.find(c => c.round === 4);
+    const targetCanReveal = !targetChip || state.players
+      .filter(p => p.id !== targetId)
+      .every(p => {
+        const theirChip = p.chips.find(c => c.round === 4);
+        return !theirChip || theirChip.number >= (targetChip?.number ?? 0) || !!state.revealedHoleCards[p.id];
+      });
+    const targetRevealed = !!(targetId && state.revealedHoleCards[targetId]);
+    guessRankInfo.set(addonId, { targetId, locked, targetCanReveal, targetRevealed });
+  }
+
+  // 5s per-addon timer: hide guesses after each target reveals
+  const [hiddenGuessRankAddons, setHiddenGuessRankAddons] = useState<Set<string>>(new Set);
+  const guessTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  useEffect(() => {
+    for (const [addonId, info] of guessRankInfo) {
+      if (info.targetRevealed && !guessTimersRef.current.has(addonId)) {
+        const t = setTimeout(() => setHiddenGuessRankAddons(prev => new Set([...prev, addonId])), 5000);
+        guessTimersRef.current.set(addonId, t);
+      }
+    }
+  }, [state.revealedHoleCards]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setHiddenGuessRankAddons(new Set());
+    for (const t of guessTimersRef.current.values()) clearTimeout(t);
+    guessTimersRef.current.clear();
+  }, [state.gameId]);
+
   // ── Responsive scale (60vw) ──────────────────────────────────────────────────
   const [scale, setScale] = useState(getScale);
   const scaleRef = useRef(scale);
@@ -225,20 +280,45 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               : (state.neighborHoleCards[player.id] ?? null);
           const showFaceDown = !readOnly && !isMe && !state.neighborHoleCards[player.id];
           const myCardsRevealed = !!state.revealedHoleCards[state.myId];
-          const myPlayer = state.players.find((p) => p.id === state.myId);
           const myRound4Chip = myPlayer?.chips.find((c) => c.round === 4);
-          const canReveal = !myRound4Chip || state.players
+          const chipOrderCanReveal = !myRound4Chip || state.players
             .filter((p) => p.id !== state.myId)
             .every((p) => {
               const theirChip = p.chips.find((c) => c.round === 4);
               return !theirChip || theirChip.number >= myRound4Chip.number || !!state.revealedHoleCards[p.id];
             });
+          // Block reveal if any active guess-rank addon targets me and isn't locked yet
+          const guessRankBlock = isMe && [...guessRankInfo.values()].some(
+            info => info.targetId === state.myId && !info.locked
+          );
+          const canReveal = chipOrderCanReveal && !guessRankBlock;
+          // Guess-rank UIs shown on this seat (when this player is a target and voting is active)
+          const guessRankUIs = activeGuessRankAddons
+            .filter(addonId => {
+              const info = guessRankInfo.get(addonId)!;
+              return info.targetId === player.id && info.targetCanReveal && !info.targetRevealed && !isMe && !hiddenGuessRankAddons.has(addonId);
+            })
+            .map(addonId => {
+              const info = guessRankInfo.get(addonId)!;
+              const addonVotes = state.rankGuesses[addonId] ?? {};
+              return { addonId, myVote: addonVotes[state.myId] as string | undefined, locked: info.locked };
+            });
+          // Dialogue clouds: one per addon where this player has voted (and addon not hidden)
+          const dialogueClouds = activeGuessRankAddons
+            .filter(addonId => {
+              const info = guessRankInfo.get(addonId)!;
+              return info.targetId !== player.id && !hiddenGuessRankAddons.has(addonId)
+                && !!(state.rankGuesses[addonId] ?? {})[player.id];
+            })
+            .map(addonId => (state.rankGuesses[addonId] ?? {})[player.id]);
           return (
             <PlayerSeat key={player.id} player={player} isMe={isMe}
               holeCards={holeCards} showFaceDown={showFaceDown}
               currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip}
               sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
               canReveal={canReveal}
+              guessRankUIs={guessRankUIs}
+              dialogueClouds={dialogueClouds}
               blackNumbers={blackNumbers}
               canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
               style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
