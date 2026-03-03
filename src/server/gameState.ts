@@ -273,6 +273,20 @@ export function revealCards(socketId: string): string | null {
   if (state.phase !== 'finished') return 'Not in finished phase';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
+
+  const myPlayer = state.players.find((p) => p.id === playerId);
+  if (!myPlayer) return 'Player not found';
+  const myChip = myPlayer.chips.find((c) => c.round === 4);
+  if (myChip) {
+    for (const player of state.players) {
+      if (player.id === playerId) continue;
+      const theirChip = player.chips.find((c) => c.round === 4);
+      if (theirChip && theirChip.number < myChip.number && !state.revealedPlayers.has(player.id)) {
+        return 'Wait for players with smaller chips to reveal first';
+      }
+    }
+  }
+
   state.revealedPlayers.add(playerId);
   return null;
 }

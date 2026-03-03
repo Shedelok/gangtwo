@@ -46,6 +46,7 @@ At the end of first round, 3 common cards are placed on the table. At the end of
 placed on the table. Players cannot interact with the common cards.
 
 Once the 4th round is over, each player gets a button "reveal cards" which, when pressed, shows their cards to everyone.
+A player can only reveal their cards once everyone with a smaller value last round chip have done so.
 Players can still see the chips, cards, etc. but can't interact with any of them anymore.
 
 All the time each player has a button "Stop the game", which stops the current game immediately and resets the app to

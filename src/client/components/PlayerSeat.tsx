@@ -22,6 +22,7 @@ interface Props {
   sendAction: (a: ClientAction) => void;
   readOnly: boolean;
   myCardsRevealed: boolean;
+  canReveal?: boolean;
   blackNumbers?: number[];
   canStealFrom?: boolean;
   style?: React.CSSProperties;
@@ -30,7 +31,7 @@ interface Props {
 export default function PlayerSeat({
   player, isMe, holeCards, showFaceDown,
   currentRound, iHaveCurrentRoundChip,
-  sendAction, readOnly, myCardsRevealed, blackNumbers = [], canStealFrom = true, style,
+  sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true, style,
 }: Props) {
   // Sort by round asc, then number asc within the same round
   const sortedChips = [...player.chips].sort((a, b) =>
@@ -85,7 +86,8 @@ export default function PlayerSeat({
 
       {/* Reveal cards button — shown to self in finished phase until revealed */}
       {readOnly && isMe && !myCardsRevealed && (
-        <button style={{ ...btn, background: '#166534', color: '#bbf7d0' }}
+        <button style={{ ...btn, background: canReveal ? '#166534' : '#374151', color: canReveal ? '#bbf7d0' : '#9ca3af', cursor: canReveal ? 'pointer' : 'not-allowed' }}
+          disabled={!canReveal}
           onClick={() => sendAction({ type: 'REVEAL_CARDS' })}>
           Reveal cards
         </button>

@@ -225,11 +225,20 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               : (state.neighborHoleCards[player.id] ?? null);
           const showFaceDown = !readOnly && !isMe && !state.neighborHoleCards[player.id];
           const myCardsRevealed = !!state.revealedHoleCards[state.myId];
+          const myPlayer = state.players.find((p) => p.id === state.myId);
+          const myRound4Chip = myPlayer?.chips.find((c) => c.round === 4);
+          const canReveal = !myRound4Chip || state.players
+            .filter((p) => p.id !== state.myId)
+            .every((p) => {
+              const theirChip = p.chips.find((c) => c.round === 4);
+              return !theirChip || theirChip.number >= myRound4Chip.number || !!state.revealedHoleCards[p.id];
+            });
           return (
             <PlayerSeat key={player.id} player={player} isMe={isMe}
               holeCards={holeCards} showFaceDown={showFaceDown}
               currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip}
               sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
+              canReveal={canReveal}
               blackNumbers={blackNumbers}
               canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
               style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
