@@ -54,6 +54,16 @@ with the value 1.
 Same as "Black 1s", but instead of chips with value 1, a random number X (from 1 to N) is determined at the beginning of
 the game and chips with number X become black. X stays the same through all rounds.
 
+### No Old Chips
+
+Short description: "No Old Chips"
+
+Long description: At the beginning of each round (after the first one), all chips from the previous round are removed
+and player cannot see them.
+
+Functionality: When a new round starts and chips for this new round are placed on the table, all chips from the previous
+round are removed as if they were never in the game.
+
 ## Positive Addons
 
 ### See 1 Neighbor's Cards

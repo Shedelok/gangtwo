@@ -49,6 +49,12 @@ export const ADDONS: AddonDef[] = [
     type: 'negative',
   },
   {
+    id: 'no-old-chips',
+    short: "No Old Chips",
+    long: "At the beginning of each round (after the first one), all chips from the previous round are removed and player cannot see them.",
+    type: 'negative',
+  },
+  {
     id: 'see-1-neighbor-cards',
     short: "See 1 Neighbor's Cards",
     long: "Besides your own cards you can also see pocket cards of the player next to your left.",

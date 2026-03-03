@@ -69,11 +69,17 @@ function advanceRound(): void {
   }
 
   if (state.currentRound < 4) {
+    const prevRound = state.currentRound;
     const nextRound = (state.currentRound + 1) as RoundNumber;
     state.currentRound = nextRound;
     state.middleChips = createChipsForRound(nextRound, state.players.length);
     for (const player of state.players) {
       player.readyForNextRound = false;
+    }
+    if (state.enabledAddons.has('no-old-chips')) {
+      for (const player of state.players) {
+        player.chips = player.chips.filter(c => c.round !== prevRound);
+      }
     }
   } else {
     state.phase = 'finished';
