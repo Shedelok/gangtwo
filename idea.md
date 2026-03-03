@@ -7,6 +7,7 @@
 - Restart should work similar to "move to next round", all players must press it to restart
 - "Guess..." addons should force players to "guess" so that they don't forget about this addon
 - "Stop the game" should keep the addons code instead of resetting it to the default one.
+- "Stop the game" should pre-type the previous nickname into the field for the new one.
 
 ## Addons
 
@@ -33,3 +34,5 @@
     are used for the rest of the game.
 16. You get 3 cards on preflop, but on flop you have to discard one of them.
 17. One player once can swap one of their cards with one of the common cards.
+18. One player once can show one of their cards to another player
+19. Jocker X: X is a random card. One player can once change on of their cards to X that would have no suit.
