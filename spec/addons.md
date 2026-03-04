@@ -106,3 +106,5 @@ Functionality: During the game each player sees the cards of their immediate nei
 ### Addon: See 2 Neighbors' Cards
 
 Same as "See 1 Neighbor's Cards" but you can also see cards of the person right next to your right, not only left.
+
+This addon is disabled in the lobby by default.

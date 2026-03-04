@@ -54,7 +54,7 @@ const state: ServerGameState = {
   revealedPlayers: new Set(),
   enabledAddons: new Set(),
   blackXValue: null,
-  addonPool: new Set(ADDONS.map((a) => a.id)),
+  addonPool: new Set(ADDONS.filter((a) => a.id !== 'see-2-neighbors-cards').map((a) => a.id)),
   negativeAddonCount: 0,
   positiveAddonCount: 0,
   socketToPlayerId: new Map(),
@@ -473,7 +473,7 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.winningGuessRanks = new Map();
   state.enabledAddons = new Set();
   state.blackXValue = null;
-  state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
+  state.addonPool = savedAddonPool ?? new Set(ADDONS.filter((a) => a.id !== 'see-2-neighbors-cards').map((a) => a.id));
   state.negativeAddonCount = savedNegativeCount;
   state.positiveAddonCount = savedPositiveCount;
   state.startGameVoters = new Set();
