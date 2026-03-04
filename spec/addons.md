@@ -81,7 +81,8 @@ Long description: At the beginning of each round (after the first one), all chip
 and player cannot see them.
 
 Functionality: When a new round starts and chips for this new round are placed on the table, all chips from the previous
-round are removed as if they were never in the game.
+round are removed as if they were never in the game. Once the game is over and all players have revealed their cards,
+the chips are shown for the players to better analyze the game.
 
 ### Addon: Only Neighbors Steal
 

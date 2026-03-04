@@ -37,6 +37,7 @@ interface ServerGameState {
   prefillNames: Map<string, string>;
   startGameVoters: Set<string>;
   restartVoters: Set<string>;
+  noOldChipsHidden: Map<string, Chip[]>; // playerId → chips hidden by no-old-chips addon
   rankGuesses: Map<string, Map<string, string>>; // addonId → (voterId → rank)
   winningGuessRanks: Map<string, string>; // addonId → winning rank (set when voting locks)
   gameId: string;
@@ -61,6 +62,7 @@ const state: ServerGameState = {
   prefillNames: new Map(),
   startGameVoters: new Set(),
   restartVoters: new Set(),
+  noOldChipsHidden: new Map(),
   rankGuesses: new Map(),
   winningGuessRanks: new Map(),
   gameId: '',
@@ -112,6 +114,11 @@ function advanceRound(): void {
     }
     if (state.enabledAddons.has('no-old-chips')) {
       for (const player of state.players) {
+        const removed = player.chips.filter(c => c.round === prevRound);
+        if (removed.length > 0) {
+          const existing = state.noOldChipsHidden.get(player.id) ?? [];
+          state.noOldChipsHidden.set(player.id, [...existing, ...removed]);
+        }
         player.chips = player.chips.filter(c => c.round !== prevRound);
       }
     }
@@ -461,6 +468,7 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.middleChips = [];
   state.deck = [];
   state.revealedPlayers = new Set();
+  state.noOldChipsHidden = new Map();
   state.rankGuesses = new Map();
   state.winningGuessRanks = new Map();
   state.enabledAddons = new Set();
@@ -504,10 +512,18 @@ export function buildClientState(socketId: string): ClientGameState {
     }
   }
 
+  const allRevealed = state.phase === 'finished' && state.players.every((p) => state.revealedPlayers.has(p.id));
+
   return {
     phase: state.phase,
     gameId: state.gameId,
-    players: state.players.map((p) => ({ ...p, chips: [...p.chips] })),
+    players: state.players.map((p) => {
+      const chips = [...p.chips];
+      if (allRevealed && state.noOldChipsHidden.has(p.id)) {
+        chips.push(...state.noOldChipsHidden.get(p.id)!);
+      }
+      return { ...p, chips };
+    }),
     myId: playerId,
     myHoleCards,
     neighborHoleCards,

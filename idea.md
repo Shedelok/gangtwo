@@ -7,7 +7,6 @@
 - Change Base32 alphabet
 - When on home page, you should be able to see number of players in it
 - Make chips clickable
-- 'No old chips' old chips should be shown when the game is over
 
 ## Addons
 
