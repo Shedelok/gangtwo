@@ -23,7 +23,7 @@ Above these 2 columns there's a header "Addons" in the same style and color as "
 ## Home Page
 
 When first entering the application, the users see a text input for entering their name and button "Join Lobby (X
-player(s))", where X is the number of players currently in the lobby and "player(s)" is actually either "player" or 
+player(s))", where X is the number of players currently in the lobby and "player(s)" is actually either "player" or
 "players" depending on the number.
 
 ## Lobby
@@ -116,7 +116,9 @@ The cards are displayed face up for the current player and face down for everyon
 ### Chips
 
 The chips are displayed as circles of the designated color. The color of the chips should
-always stay the same, even after the corresponding round is over, chips remain their color. Each chip has black
+always stay the same, even after the corresponding round is over, chips remain their color.
+
+Each chip has black
 five-pointed stars on it that are of number equal to the chips value. If a chip has 1
 star, it should be exactly in the middle, visually, meaning that the center of the star is exactly in the center of the
 chip (circle) vertically and horizontally. If a chip has 2 stars, they should be on the same horizontal line. If a chip
@@ -129,12 +131,28 @@ The chips of the same color are always sorted by value ascending when are put ne
 The chips of different colors are always sorted by their corresponding round number ascending when are put next to each
 other.
 
+Chips on the table always have dedicated spots, meaning their position doesn't depend on the number of chips on the
+table. The same chip, when taken and then returned to the table, always ends up in the same position, no matter if any
+other chips were taken/returned from/to the table in between. The chip spots are fixed horizontally and vertically, so
+that chips on the table don't move when other chips are touched (this takes into account any additional elements like
+buttons appearing/disappearing next to chips). Each chip spot has a very subtle rectangular border.
+
 All chips belonging to a player are always displayed in a single horizontal row. The chip area in each player's seat
 always occupies the same vertical space regardless of whether the player currently holds any chips, so the seat does
 not resize when a chip is taken or returned.
 
 Every time a chip is moved (by a move of one of the players, etc.), visually it doesn't teleport immediately, but rather
-a moving animation is played that lasts 1 second and moves the chip from its origin to destination.
+a moving animation is played that lasts 1 second and moves the chip from its origin to destination. This animation is
+used
+regardless of whether the chip is taken from the table, or from another player, or somewhere else. The dedicated chip
+spots
+on the table are always available as precise animation endpoints. Specifically, if a chip is being taken from the table,
+the animation must start from the chip's table spot; if a chip is being returned to the table, the animation must end at
+its table spot.
+These table spot positions must remain trackable at all times, including while the chip is held by a player. If another
+action
+that moves a chip that is already moving was done to it, the chip moves to the new place starting where it was when the
+action happened. The chip should never magically "teleport".
 
 ### Ready Button
 

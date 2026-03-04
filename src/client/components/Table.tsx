@@ -46,8 +46,15 @@ interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to
 
 const noopCtx: ChipAnimCtxValue = { register: () => {}, hiding: new Set() };
 
-function FlyingChip({ entry, onDone }: { entry: AnimEntry; onDone: () => void }) {
+function FlyingChip({ entry, flyingElsRef, onDone }: { entry: AnimEntry; flyingElsRef: React.MutableRefObject<Map<string, HTMLDivElement>>; onDone: () => void }) {
   const [arrived, setArrived] = useState(false);
+  const elRef = useRef<HTMLDivElement>(null);
+  const chipKey = `${entry.chip.round}-${entry.chip.number}`;
+
+  useLayoutEffect(() => {
+    if (elRef.current) flyingElsRef.current.set(chipKey, elRef.current);
+    return () => { flyingElsRef.current.delete(chipKey); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setArrived(true));
@@ -57,7 +64,7 @@ function FlyingChip({ entry, onDone }: { entry: AnimEntry; onDone: () => void })
 
   return (
     <ChipAnimContext.Provider value={noopCtx}>
-      <div style={{
+      <div ref={elRef} style={{
         position: 'absolute',
         left: arrived ? entry.to.x : entry.from.x,
         top:  arrived ? entry.to.y : entry.from.y,
@@ -170,6 +177,10 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   const prevLocsRef  = useRef(new Map<string, ChipLoc>());
   const [animations,  setAnimations]  = useState<AnimEntry[]>([]);
   const [hidingChips, setHidingChips] = useState(() => new Set<string>());
+  const hidingChipsRef = useRef(new Set<string>());
+  hidingChipsRef.current = hidingChips;
+  const flyingElsRef = useRef(new Map<string, HTMLDivElement>());
+  const tableSlotElsRef = useRef(new Map<string, HTMLDivElement>());
 
   const registerChip = useCallback((key: string, el: HTMLDivElement | null) => {
     if (el) chipElsRef.current.set(key, el);
@@ -196,21 +207,52 @@ export default function Table({ state, sendAction, readOnly }: Props) {
         (prevLoc.kind === 'player' && currLoc.kind === 'player' && prevLoc.id !== currLoc.id)
       );
       if (moved) {
-        const prevPos = prevPosRef.current.get(key);
-        const currEl  = chipElsRef.current.get(key);
-        if (prevPos && currEl) {
+        // Use table slot ref for middle destination (player chip ref for player destination)
+        const currEl = currLoc.kind === 'middle'
+          ? tableSlotElsRef.current.get(key)
+          : chipElsRef.current.get(key);
+        if (currEl) {
           const currPos = relCenter(currEl);
           const chip    = findChip(state, key);
           if (currPos && chip) {
-            newAnims.push({ id: `${key}-${Date.now()}`, chip, from: prevPos, to: currPos, blackInside: blackNumbers.includes(chip.number) });
-            newHiding.push(key);
+            // If chip is mid-animation, use flying element's current visual position as 'from'
+            let fromPos: { x: number; y: number } | undefined;
+            if (hidingChipsRef.current.has(key)) {
+              const flyEl = flyingElsRef.current.get(key);
+              if (flyEl) {
+                const c = containerRef.current;
+                if (c) {
+                  const er = flyEl.getBoundingClientRect(), cr = c.getBoundingClientRect();
+                  const s = scaleRef.current;
+                  fromPos = { x: (er.left - cr.left + er.width / 2) / s, y: (er.top - cr.top + er.height / 2) / s };
+                }
+              }
+            }
+            if (!fromPos) {
+              if (prevLoc.kind === 'middle') {
+                // Use table slot position directly (always trackable)
+                const slotEl = tableSlotElsRef.current.get(key);
+                if (slotEl) fromPos = relCenter(slotEl) ?? undefined;
+              } else {
+                fromPos = prevPosRef.current.get(key);
+              }
+            }
+            if (fromPos) {
+              newAnims.push({ id: `${key}-${Date.now()}`, chip, from: fromPos, to: currPos, blackInside: blackNumbers.includes(chip.number) });
+              newHiding.push(key);
+            }
           }
         }
       }
     }
 
     if (newAnims.length > 0) {
-      setAnimations(prev => [...prev, ...newAnims]);
+      const movedKeys = new Set(newHiding);
+      // Replace any existing animations for the same chips (don't accumulate stale ones)
+      setAnimations(prev => [
+        ...prev.filter(a => !movedKeys.has(`${a.chip.round}-${a.chip.number}`)),
+        ...newAnims,
+      ]);
       setHidingChips(prev => new Set([...prev, ...newHiding]));
     }
 
@@ -249,22 +291,41 @@ export default function Table({ state, sendAction, readOnly }: Props) {
             {/* Community cards */}
             <CommunityCards cards={state.communityCards} blackAndRed={blackAndRed} />
 
-            {/* Middle chips */}
-            {state.middleChips.length > 0 && (
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
-                {[...state.middleChips].sort((a, b) => a.number - b.number).map(chip => (
-                  <div key={chip.number} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <ChipCircle chip={chip} size={30} blackInside={blackNumbers.includes(chip.number)} />
-                    {!readOnly && !iHaveCurrentRoundChip && (
-                      <button onClick={() => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number })}
-                        style={{ padding: '2px 7px', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0' }}>
-                        Take
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Middle chips – fixed dedicated slots for every chip in the game */}
+            {(() => {
+              const allGameChips = [
+                ...state.middleChips,
+                ...state.players.flatMap(p => p.chips),
+              ].sort((a, b) => a.round !== b.round ? a.round - b.round : a.number - b.number);
+              const middleSet = new Set(state.middleChips.map(c => `${c.round}-${c.number}`));
+              if (allGameChips.length === 0) return null;
+              return (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {allGameChips.map(chip => {
+                    const key = `${chip.round}-${chip.number}`;
+                    const inMiddle = middleSet.has(key);
+                    return (
+                      <div key={key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: 3 }}>
+                        <div
+                          ref={el => { if (el) tableSlotElsRef.current.set(key, el); else tableSlotElsRef.current.delete(key); }}
+                          style={{ visibility: (inMiddle && !hidingChips.has(key)) ? 'visible' : 'hidden' }}>
+                          <ChipAnimContext.Provider value={noopCtx}>
+                            <ChipCircle chip={chip} size={30} blackInside={blackNumbers.includes(chip.number)} />
+                          </ChipAnimContext.Provider>
+                        </div>
+                        {!readOnly && (
+                          <button
+                            onClick={inMiddle && !iHaveCurrentRoundChip ? () => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number }) : undefined}
+                            style={{ padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip ? 'pointer' : 'default' }}>
+                            Take
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -342,9 +403,16 @@ export default function Table({ state, sendAction, readOnly }: Props) {
 
         {/* Animated chip overlay */}
         {animations.map(entry => (
-          <FlyingChip key={entry.id} entry={entry} onDone={() => {
-            setAnimations(prev => prev.filter(a => a.id !== entry.id));
-            setHidingChips(prev => { const s = new Set(prev); s.delete(`${entry.chip.round}-${entry.chip.number}`); return s; });
+          <FlyingChip key={entry.id} entry={entry} flyingElsRef={flyingElsRef} onDone={() => {
+            const chipKey = `${entry.chip.round}-${entry.chip.number}`;
+            setAnimations(prev => {
+              const next = prev.filter(a => a.id !== entry.id);
+              // Only un-hide if no replacement animation for this chip is running
+              if (!next.some(a => `${a.chip.round}-${a.chip.number}` === chipKey)) {
+                setHidingChips(prev => { const s = new Set(prev); s.delete(chipKey); return s; });
+              }
+              return next;
+            });
           }} />
         ))}
 
