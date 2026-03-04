@@ -4,7 +4,6 @@
 
 - Get rid of spec duplication ("copy-paste") in the description of the list of the addons in lobby and in the game.
 - Hovering over an addon description should remove it (so that going up to down with your cursor touches all addons)
-- Start the game button in the lobby should also be voting-based and only take effect when everyone presses it.
 
 ## Addons
 

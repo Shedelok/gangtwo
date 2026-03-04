@@ -8,7 +8,8 @@ This file describes the UI aspects of the application.
 
 One the player joins the lobby, they see the full list of players and "Start Game" button. If the game cannot start for
 any logical reason (for example because too many addons are requested), the "Start Game" button appears gray and cannot
-be pressed.
+be pressed. Start Game button only takes effect once all players in the lobby have it pressed. Players can press/unpress
+it, and they can see how many players have it pressed.
 
 ### Addons
 

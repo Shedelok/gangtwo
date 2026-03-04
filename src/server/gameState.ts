@@ -35,6 +35,7 @@ interface ServerGameState {
   socketToPlayerId: Map<string, string>;
   playerIdToSocketId: Map<string, string>;
   prefillNames: Map<string, string>;
+  startGameVoters: Set<string>;
   restartVoters: Set<string>;
   rankGuesses: Map<string, Map<string, string>>; // addonId → (voterId → rank)
   winningGuessRanks: Map<string, string>; // addonId → winning rank (set when voting locks)
@@ -58,6 +59,7 @@ const state: ServerGameState = {
   socketToPlayerId: new Map(),
   playerIdToSocketId: new Map(),
   prefillNames: new Map(),
+  startGameVoters: new Set(),
   restartVoters: new Set(),
   rankGuesses: new Map(),
   winningGuessRanks: new Map(),
@@ -157,9 +159,14 @@ export function removePlayer(socketId: string): void {
   }
   state.socketToPlayerId.delete(socketId);
   state.playerIdToSocketId.delete(playerId);
+  state.startGameVoters.delete(playerId);
   state.restartVoters.delete(playerId);
   if (state.phase === 'lobby') {
     state.players = state.players.filter((p) => p.id !== playerId);
+    // Auto-start if all remaining players have voted and conditions are met
+    if (state.players.length >= 2 && state.players.every((p) => state.startGameVoters.has(p.id))) {
+      startGame();
+    }
   }
   // During game, keep the player to not break state; their socket is just gone
 }
@@ -381,6 +388,26 @@ export function restartGame(): string | null {
   return startGame();
 }
 
+export function toggleStartGameVote(socketId: string): string | null {
+  if (state.phase !== 'lobby') return 'Not in lobby';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Not in lobby';
+  if (state.startGameVoters.has(playerId)) {
+    state.startGameVoters.delete(playerId);
+  } else {
+    if (state.players.length < 2) return 'Need at least 2 players';
+    const negativePool = ADDONS.filter((a) => a.type === 'negative' && state.addonPool.has(a.id));
+    const positivePool = ADDONS.filter((a) => a.type === 'positive' && state.addonPool.has(a.id));
+    if (state.negativeAddonCount > negativePool.length) return 'Not enough negative addons in pool';
+    if (state.positiveAddonCount > positivePool.length) return 'Not enough positive addons in pool';
+    state.startGameVoters.add(playerId);
+    if (state.startGameVoters.size === state.players.length) {
+      return startGame();
+    }
+  }
+  return null;
+}
+
 export function toggleAddon(addonId: string): string | null {
   if (state.phase !== 'lobby') return 'Cannot change addons after game started';
   if (state.addonPool.has(addonId)) {
@@ -441,6 +468,7 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
   state.negativeAddonCount = savedNegativeCount;
   state.positiveAddonCount = savedPositiveCount;
+  state.startGameVoters = new Set();
   state.restartVoters = new Set();
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
@@ -493,6 +521,8 @@ export function buildClientState(socketId: string): ClientGameState {
     negativeAddonCount: state.negativeAddonCount,
     positiveAddonCount: state.positiveAddonCount,
     prefilledName: state.prefillNames.get(socketId) ?? null,
+    startGameVotes: state.startGameVoters.size,
+    myStartGameVote: playerId ? state.startGameVoters.has(playerId) : false,
     restartVotes: state.restartVoters.size,
     myRestartVote: playerId ? state.restartVoters.has(playerId) : false,
     rankGuesses: state.phase === 'finished'

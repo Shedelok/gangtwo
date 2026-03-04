@@ -32,6 +32,8 @@ export interface ClientGameState {
   negativeAddonCount: number; // how many negative addons to pick randomly
   positiveAddonCount: number; // how many positive addons to pick randomly
   prefilledName: string | null; // name pre-filled for rejoining after Stop the game
+  startGameVotes: number;     // how many players have pressed Start Game
+  myStartGameVote: boolean;   // whether the current player has pressed Start Game
   restartVotes: number;       // how many players have voted to restart
   myRestartVote: boolean;     // whether the current player has voted to restart
   rankGuesses: Record<string, Record<string, string>>; // addonId → (voterId → rank); populated during guess-rank addons

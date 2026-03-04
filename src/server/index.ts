@@ -8,7 +8,7 @@ import {
   registerConnection,
   addPlayer,
   removePlayer,
-  startGame,
+  toggleStartGameVote,
   discardChip,
   takeFromMiddle,
   stealChip,
@@ -64,7 +64,7 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       error = addPlayer(socketId, action.name);
       break;
     case 'START_GAME':
-      error = startGame();
+      error = toggleStartGameVote(socketId);
       break;
     case 'TOGGLE_ADDON':
       error = toggleAddon(action.addonId);
