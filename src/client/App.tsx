@@ -356,8 +356,10 @@ export default function App() {
             style={{ marginTop: '2px', flexShrink: 0, cursor: 'pointer' }}
           />
         )}
-        <span style={styles.addonShort}>{addon.short}</span>
-        {hovered && <div style={styles.addonTooltip}>{addon.long}</div>}
+        <div style={{ position: 'relative', flex: 1 }}>
+          <span style={styles.addonShort}>{addon.short}</span>
+          {hovered && <div style={styles.addonTooltip} onMouseEnter={() => setHoveredAddon(null)}>{addon.long}</div>}
+        </div>
       </div>
     );
   };
