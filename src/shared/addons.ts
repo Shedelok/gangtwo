@@ -66,10 +66,4 @@ export const ADDONS: AddonDef[] = [
     long: "Besides your own cards you can also see pocket cards of the player next to your left.",
     type: 'positive',
   },
-  {
-    id: 'see-2-neighbors-cards',
-    short: "See 2 Neighbors' Cards",
-    long: "Besides your own cards you can also see pocket cards of the players next to your left and right.",
-    type: 'positive',
-  },
 ];

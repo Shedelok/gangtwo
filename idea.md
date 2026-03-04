@@ -2,8 +2,10 @@
 
 ## General
 
-- When on home page, you should be able to see number of players in it
 - Make chips clickable
+- Black X should have no collision with Black 1 and Black N
+- Chips should have fixed spaces, so that there are no miss-clicks
+- After the game is over, you should see who didn't press restart
 
 ## Addons
 
