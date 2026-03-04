@@ -95,6 +95,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   if (state.enabledAddons.includes('ns-are-black')) blackNumbers.push(n);
   if (state.enabledAddons.includes('xs-are-black') && state.blackXValue !== null) blackNumbers.push(state.blackXValue);
   const onlyNeighborsSteal = state.enabledAddons.includes('only-neighbors-steal');
+  const blackAndRed = state.enabledAddons.includes('clubs-spades-diamonds-hearth');
 
   // ── Guess-rank addons: per-addon target/voting state ─────────────────────────
   const GUESS_RANK_ADDON_IDS = [
@@ -246,7 +247,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
             </div>
 
             {/* Community cards */}
-            <CommunityCards cards={state.communityCards} />
+            <CommunityCards cards={state.communityCards} blackAndRed={blackAndRed} />
 
             {/* Middle chips */}
             {state.middleChips.length > 0 && (
@@ -333,6 +334,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               dialogueClouds={dialogueClouds}
               blackNumbers={blackNumbers}
               canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
+              blackAndRed={blackAndRed}
               style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );

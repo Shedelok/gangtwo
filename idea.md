@@ -3,10 +3,7 @@
 ## General
 
 - Get rid of spec duplication ("copy-paste") in the description of the list of the addons in lobby and in the game.
-- Black & Red addon should actually make 2 pairs of suits look the same
 - Hovering over an addon description should remove it (so that going up to down with your cursor touches all addons)
-- When one player is under multiple "guess rank" addons, there should not be multiple "guess rank" buttons under them
-  when it's turn for other players to submit the guess.
 - Start the game button in the lobby should also be voting-based and only take effect when everyone presses it.
 
 ## Addons

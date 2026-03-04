@@ -11,7 +11,7 @@ const SUIT_SYMBOLS: Record<string, string> = {
 
 const RED_SUITS = new Set(['hearts', 'diamonds']);
 
-function CommunityCard({ card, animate }: { card: Card; animate: boolean }) {
+function CommunityCard({ card, animate, blackAndRed }: { card: Card; animate: boolean; blackAndRed: boolean }) {
   const [faceUp, setFaceUp] = useState(!animate);
 
   useEffect(() => {
@@ -22,14 +22,16 @@ function CommunityCard({ card, animate }: { card: Card; animate: boolean }) {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const color = RED_SUITS.has(card.suit) ? '#c0392b' : '#1a1a2e';
+  const isRed = RED_SUITS.has(card.suit);
+  const suitBg = isRed ? '#c0392b' : '#1a1a2e';
+  const color = blackAndRed ? 'white' : (isRed ? '#c0392b' : '#1a1a2e');
   const symbol = SUIT_SYMBOLS[card.suit];
 
   return (
     <div className="cc-flip-container">
       <div className="cc-flipper" style={{ transform: faceUp ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
         <div className="cc-face cc-back" />
-        <div className="cc-face cc-front">
+        <div className="cc-face cc-front" style={blackAndRed ? { background: suitBg } : undefined}>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color }}>
             <span style={{ fontSize: 11, fontWeight: 'bold' }}>{card.rank}</span>
             <span style={{ fontSize: 9 }}>{symbol}</span>
@@ -45,9 +47,10 @@ function CommunityCard({ card, animate }: { card: Card; animate: boolean }) {
 
 interface Props {
   cards: Card[];
+  blackAndRed?: boolean;
 }
 
-export default function CommunityCards({ cards }: Props) {
+export default function CommunityCards({ cards, blackAndRed = false }: Props) {
   // animateFromIndex: cards at index >= this value were newly added and should animate.
   // Initialized to cards.length so cards present on first render never animate.
   const [animateFromIndex, setAnimateFromIndex] = useState<number>(() => cards.length);
@@ -69,7 +72,7 @@ export default function CommunityCards({ cards }: Props) {
   return (
     <div style={{ display: 'flex', gap: 5, justifyContent: 'center', flexWrap: 'wrap' }}>
       {cards.map((card, i) => (
-        <CommunityCard key={i} card={card} animate={i >= animateFromIndex} />
+        <CommunityCard key={i} card={card} animate={i >= animateFromIndex} blackAndRed={blackAndRed} />
       ))}
     </div>
   );

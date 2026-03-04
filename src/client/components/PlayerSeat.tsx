@@ -30,6 +30,7 @@ interface Props {
   canReveal?: boolean;
   blackNumbers?: number[];
   canStealFrom?: boolean;
+  blackAndRed?: boolean;
   // Guess-rank addon props
   guessRankUIs?: Array<{ addonId: string; myVote?: string; locked: boolean }>; // one per addon targeting this seat
   dialogueClouds?: Array<{ text: string; winner: boolean; locked: boolean }>; // one cloud per vote
@@ -40,7 +41,7 @@ export default function PlayerSeat({
   player, isMe, holeCards, showFaceDown,
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
-  guessRankUIs = [], dialogueClouds = [], style,
+  blackAndRed = false, guessRankUIs = [], dialogueClouds = [], style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
@@ -99,7 +100,7 @@ export default function PlayerSeat({
       </div>
 
       {/* Cards */}
-      <PlayerHand cards={holeCards} faceDown={showFaceDown} small />
+      <PlayerHand cards={holeCards} faceDown={showFaceDown} small blackAndRed={blackAndRed} />
 
       {/* Chips — sorted by round asc, number asc; always rendered to reserve height */}
       <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center', minHeight: 54 }}>

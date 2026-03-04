@@ -10,15 +10,18 @@ const SUIT_SYMBOLS: Record<string, string> = {
 
 const RED_SUITS = new Set(['hearts', 'diamonds']);
 
-function PlayingCard({ card, small }: { card: Card; small: boolean }) {
-  const color = RED_SUITS.has(card.suit) ? '#c0392b' : '#1a1a2e';
+function PlayingCard({ card, small, blackAndRed }: { card: Card; small: boolean; blackAndRed: boolean }) {
+  const isRed = RED_SUITS.has(card.suit);
+  const suitBg = isRed ? '#c0392b' : '#1a1a2e';
+  const background = blackAndRed ? suitBg : 'white';
+  const color = blackAndRed ? 'white' : (isRed ? '#c0392b' : '#1a1a2e');
   const symbol = SUIT_SYMBOLS[card.suit];
   const w = small ? 52 : 80;
   const h = small ? 78 : 120;
   return (
     <div style={{
       width: w, height: h,
-      background: 'white',
+      background,
       borderRadius: small ? 5 : 8,
       display: 'flex',
       flexDirection: 'column',
@@ -67,9 +70,10 @@ interface Props {
   cards: [Card, Card] | null;
   faceDown?: boolean;
   small?: boolean;
+  blackAndRed?: boolean;
 }
 
-export default function PlayerHand({ cards, faceDown = false, small = false }: Props) {
+export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false }: Props) {
   const gap = small ? 6 : 12;
   if (faceDown) {
     return (
@@ -88,8 +92,8 @@ export default function PlayerHand({ cards, faceDown = false, small = false }: P
   }
   return (
     <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
-      <PlayingCard card={cards[0]} small={small} />
-      <PlayingCard card={cards[1]} small={small} />
+      <PlayingCard card={cards[0]} small={small} blackAndRed={blackAndRed} />
+      <PlayingCard card={cards[1]} small={small} blackAndRed={blackAndRed} />
     </div>
   );
 }

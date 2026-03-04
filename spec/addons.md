@@ -48,8 +48,8 @@ Short description: "Black & Red"
 Long description: Instead of 4 logical suits, there are only 2: black (represented by clubs and spades) and red (
 represented by diamonds and hearths).
 
-Functionality: This addon doesn't change the functionality of the game in any way. The effect of this addon is fully
-applied to the player's communications outside the application.
+Functionality: All cards revert their colors, meaning the following: cards have the background of their suit color
+(red or black) and card's rank and suit symbols become white.
 
 ### Black Chip
 
