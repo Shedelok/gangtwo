@@ -31,3 +31,13 @@
 15. One player once can swap one of their cards with one of the common cards.
 16. One player once can show one of their cards to another player
 17. Jocker X: X is a random card. One player can once change on of their cards to X that would have no suit.
+18. Right after dealing the cards each player says how many J,Q,K they have.
+19. Cards of rank >10 are removed from the deck
+20. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
+    one).
+21. One player can once reroll one of the common cards (for everyone)
+22. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
+23. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
+24. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
+25. Kickers (non-scoring cards) are reversed (go in reversed order).
+26. After dealing cards everyone tells their sum (black-jack sum).
