@@ -36,7 +36,7 @@ Same as "Guess Rank Highest" (including the functionality), but for second-highe
 
 Same as "Guess Rank Highest" (including the functionality), but for the lowest red chip instead of the highest one.
 
-#### Details
+#### General Details
 
 When the same player is under multiple "guess rank" addons, it is logically and visually equal to them being under just
 one. There's no point in having players to guess the same thing twice.
@@ -71,7 +71,10 @@ with the value 1.
 #### Addon: Black Xs
 
 Same as "Black 1s", but instead of chips with value 1, a random number X (from 1 to N) is determined at the beginning of
-the game and chips with number X become black. X stays the same through all rounds.
+the game and chips with number X become black. X stays the same through all rounds. If this addon affects a chip that
+is already black (for example, because Black 1s addon is also enabled), then number X is rerolled until this doesn't
+happen. If it's impossible to find such X (for example, if there are 2 players and both Black 1s and Black Ns addons are
+enabled alongside this addon), then this addon has no effect.
 
 ### Addon: No Old Chips
 

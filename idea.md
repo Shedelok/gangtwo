@@ -2,10 +2,10 @@
 
 ## General
 
-- Make chips clickable
-- Black X should have no collision with Black 1 and Black N
 - Chips should have fixed spaces, so that there are no miss-clicks
-- After the game is over, you should see who didn't press restart
+- After the game is over, you should see who hasn't pressed restart
+- Full addon descriptions should be not on hover on an addon, but on hover on a question mark sign right to it
+- (Maybe) Make chips clickable
 
 ## Addons
 

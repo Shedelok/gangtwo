@@ -199,7 +199,16 @@ export function startGame(): string | null {
     ...pickRandom(positivePool, state.positiveAddonCount),
   ]);
   if (state.enabledAddons.has('xs-are-black')) {
-    state.blackXValue = Math.floor(Math.random() * state.players.length) + 1;
+    const n = state.players.length;
+    const alreadyBlack = new Set<number>();
+    if (state.enabledAddons.has('ones-are-black')) alreadyBlack.add(1);
+    if (state.enabledAddons.has('ns-are-black')) alreadyBlack.add(n);
+    const candidates = Array.from({ length: n }, (_, i) => i + 1).filter(v => !alreadyBlack.has(v));
+    if (candidates.length === 0) {
+      state.blackXValue = null;
+    } else {
+      state.blackXValue = candidates[Math.floor(Math.random() * candidates.length)];
+    }
   } else {
     state.blackXValue = null;
   }
