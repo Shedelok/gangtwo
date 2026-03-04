@@ -20,6 +20,12 @@ the addon hides the description (it's not hoverable).
 
 Above these 2 columns there's a header "Addons" in the same style and color as "Volume" text above it, but in uppercase.
 
+## Home Page
+
+When first entering the application, the users see a text input for entering their name and button "Join Lobby (X
+player(s))", where X is the number of players currently in the lobby and "player(s)" is actually either "player" or 
+"players" depending on the number.
+
 ## Lobby
 
 One the player joins the lobby, they see the full list of players and "Start Game" button. If the game cannot start for

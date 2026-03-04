@@ -146,7 +146,7 @@ export default function Lobby({ state, sendAction }: Props) {
               autoFocus
             />
             <button style={s.button} type="submit" disabled={!nameInput.trim()}>
-              Join Lobby
+              Join Lobby ({state.players.length} {state.players.length === 1 ? 'player' : 'players'})
             </button>
           </form>
         </div>
