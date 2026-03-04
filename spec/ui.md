@@ -49,7 +49,7 @@ checkboxes and numbers change accordingly and vice versa.
 The idea of the code is to be a human-readable Base32 serialization of the game setup so that the players don't have
 to set up the game again and again. The sequence of the checkboxes is converted in a sequence of 1s and 0s, then
 number of negative addons requested and number of positive addons requested is appended to in binary format. After that
-this whole sequence is converted to Base32 code as a number.
+this whole sequence is converted to Base32 code (using RFC 4648 alphabet) as a number.
 
 The encoding/decoding logic can assume that the list of addons will never change.
 

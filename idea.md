@@ -4,7 +4,6 @@
 
 - Get rid of spec duplication ("copy-paste") in the description of the list of the addons in lobby and in the game.
 - Hovering over an addon description should remove it (so that going up to down with your cursor touches all addons)
-- Change Base32 alphabet
 - When on home page, you should be able to see number of players in it
 - Make chips clickable
 

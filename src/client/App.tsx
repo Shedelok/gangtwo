@@ -49,6 +49,7 @@ function playSound(file: string, masterVolume: number, multiplier: number): void
 
 const ADDON_COUNT_BITS = 3; // covers 0–6 negative addons
 const POS_COUNT_BITS = 2;  // covers 0–2 positive addons
+const RFC4648 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 function encodeSetup(addonPool: string[], negativeAddonCount: number, positiveAddonCount: number): string {
   let bits = '';
@@ -57,13 +58,24 @@ function encodeSetup(addonPool: string[], negativeAddonCount: number, positiveAd
   }
   bits += Math.min(negativeAddonCount, (1 << ADDON_COUNT_BITS) - 1).toString(2).padStart(ADDON_COUNT_BITS, '0');
   bits += Math.min(positiveAddonCount, (1 << POS_COUNT_BITS) - 1).toString(2).padStart(POS_COUNT_BITS, '0');
-  return parseInt(bits, 2).toString(32).toUpperCase();
+  let num = parseInt(bits, 2);
+  if (num === 0) return RFC4648[0];
+  let result = '';
+  while (num > 0) {
+    result = RFC4648[num % 32] + result;
+    num = Math.floor(num / 32);
+  }
+  return result;
 }
 
 function decodeSetup(code: string): { addonPool: string[]; negativeAddonCount: number; positiveAddonCount: number } | null {
   if (!code) return null;
-  const num = parseInt(code, 32);
-  if (isNaN(num) || num < 0) return null;
+  let num = 0;
+  for (const ch of code.toUpperCase()) {
+    const val = RFC4648.indexOf(ch);
+    if (val === -1) return null;
+    num = num * 32 + val;
+  }
   const totalBits = ADDONS.length + ADDON_COUNT_BITS + POS_COUNT_BITS;
   const bits = num.toString(2).padStart(totalBits, '0');
   if (bits.length > totalBits) return null;
