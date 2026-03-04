@@ -340,15 +340,20 @@ export function submitRankGuess(socketId: string, addonId: string, rank: string)
   const addonVotes = state.rankGuesses.get(addonId) ?? new Map<string, string>();
   const nonTargetPlayers = state.players.filter((p) => p.id !== targetId);
   if (nonTargetPlayers.every((p) => addonVotes.has(p.id))) return 'Voting is locked';
-  addonVotes.set(playerId, rank);
-  state.rankGuesses.set(addonId, addonVotes);
-  // If voting just locked, compute the winning rank
-  if (nonTargetPlayers.every((p) => addonVotes.has(p.id))) {
-    const counts = new Map<string, number>();
-    for (const r of addonVotes.values()) counts.set(r, (counts.get(r) ?? 0) + 1);
-    const maxCount = Math.max(...counts.values());
-    const topRanks = [...counts.entries()].filter(([, c]) => c === maxCount).map(([r]) => r);
-    state.winningGuessRanks.set(addonId, topRanks[Math.floor(Math.random() * topRanks.length)]);
+  // Apply vote to this addon and all other enabled guess-rank addons targeting the same player
+  for (const aid of GUESS_RANK_ADDON_IDS) {
+    if (!state.enabledAddons.has(aid)) continue;
+    if (findGuessRankTargetId(aid, state.players) !== targetId) continue;
+    const votes = state.rankGuesses.get(aid) ?? new Map<string, string>();
+    votes.set(playerId, rank);
+    state.rankGuesses.set(aid, votes);
+    if (!state.winningGuessRanks.has(aid) && nonTargetPlayers.every((p) => votes.has(p.id))) {
+      const counts = new Map<string, number>();
+      for (const r of votes.values()) counts.set(r, (counts.get(r) ?? 0) + 1);
+      const maxCount = Math.max(...counts.values());
+      const topRanks = [...counts.entries()].filter(([, c]) => c === maxCount).map(([r]) => r);
+      state.winningGuessRanks.set(aid, topRanks[Math.floor(Math.random() * topRanks.length)]);
+    }
   }
   return null;
 }

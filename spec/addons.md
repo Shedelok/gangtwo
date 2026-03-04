@@ -6,7 +6,9 @@ This file describes the addons (toggleable modifications of the base game).
 
 ## Negative Addons
 
-### Guess Rank Highest
+### Guess Rank
+
+#### Addon: Guess Rank Highest
 
 Short description: "Guess Rank Highest"
 
@@ -24,17 +26,22 @@ guess everyone else sees their guess above them in a style of a text a dialogue 
 the guesses are fixed and HRC can reveal their cards as normal. When guesses are fixed, the most popular guess is
 determined. If there are multiple guesses with maximum number of votes, a pure random chooses one of them. Guesses of
 the players who voted for that chosen option get yellow background, other guesses get more subtle more gray background
-and text. 5 seconds after HRC reveals their cards, all the guesses disappear.
+and text. 3 seconds after HRC reveals their cards, all the guesses disappear.
 
-### Guess Rank 2nd Highest
+#### Addon: Guess Rank 2nd Highest
 
 Same as "Guess Rank Highest" (including the functionality), but for second-highest red chip instead of the highest one.
 
-### Guess Rank Lowest
+#### Addon: Guess Rank Lowest
 
 Same as "Guess Rank Highest" (including the functionality), but for the lowest red chip instead of the highest one.
 
-### Black & Red
+#### Details
+
+When the same player is under multiple "guess rank" addons, it is logically and visually equal to them being under just
+one. There's no point in having players to guess the same thing twice.
+
+### Addon: Black & Red
 
 Short description: "Black & Red"
 
@@ -44,7 +51,9 @@ represented by diamonds and hearths).
 Functionality: This addon doesn't change the functionality of the game in any way. The effect of this addon is fully
 applied to the player's communications outside the application.
 
-### Black 1s
+### Black Chip
+
+#### Addon: Black 1s
 
 Short description: "Black 1s"
 
@@ -54,17 +63,17 @@ taken from the middle of the table for the first time.
 Functionality: All chips of value 1 have black circle inside them (the border is still of their color, but the middle is
 black). There's no steal or drop option for a black chip.
 
-### Black Ns
+#### Addon: Black Ns
 
 Same as "Black 1s", but the highest value (equal to the number of players) chips become black instead of the chips
 with the value 1.
 
-### Black Xs
+#### Addon: Black Xs
 
 Same as "Black 1s", but instead of chips with value 1, a random number X (from 1 to N) is determined at the beginning of
 the game and chips with number X become black. X stays the same through all rounds.
 
-### No Old Chips
+### Addon: No Old Chips
 
 Short description: "No Old Chips"
 
@@ -74,7 +83,7 @@ and player cannot see them.
 Functionality: When a new round starts and chips for this new round are placed on the table, all chips from the previous
 round are removed as if they were never in the game.
 
-### Only Neighbors Steal
+### Addon: Only Neighbors Steal
 
 Short description: "Only Neighbors Steal"
 
@@ -85,7 +94,7 @@ of the current player.
 
 ## Positive Addons
 
-### See 1 Neighbor's Cards
+### Addon: See 1 Neighbor's Cards
 
 Short description: "See 1 Neighbor's Cards"
 
@@ -93,6 +102,6 @@ Long description: Besides your own cards you can also see pocket cards of the pl
 
 Functionality: During the game each player sees the cards of their immediate neighbors on the left face up.
 
-### See 2 Neighbors' Cards
+### Addon: See 2 Neighbors' Cards
 
 Same as "See 1 Neighbor's Cards" but you can also see cards of the person right next to your right, not only left.

@@ -140,7 +140,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   useEffect(() => {
     for (const [addonId, info] of guessRankInfo) {
       if (info.targetRevealed && !guessTimersRef.current.has(addonId)) {
-        const t = setTimeout(() => setHiddenGuessRankAddons(prev => new Set([...prev, addonId])), 5000);
+        const t = setTimeout(() => setHiddenGuessRankAddons(prev => new Set([...prev, addonId])), 3000);
         guessTimersRef.current.set(addonId, t);
       }
     }
@@ -292,30 +292,37 @@ export default function Table({ state, sendAction, readOnly }: Props) {
             info => info.targetId === state.myId && !info.locked
           );
           const canReveal = chipOrderCanReveal && !guessRankBlock;
-          // Guess-rank UIs shown on this seat (when this player is a target and voting is active)
+          // Guess-rank UIs shown on this seat (one per unique target — dedup if multiple addons target same player)
           const guessRankUIs = activeGuessRankAddons
             .filter(addonId => {
               const info = guessRankInfo.get(addonId)!;
               return info.targetId === player.id && info.targetCanReveal && !info.targetRevealed && !isMe && !hiddenGuessRankAddons.has(addonId);
             })
+            .slice(0, 1) // only one UI per target player
             .map(addonId => {
               const info = guessRankInfo.get(addonId)!;
               const addonVotes = state.rankGuesses[addonId] ?? {};
               return { addonId, myVote: addonVotes[state.myId] as string | undefined, locked: info.locked };
             });
-          // Dialogue clouds: one per addon where this player has voted (and addon not hidden)
-          const dialogueClouds = activeGuessRankAddons
-            .filter(addonId => {
-              const info = guessRankInfo.get(addonId)!;
-              return info.targetId !== player.id && !hiddenGuessRankAddons.has(addonId)
-                && !!(state.rankGuesses[addonId] ?? {})[player.id];
-            })
-            .map(addonId => {
-              const info = guessRankInfo.get(addonId)!;
-              const vote = (state.rankGuesses[addonId] ?? {})[player.id];
-              const winningRank = state.winningGuessRanks[addonId];
-              return { text: vote, winner: info.locked && !!winningRank && vote === winningRank, locked: info.locked };
-            });
+          // Dialogue clouds: one per unique target player this voter has guessed
+          const dialogueClouds = (() => {
+            const seenTargets = new Set<string | null>();
+            return activeGuessRankAddons
+              .filter(addonId => {
+                const info = guessRankInfo.get(addonId)!;
+                if (info.targetId === player.id || hiddenGuessRankAddons.has(addonId)) return false;
+                if (!(state.rankGuesses[addonId] ?? {})[player.id]) return false;
+                if (seenTargets.has(info.targetId)) return false;
+                seenTargets.add(info.targetId);
+                return true;
+              })
+              .map(addonId => {
+                const info = guessRankInfo.get(addonId)!;
+                const vote = (state.rankGuesses[addonId] ?? {})[player.id];
+                const winningRank = state.winningGuessRanks[addonId];
+                return { text: vote, winner: info.locked && !!winningRank && vote === winningRank, locked: info.locked };
+              });
+          })();
           return (
             <PlayerSeat key={player.id} player={player} isMe={isMe}
               holeCards={holeCards} showFaceDown={showFaceDown}
