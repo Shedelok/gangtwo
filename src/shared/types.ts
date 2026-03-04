@@ -35,6 +35,7 @@ export interface ClientGameState {
   restartVotes: number;       // how many players have voted to restart
   myRestartVote: boolean;     // whether the current player has voted to restart
   rankGuesses: Record<string, Record<string, string>>; // addonId → (voterId → rank); populated during guess-rank addons
+  winningGuessRanks: Record<string, string>; // addonId → winning rank (set when voting locks)
 }
 
 // Client → Server actions

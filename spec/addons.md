@@ -21,8 +21,10 @@ are, top-to-down: Royal Flush, Straight Flush, Four of a Kind, Full House, Flush
 One Pair, High Card. If the player presses one of these options, the list disappears and the chosen rank is displayed
 where the "Guess Rank" button was. The player can click the chosen rank to change their vote. Once the player made a
 guess everyone else sees their guess above them in a style of a text a dialogue cloud. Once everyone has made a guess,
-the guesses are fixed and HRC can reveal their cards as normal. 5 seconds after HRC reveals their cards, all the guesses
-disappear.
+the guesses are fixed and HRC can reveal their cards as normal. When guesses are fixed, the most popular guess is
+determined. If there are multiple guesses with maximum number of votes, a pure random chooses one of them. Guesses of
+the players who voted for that chosen option get yellow background, other guesses get more subtle more gray background
+and text. 5 seconds after HRC reveals their cards, all the guesses disappear.
 
 ### Guess Rank 2nd Highest
 

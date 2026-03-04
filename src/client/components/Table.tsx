@@ -310,7 +310,12 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               return info.targetId !== player.id && !hiddenGuessRankAddons.has(addonId)
                 && !!(state.rankGuesses[addonId] ?? {})[player.id];
             })
-            .map(addonId => (state.rankGuesses[addonId] ?? {})[player.id]);
+            .map(addonId => {
+              const info = guessRankInfo.get(addonId)!;
+              const vote = (state.rankGuesses[addonId] ?? {})[player.id];
+              const winningRank = state.winningGuessRanks[addonId];
+              return { text: vote, winner: info.locked && !!winningRank && vote === winningRank, locked: info.locked };
+            });
           return (
             <PlayerSeat key={player.id} player={player} isMe={isMe}
               holeCards={holeCards} showFaceDown={showFaceDown}

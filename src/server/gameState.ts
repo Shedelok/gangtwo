@@ -37,6 +37,7 @@ interface ServerGameState {
   prefillNames: Map<string, string>;
   restartVoters: Set<string>;
   rankGuesses: Map<string, Map<string, string>>; // addonId → (voterId → rank)
+  winningGuessRanks: Map<string, string>; // addonId → winning rank (set when voting locks)
   gameId: string;
 }
 
@@ -59,6 +60,7 @@ const state: ServerGameState = {
   prefillNames: new Map(),
   restartVoters: new Set(),
   rankGuesses: new Map(),
+  winningGuessRanks: new Map(),
   gameId: '',
 };
 
@@ -340,6 +342,14 @@ export function submitRankGuess(socketId: string, addonId: string, rank: string)
   if (nonTargetPlayers.every((p) => addonVotes.has(p.id))) return 'Voting is locked';
   addonVotes.set(playerId, rank);
   state.rankGuesses.set(addonId, addonVotes);
+  // If voting just locked, compute the winning rank
+  if (nonTargetPlayers.every((p) => addonVotes.has(p.id))) {
+    const counts = new Map<string, number>();
+    for (const r of addonVotes.values()) counts.set(r, (counts.get(r) ?? 0) + 1);
+    const maxCount = Math.max(...counts.values());
+    const topRanks = [...counts.entries()].filter(([, c]) => c === maxCount).map(([r]) => r);
+    state.winningGuessRanks.set(addonId, topRanks[Math.floor(Math.random() * topRanks.length)]);
+  }
   return null;
 }
 
@@ -420,6 +430,7 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.deck = [];
   state.revealedPlayers = new Set();
   state.rankGuesses = new Map();
+  state.winningGuessRanks = new Map();
   state.enabledAddons = new Set();
   state.blackXValue = null;
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
@@ -481,6 +492,9 @@ export function buildClientState(socketId: string): ClientGameState {
     myRestartVote: playerId ? state.restartVoters.has(playerId) : false,
     rankGuesses: state.phase === 'finished'
       ? Object.fromEntries([...state.rankGuesses].map(([aid, votes]) => [aid, Object.fromEntries(votes)]))
+      : {},
+    winningGuessRanks: state.phase === 'finished'
+      ? Object.fromEntries(state.winningGuessRanks)
       : {},
   };
 }

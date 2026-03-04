@@ -32,7 +32,7 @@ interface Props {
   canStealFrom?: boolean;
   // Guess-rank addon props
   guessRankUIs?: Array<{ addonId: string; myVote?: string; locked: boolean }>; // one per addon targeting this seat
-  dialogueClouds?: string[]; // one cloud string per vote this player has submitted
+  dialogueClouds?: Array<{ text: string; winner: boolean; locked: boolean }>; // one cloud per vote
   style?: React.CSSProperties;
 }
 
@@ -76,10 +76,18 @@ export default function PlayerSeat({
         }}>
           {dialogueClouds.map((cloud, idx) => (
             <div key={idx} style={{
-              background: '#f0f4ff', color: '#1e293b', borderRadius: 8, padding: '2px 8px',
-              fontSize: 11, fontWeight: 'bold', border: '1px solid #94a3b8', whiteSpace: 'nowrap',
+              background: cloud.locked
+                ? cloud.winner ? '#fef08a' : '#4b5563'
+                : '#f0f4ff',
+              color: cloud.locked
+                ? cloud.winner ? '#713f12' : '#9ca3af'
+                : '#1e293b',
+              borderRadius: 8, padding: '2px 8px',
+              fontSize: 11, fontWeight: 'bold',
+              border: `1px solid ${cloud.locked ? (cloud.winner ? '#ca8a04' : '#374151') : '#94a3b8'}`,
+              whiteSpace: 'nowrap',
             }}>
-              {cloud}
+              {cloud.text}
             </div>
           ))}
         </div>
