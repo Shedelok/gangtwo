@@ -477,7 +477,7 @@ export default function App() {
         )}
       </div>
       <div style={styles.topRightButtons}>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+        <div style={{ position: 'relative' }}>
           <button
             style={{ ...styles.restartButton, ...(state.myRestartVote ? { background: '#166534', borderColor: '#15803d' } : {}) }}
             onClick={() => sendAction({ type: 'TOGGLE_RESTART_VOTE' })}>
@@ -487,7 +487,7 @@ export default function App() {
             const notRestarted = state.players.filter(p => !state.restartVoterIds.includes(p.id));
             if (notRestarted.length === 0) return null;
             return (
-              <div style={{ fontSize: 11, color: '#888', textAlign: 'right', maxWidth: 200, wordBreak: 'break-word' }}>
+              <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, fontSize: 11, color: '#888', textAlign: 'right', maxWidth: 200, wordBreak: 'break-word' }}>
                 Haven't pressed yet: {notRestarted.map(p => p.name).join(', ')}
               </div>
             );
