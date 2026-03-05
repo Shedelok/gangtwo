@@ -33,6 +33,11 @@ any logical reason (for example because too many addons are requested), the "Sta
 be pressed. Start Game button only takes effect once all players in the lobby have it pressed. Players can press/unpress
 it, and they can see how many players have it pressed.
 
+Once any player has pressed Start Game, players also see the names of players who have not yet pressed the Start Game
+button, displayed right below the button, prefixed with "Haven't pressed yet:". Each name is on its own line with a
+bullet point and is left-aligned. Long names are truncated with an ellipsis. The list disappears once all players have
+pressed Start Game.
+
 ### Addons
 
 On the left, all players see full list of available addons as a side-panel under the sound control elements.
@@ -90,8 +95,11 @@ Pressing the Stop Game button sets up the new lobby exactly as the previous one 
 have the same addons code.
 
 The Restart button works similar to the "Move to the next round" button. All players must press it for it to take
-effect. Each player can press and unpress it. Players can only see how many of them have this button pressed at the
-moment.
+effect. Each player can press and unpress it. Players can see how many of them have this button pressed at the moment.
+Once the game is over (finished phase), players also see the names of players who have not yet pressed the Restart
+button, displayed right below the Restart button, prefixed with "Haven't pressed yet:". Each name is on its own line
+with a bullet point and is left-aligned. Long names are truncated with an ellipsis. The list disappears once all
+players have pressed Restart.
 
 ### Table
 

@@ -543,8 +543,10 @@ export function buildClientState(socketId: string): ClientGameState {
     positiveAddonCount: state.positiveAddonCount,
     prefilledName: state.prefillNames.get(socketId) ?? null,
     startGameVotes: state.startGameVoters.size,
+    startGameVoterIds: [...state.startGameVoters],
     myStartGameVote: playerId ? state.startGameVoters.has(playerId) : false,
     restartVotes: state.restartVoters.size,
+    restartVoterIds: [...state.restartVoters],
     myRestartVote: playerId ? state.restartVoters.has(playerId) : false,
     rankGuesses: state.phase === 'finished'
       ? Object.fromEntries([...state.rankGuesses].map(([aid, votes]) => [aid, Object.fromEntries(votes)]))

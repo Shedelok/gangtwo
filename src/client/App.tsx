@@ -477,11 +477,29 @@ export default function App() {
         )}
       </div>
       <div style={styles.topRightButtons}>
-        <button
-          style={{ ...styles.restartButton, ...(state.myRestartVote ? { background: '#166534', borderColor: '#15803d' } : {}) }}
-          onClick={() => sendAction({ type: 'TOGGLE_RESTART_VOTE' })}>
-          Restart ({state.restartVotes}/{state.players.length})
-        </button>
+        <div style={{ position: 'relative' }}>
+          <button
+            style={{ ...styles.restartButton, ...(state.myRestartVote ? { background: '#166534', borderColor: '#15803d' } : {}) }}
+            onClick={() => sendAction({ type: 'TOGGLE_RESTART_VOTE' })}>
+            Restart ({state.restartVotes}/{state.players.length})
+          </button>
+          {state.phase === 'finished' && (() => {
+            const notRestarted = state.players.filter(p => !state.restartVoterIds.includes(p.id));
+            if (notRestarted.length === 0) return null;
+            return (
+              <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 4, fontSize: 11, color: '#888' }}>
+                <div>Haven't pressed yet:</div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                  {notRestarted.map(p => (
+                    <li key={p.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
+                      • {p.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
+        </div>
         <button style={styles.stopButton} onClick={() => sendAction({ type: 'FINISH_GAME' })}>
           Stop the game
         </button>
