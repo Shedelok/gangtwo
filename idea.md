@@ -3,6 +3,7 @@
 ## General
 
 - After the game is over, you should see who hasn't pressed restart
+- Fix UI of the "Haven't pressed yet" list under the Start Game button in lobby
 - Full addon descriptions should be not on hover on an addon, but on hover on a question mark sign right to it
 - (Maybe) Make chips clickable
 
