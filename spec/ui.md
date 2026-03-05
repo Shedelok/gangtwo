@@ -90,8 +90,9 @@ Pressing the Stop Game button sets up the new lobby exactly as the previous one 
 have the same addons code.
 
 The Restart button works similar to the "Move to the next round" button. All players must press it for it to take
-effect. Each player can press and unpress it. Players can only see how many of them have this button pressed at the
-moment.
+effect. Each player can press and unpress it. Players can see how many of them have this button pressed at the moment.
+Once the game is over (finished phase), players also see the names of players who have not yet pressed the Restart
+button, displayed right below the Restart button.
 
 ### Table
 

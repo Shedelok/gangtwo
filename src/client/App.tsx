@@ -477,11 +477,22 @@ export default function App() {
         )}
       </div>
       <div style={styles.topRightButtons}>
-        <button
-          style={{ ...styles.restartButton, ...(state.myRestartVote ? { background: '#166534', borderColor: '#15803d' } : {}) }}
-          onClick={() => sendAction({ type: 'TOGGLE_RESTART_VOTE' })}>
-          Restart ({state.restartVotes}/{state.players.length})
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+          <button
+            style={{ ...styles.restartButton, ...(state.myRestartVote ? { background: '#166534', borderColor: '#15803d' } : {}) }}
+            onClick={() => sendAction({ type: 'TOGGLE_RESTART_VOTE' })}>
+            Restart ({state.restartVotes}/{state.players.length})
+          </button>
+          {state.phase === 'finished' && (() => {
+            const notRestarted = state.players.filter(p => !state.restartVoterIds.includes(p.id));
+            if (notRestarted.length === 0) return null;
+            return (
+              <div style={{ fontSize: 11, color: '#888', textAlign: 'right' }}>
+                {notRestarted.map(p => p.name).join(', ')}
+              </div>
+            );
+          })()}
+        </div>
         <button style={styles.stopButton} onClick={() => sendAction({ type: 'FINISH_GAME' })}>
           Stop the game
         </button>

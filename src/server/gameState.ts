@@ -545,6 +545,7 @@ export function buildClientState(socketId: string): ClientGameState {
     startGameVotes: state.startGameVoters.size,
     myStartGameVote: playerId ? state.startGameVoters.has(playerId) : false,
     restartVotes: state.restartVoters.size,
+    restartVoterIds: [...state.restartVoters],
     myRestartVote: playerId ? state.restartVoters.has(playerId) : false,
     rankGuesses: state.phase === 'finished'
       ? Object.fromEntries([...state.rankGuesses].map(([aid, votes]) => [aid, Object.fromEntries(votes)]))
