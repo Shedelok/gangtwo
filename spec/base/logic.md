@@ -43,6 +43,18 @@ Once the 4th round is over, each player gets a button "reveal cards" which, when
 A player can only reveal their cards once everyone with a smaller value last round chip have done so.
 Players can still see the chips, cards, etc. but can't interact with any of them anymore.
 
+# Disconnection and Reconnection
+
+If a player disconnects while in the lobby, they are removed from it immediately. They can rejoin at any time by
+entering their name again.
+
+If a player disconnects during a game or the finished phase, their seat, chips, and cards remain on the table. If the
+player reconnects in the same browser (e.g. after a page refresh or a brief network interruption), they automatically
+resume their old seat and can continue playing. If they connect from a different browser or device, they join as a new
+visitor.
+
+# Stop and Restart
+
 All the time each player has a button "Stop the game", which stops the current game immediately and resets the app to
 the "Lobby" phase, opening the home page for all players. All the time, players also have
 a button "Restart" which starts the game with the same set (and order) of players and any other settings.
