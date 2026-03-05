@@ -293,9 +293,9 @@ export default function Table({ state, sendAction, readOnly }: Props) {
 
             {/* Middle chips – fixed dedicated slots for every chip in the game */}
             {(() => {
-              const allGameChips = [
+              const allGameChips = currentRound === null ? [] : [
                 ...state.middleChips,
-                ...state.players.flatMap(p => p.chips),
+                ...state.players.flatMap(p => p.chips).filter(c => c.round === currentRound),
               ].sort((a, b) => a.round !== b.round ? a.round - b.round : a.number - b.number);
               const middleSet = new Set(state.middleChips.map(c => `${c.round}-${c.number}`));
               if (allGameChips.length === 0) return null;

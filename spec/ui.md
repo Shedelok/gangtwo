@@ -132,8 +132,10 @@ The chips of different colors are always sorted by their corresponding round num
 other.
 
 Chips on the table always have dedicated spots, meaning their position doesn't depend on the number of chips on the
-table. The same chip, when taken and then returned to the table, always ends up in the same position, no matter if any
-other chips were taken/returned from/to the table in between. The chip spots are fixed horizontally and vertically, so
+table. The same value chip, when taken and then returned to the table, always ends up in the same position, no matter if
+any other chips were taken/returned from/to the table in between. Once the round where the chip was introduced is over
+and the chip can no longer move, the spot of the chip is removed from the UI. The chip spots are fixed horizontally and
+vertically, so
 that chips on the table don't move when other chips are touched (this takes into account any additional elements like
 buttons appearing/disappearing next to chips). Each chip spot has a very subtle rectangular border.
 
