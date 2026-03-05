@@ -44,6 +44,7 @@ export interface ClientGameState {
 
 // Client → Server actions
 export type ClientAction =
+  | { type: 'RESUME_SESSION'; sessionId: string }
   | { type: 'JOIN_LOBBY'; name: string }
   | { type: 'START_GAME' }
   | { type: 'TOGGLE_ADDON'; addonId: string }

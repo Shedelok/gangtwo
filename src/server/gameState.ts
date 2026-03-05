@@ -35,6 +35,8 @@ interface ServerGameState {
   socketToPlayerId: Map<string, string>;
   playerIdToSocketId: Map<string, string>;
   prefillNames: Map<string, string>;
+  sessionIdToPlayerId: Map<string, string>;
+  socketToSessionId: Map<string, string>;
   startGameVoters: Set<string>;
   restartVoters: Set<string>;
   noOldChipsHidden: Map<string, Chip[]>; // playerId → chips hidden by no-old-chips addon
@@ -60,6 +62,8 @@ const state: ServerGameState = {
   socketToPlayerId: new Map(),
   playerIdToSocketId: new Map(),
   prefillNames: new Map(),
+  sessionIdToPlayerId: new Map(),
+  socketToSessionId: new Map(),
   startGameVoters: new Set(),
   restartVoters: new Set(),
   noOldChipsHidden: new Map(),
@@ -138,6 +142,21 @@ export function registerConnection(socketId: string): void {
   state.socketToPlayerId.set(socketId, '');
 }
 
+// Returns true if successfully reconnected to an existing seat
+export function resumeSession(socketId: string, sessionId: string): boolean {
+  state.socketToSessionId.set(socketId, sessionId);
+  const playerId = state.sessionIdToPlayerId.get(sessionId);
+  if (!playerId) return false;
+  if (!state.players.find((p) => p.id === playerId)) return false;
+  if (state.phase === 'lobby') return false;
+  // Re-associate new socket with the existing player
+  const oldSocketId = state.playerIdToSocketId.get(playerId);
+  if (oldSocketId) state.socketToPlayerId.set(oldSocketId, '');
+  state.socketToPlayerId.set(socketId, playerId);
+  state.playerIdToSocketId.set(playerId, socketId);
+  return true;
+}
+
 export function addPlayer(socketId: string, name: string): string | null {
   if (state.phase !== 'lobby') return 'Game already in progress';
   const trimmed = name.trim();
@@ -149,6 +168,8 @@ export function addPlayer(socketId: string, name: string): string | null {
   state.socketToPlayerId.set(socketId, playerId);
   state.playerIdToSocketId.set(playerId, socketId);
   state.prefillNames.delete(socketId);
+  const sessionId = state.socketToSessionId.get(socketId);
+  if (sessionId) state.sessionIdToPlayerId.set(sessionId, playerId);
   state.players.push({
     id: playerId,
     name: trimmed,
@@ -166,6 +187,7 @@ export function removePlayer(socketId: string): void {
   }
   state.socketToPlayerId.delete(socketId);
   state.playerIdToSocketId.delete(playerId);
+  state.socketToSessionId.delete(socketId);
   state.startGameVoters.delete(playerId);
   state.restartVoters.delete(playerId);
   if (state.phase === 'lobby') {
@@ -487,6 +509,7 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.positiveAddonCount = savedPositiveCount;
   state.startGameVoters = new Set();
   state.restartVoters = new Set();
+  state.sessionIdToPlayerId = new Map();
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
     state.socketToPlayerId.set(socketId, '');
