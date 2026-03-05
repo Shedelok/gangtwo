@@ -92,8 +92,9 @@ have the same addons code.
 The Restart button works similar to the "Move to the next round" button. All players must press it for it to take
 effect. Each player can press and unpress it. Players can see how many of them have this button pressed at the moment.
 Once the game is over (finished phase), players also see the names of players who have not yet pressed the Restart
-button, displayed right below the Restart button, prefixed with "Haven't pressed yet:". The list wraps if player
-names are long. The list disappears once all players have pressed Restart.
+button, displayed right below the Restart button, prefixed with "Haven't pressed yet:". Each name is on its own line
+with a bullet point and is left-aligned. Long names are truncated with an ellipsis. The list disappears once all
+players have pressed Restart.
 
 ### Table
 
