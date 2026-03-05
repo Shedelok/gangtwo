@@ -179,6 +179,22 @@ export default function Lobby({ state, sendAction }: Props) {
                 : 'Too many addons requested for the selected pool'}
             </div>
           )}
+          {(() => {
+            const notStarted = state.players.filter(p => !state.startGameVoterIds.includes(p.id));
+            if (notStarted.length === 0 || notStarted.length === state.players.length) return null;
+            return (
+              <div style={{ marginTop: 4, fontSize: 11, color: '#888' }}>
+                <div>Haven't pressed yet:</div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                  {notStarted.map(p => (
+                    <li key={p.id} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
+                      • {p.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
