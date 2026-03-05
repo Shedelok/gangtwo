@@ -487,8 +487,8 @@ export default function App() {
             const notRestarted = state.players.filter(p => !state.restartVoterIds.includes(p.id));
             if (notRestarted.length === 0) return null;
             return (
-              <div style={{ fontSize: 11, color: '#888', textAlign: 'right' }}>
-                {notRestarted.map(p => p.name).join(', ')}
+              <div style={{ fontSize: 11, color: '#888', textAlign: 'right', maxWidth: 200, wordBreak: 'break-word' }}>
+                Haven't pressed yet: {notRestarted.map(p => p.name).join(', ')}
               </div>
             );
           })()}
