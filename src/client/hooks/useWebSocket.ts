@@ -3,6 +3,15 @@ import type { ClientGameState, ClientAction, ServerMessage } from '@shared/types
 
 type Status = 'connecting' | 'connected' | 'disconnected';
 
+function getSessionId(): string {
+  let id = localStorage.getItem('gangGameSessionId');
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem('gangGameSessionId', id);
+  }
+  return id;
+}
+
 export function useWebSocket() {
   const [state, setState] = useState<ClientGameState | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
@@ -20,6 +29,7 @@ export function useWebSocket() {
     ws.onopen = () => {
       retriesRef.current = 0;
       setStatus('connected');
+      ws.send(JSON.stringify({ type: 'RESUME_SESSION', sessionId: getSessionId() }));
     };
 
     ws.onmessage = (ev) => {
