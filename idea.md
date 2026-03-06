@@ -3,7 +3,7 @@
 ## General
 
 - Full addon descriptions should be not on hover on an addon, but on hover on a question mark sign right to it
-- Change wording on the "Move to next round" button to avoid confusion of it being pressed or not
+- restart tick should not be visible until all other players reveal their cards
 - (Maybe) Make chips clickable
 
 ## Addons

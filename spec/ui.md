@@ -31,7 +31,8 @@ player(s))", where X is the number of players currently in the lobby and "player
 One the player joins the lobby, they see the full list of players and "Start Game" button. If the game cannot start for
 any logical reason (for example because too many addons are requested), the "Start Game" button appears gray and cannot
 be pressed. Start Game button only takes effect once all players in the lobby have it pressed. Players can press/unpress
-it, and they can see how many players have it pressed. Players who have the Start Game button pressed have a green tick
+it, and they can see how many players have it pressed. When the button is pressed, it reads "Waiting" and has less
+bright color. Players who have the Start Game button pressed have a green tick
 on the right side. The space for the tick is always reserved, so that when it appears/disappears, the size of the
 player's row doesn't change.
 
@@ -88,12 +89,15 @@ The players can also see the code of the current addons setup.
 
 The Stop Game and Restart buttons are displayed side by side with a gap between them.
 
-Pressing the Stop Game button sets up the new lobby exactly as the previous one that was just over, meaning it shoud
+Pressing the Stop Game button sets up the new lobby exactly as the previous one that was just over, meaning it should
 have the same addons code.
 
 The Restart button works similar to the "Move to the next round" button. All players must press it for it to take
-effect. Each player can press and unpress it. After the game is over and players don't have any available actions (
-including revealing cards) rather than restart/stop the game, each player has a tick right next to their name indicating
+effect. Each player can press and unpress it. Each player sees how many players have the button pressed.
+When the button is pressed by the player it reads "Waiting", still displays number of players who pressed it and has
+a less bright color.
+After the game is over and players don't have any available actions (including revealing cards) rather than restart/stop
+the game, each player has a tick right next to their name indicating
 that they have Restart button pressed. The tick should not move the name horizontally, it should appear to the right
 from the name, but the name should still be centered as if there was no tick. This helps players to see who hasn't
 pressed the Restart button yet, but not
@@ -165,8 +169,9 @@ action happened. The chip should never magically "teleport".
 ### Ready Button
 
 The "ready" button is only visible to the player themselves. When not ready, the
-button reads "Move to next round" and is styled prominently to draw attention. When ready, the button reads "Ready!"
-and is styled green. Clicking the button toggles the state. The button is sized to fit its label and does not affect the
+button reads "Move to next round" and is styled prominently to draw attention. When ready, the button reads "Waiting"
+and has less bright color. Clicking the button toggles the state. The button is sized to fit its label and does not
+affect the
 size of the player seat.
 
 ### Sound Bar

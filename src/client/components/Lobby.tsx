@@ -167,12 +167,12 @@ export default function Lobby({ state, sendAction }: Props) {
           <button
             style={{
               ...s.startButton,
-              ...(!canStart ? s.disabledButton : state.myStartGameVote ? { background: '#1e8449' } : {}),
+              ...(!canStart ? s.disabledButton : state.myStartGameVote ? { background: '#555', color: '#aaa' } : {}),
             }}
             onClick={() => canStart && sendAction({ type: 'START_GAME' })}
             disabled={!canStart}
           >
-            {state.myStartGameVote ? `Ready! (${state.startGameVotes}/${state.players.length})` : `Start Game (${state.startGameVotes}/${state.players.length})`}
+            {state.myStartGameVote ? `Waiting (${state.startGameVotes}/${state.players.length})` : `Start Game (${state.startGameVotes}/${state.players.length})`}
           </button>
           {!canStart && (
             <div style={s.hint}>
