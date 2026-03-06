@@ -1,31 +1,35 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useWebSocket } from './hooks/useWebSocket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
+import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H } from './components/ActionCardPanel';
 import type { ClientGameState } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 
-const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'punch-1.mp3', 'punch-2.mp3'];
+const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
-type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START';
+type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED';
 const SOUND_DEFAULTS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'bell-1.mp3',
   CHIP_MOVE: 'fast-woosh.mp3',
   CARD_FLIP: 'card-flip.mp3',
   GAME_START: 'car-engine-start.mp3',
+  ACTION_CARD_PLAYED: 'magic-1.mp3',
 };
 const SOUND_LABELS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'Steal from you',
   CHIP_MOVE: 'Chip move',
   CARD_FLIP: 'Card flip',
   GAME_START: 'Game start',
+  ACTION_CARD_PLAYED: 'Action card played',
 };
 const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   STEAL_FROM_YOU: 1,
   CHIP_MOVE: 0.2,
   CARD_FLIP: 1,
   GAME_START: 1,
+  ACTION_CARD_PLAYED: 1,
 };
 
 const preloadedAudio: Record<string, HTMLAudioElement> = {};
@@ -215,6 +219,37 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
+function FlyingActionCard({ from, to, label, snap = false }: { from: { x: number; y: number }; to: { x: number; y: number }; label: string; snap?: boolean }) {
+  const [arrived, setArrived] = useState(snap);
+  useEffect(() => {
+    if (snap) return;
+    const raf = requestAnimationFrame(() => setArrived(true));
+    return () => cancelAnimationFrame(raf);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const atDest = arrived || snap;
+  return createPortal(
+    <div style={{
+      position: 'fixed',
+      left: atDest ? to.x : from.x,
+      top: atDest ? to.y : from.y,
+      width: CARD_W,
+      height: CARD_H,
+      transition: atDest && !snap ? 'left 2s ease, top 2s ease' : 'none',
+      zIndex: 1000,
+      pointerEvents: 'none',
+      borderRadius: 6,
+      border: '2px solid #4a7a4a',
+      background: '#1a2d1a',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '6px 4px', textAlign: 'center',
+      userSelect: 'none',
+    }}>
+      <div style={{ fontSize: 9, color: '#90c090', lineHeight: 1.4 }}>{label}</div>
+    </div>,
+    document.body
+  );
+}
+
 export default function App() {
   const { state, sendAction, lastError, status } = useWebSocket();
   const [volume, setVolume] = useState(0.5);
@@ -234,6 +269,16 @@ export default function App() {
   const [codeCopied, setCodeCopied] = useState(false);
   const handHintRef = useRef<HTMLDivElement>(null);
   const [handHintPos, setHandHintPos] = useState<{ top: number; left: number } | null>(null);
+  const [actionStep, setActionStep] = useState<ActionWorkflowStep>('idle');
+  const [actionCardIndex, setActionCardIndex] = useState<0 | 1 | null>(null);
+  const [activeAddonId, setActiveAddonId] = useState<string | null>(null);
+  const cardElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const seatElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const prevLockRef = useRef<ClientGameState['actionCardLock'] | undefined>(undefined);
+  const [flyingCard, setFlyingCard] = useState<{ from: { x: number; y: number }; to: { x: number; y: number }; label: string; snap?: boolean } | null>(null);
+  const flyingCardRef = useRef(flyingCard);
+  flyingCardRef.current = flyingCard;
+  const returnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!state || state.phase !== 'lobby' || codeFocused) return;
@@ -287,7 +332,101 @@ export default function App() {
     if (state.communityCards.length > prev.communityCards.length) {
       playSound(files.CARD_FLIP, vol, SOUND_VOLUME_MULTIPLIER.CARD_FLIP);
     }
+
+    const shownCardChanged = state.myShownCard !== prev.myShownCard;
+    if (shownCardChanged) {
+      playSound(files.CARD_FLIP, vol, SOUND_VOLUME_MULTIPLIER.CARD_FLIP);
+    }
+
+    const actionCardCommitted =
+      (!prev.showCardUsed && state.showCardUsed) ||
+      (!prev.unsuitedJackUsed && state.unsuitedJackUsed) ||
+      (!prev.rerollCommonUsed && state.rerollCommonUsed);
+    if (actionCardCommitted) {
+      playSound(files.ACTION_CARD_PLAYED, vol, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_PLAYED);
+    }
   }, [state]);
+
+  useLayoutEffect(() => {
+    if (!state) return;
+    const prev = prevLockRef.current;
+    const curr = state.actionCardLock;
+    prevLockRef.current = curr;
+    const isInitial = prev === undefined;
+
+    // Helper: show card at player's seat immediately without animation
+    const snapToSeat = (addonId: string, playerId: string) => {
+      const seatEl = seatElsRef.current.get(playerId);
+      if (seatEl) {
+        const sr = seatEl.getBoundingClientRect();
+        const addonDef = ADDONS.find(a => a.id === addonId);
+        const pos = { x: sr.left + sr.width / 2 - CARD_W / 2, y: sr.top + sr.height / 2 - CARD_H / 2 };
+        setFlyingCard({ from: pos, to: pos, label: addonDef?.short ?? addonId, snap: true });
+      }
+    };
+
+    // Initial page load: if lock already set, show card at player without animation
+    if (isInitial) {
+      if (curr && curr.playerId !== state.myId) snapToSeat(curr.addonId, curr.playerId);
+      return;
+    }
+
+    // Lock acquired by another player — animate card to their seat
+    if (!prev && curr && curr.playerId !== state.myId) {
+      if (returnTimerRef.current) { clearTimeout(returnTimerRef.current); returnTimerRef.current = null; }
+      if (document.hidden) {
+        // Tab was hidden — skip animation, snap to destination
+        snapToSeat(curr.addonId, curr.playerId);
+      } else {
+        const cardEl = cardElsRef.current.get(curr.addonId);
+        const seatEl = seatElsRef.current.get(curr.playerId);
+        if (cardEl && seatEl) {
+          const cr = cardEl.getBoundingClientRect();
+          const sr = seatEl.getBoundingClientRect();
+          const addonDef = ADDONS.find(a => a.id === curr.addonId);
+          setFlyingCard({
+            from: { x: cr.left, y: cr.top },
+            to: { x: sr.left + sr.width / 2 - CARD_W / 2, y: sr.top + sr.height / 2 - CARD_H / 2 },
+            label: addonDef?.short ?? curr.addonId,
+          });
+        }
+      }
+    }
+    // Lock released
+    if (prev && !curr) {
+      const wasUsed = (prev.addonId === 'show-1-card-to-1-player' && state.showCardUsed)
+        || (prev.addonId === 'action-unsuited-jack' && state.unsuitedJackUsed)
+        || (prev.addonId === 'action-reroll-common' && state.rerollCommonUsed);
+      if (wasUsed) {
+        setFlyingCard(null);
+      } else {
+        // Card was cancelled — animate back to the panel
+        const current = flyingCardRef.current;
+        const cardEl = cardElsRef.current.get(prev.addonId);
+        if (current && cardEl) {
+          const cr = cardEl.getBoundingClientRect();
+          setFlyingCard({ from: current.to, to: { x: cr.left, y: cr.top }, label: current.label });
+          returnTimerRef.current = setTimeout(() => { setFlyingCard(null); returnTimerRef.current = null; }, 2100);
+        } else {
+          setFlyingCard(null);
+        }
+      }
+    }
+  }, [state?.actionCardLock]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Snap in-progress outgoing animation to destination when tab becomes visible
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        const fc = flyingCardRef.current;
+        if (fc && returnTimerRef.current === null) {
+          setFlyingCard({ from: fc.to, to: fc.to, label: fc.label, snap: true });
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   if (status === 'disconnected' && !state) {
     return (
@@ -489,8 +628,34 @@ export default function App() {
       </div>
       {lastError && <div style={styles.error}>{lastError}</div>}
       {state.phase === 'lobby' && <Lobby state={state} sendAction={sendAction} />}
-      {state.phase === 'game' && <Game state={state} sendAction={sendAction} />}
+      {state.phase === 'game' && (
+        <Game state={state} sendAction={sendAction}
+          actionInProgress={actionStep !== 'idle'}
+          onCardSelect={actionStep === 'select-card' && activeAddonId !== 'action-reroll-common' ? (idx) => {
+            if (activeAddonId === 'action-unsuited-jack') {
+              sendAction({ type: 'USE_UNSUITED_JACK', cardIndex: idx });
+              setActionStep('idle'); setActiveAddonId(null);
+            } else {
+              setActionCardIndex(idx); setActionStep('select-player');
+            }
+          } : undefined}
+          onPlayerSelect={actionStep === 'select-player' && actionCardIndex !== null ? (playerId) => { sendAction({ type: 'USE_SHOW_CARD', targetPlayerId: playerId, cardIndex: actionCardIndex }); setActionStep('idle'); setActionCardIndex(null); setActiveAddonId(null); } : undefined}
+          onCommonCardClick={actionStep === 'select-card' && activeAddonId === 'action-reroll-common' ? (idx) => { sendAction({ type: 'USE_REROLL_COMMON', cardIndex: idx }); setActionStep('idle'); setActiveAddonId(null); } : undefined}
+          onSeatElRef={(id, el) => { if (el) seatElsRef.current.set(id, el); else seatElsRef.current.delete(id); }}
+        />
+      )}
       {state.phase === 'finished' && <Game state={state} sendAction={sendAction} readOnly={true} />}
+      {state.phase === 'game' && (
+        <ActionCardPanel
+          state={state}
+          step={actionStep}
+          activeAddonId={activeAddonId}
+          onStart={(addonId) => { sendAction({ type: 'LOCK_ACTION_CARD', addonId }); setActiveAddonId(addonId); setActionStep('select-card'); setActionCardIndex(null); }}
+          onCancel={() => { if (activeAddonId) sendAction({ type: 'UNLOCK_ACTION_CARD', addonId: activeAddonId }); setActionStep('idle'); setActionCardIndex(null); setActiveAddonId(null); }}
+          onCardElRef={(addonId, el) => { if (el) cardElsRef.current.set(addonId, el); else cardElsRef.current.delete(addonId); }}
+        />
+      )}
+      {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} label={flyingCard.label} snap={flyingCard.snap} />}
     </div>
   );
 }

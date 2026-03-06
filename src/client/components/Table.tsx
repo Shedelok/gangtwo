@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import type { ClientGameState, ClientAction, RoundNumber, Chip } from '@shared/types';
+import type { ClientGameState, ClientAction, RoundNumber, Chip, Card } from '@shared/types';
 import PlayerSeat from './PlayerSeat';
 import ChipCircle from './ChipCircle';
 import CommunityCards from './CommunityCards';
@@ -84,11 +84,16 @@ interface Props {
   state: ClientGameState;
   sendAction: (a: ClientAction) => void;
   readOnly: boolean;
+  onCardSelect?: (idx: 0 | 1) => void;
+  onPlayerSelect?: (playerId: string) => void;
+  onCommonCardClick?: (idx: number) => void;
+  actionInProgress?: boolean;
+  onSeatElRef?: (playerId: string, el: HTMLDivElement | null) => void;
 }
 
 function getScale() { return (window.innerWidth * 0.6) / CONTAINER_W; }
 
-export default function Table({ state, sendAction, readOnly }: Props) {
+export default function Table({ state, sendAction, readOnly, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef }: Props) {
   const currentRound = (state.currentRound ?? 1) as RoundNumber;
   const myIndex = state.players.findIndex(p => p.id === state.myId);
   const rotated = myIndex >= 0
@@ -184,6 +189,26 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   hidingChipsRef.current = hidingChips;
   const flyingElsRef = useRef(new Map<string, HTMLDivElement>());
   const tableSlotElsRef = useRef(new Map<string, HTMLDivElement>());
+
+  // Track shown card for in-place flip animation (including flip-back when server clears it)
+  const [shownCard, setShownCard] = useState<{ sourceId: string; idx: 0 | 1; card: Card; faceUp: boolean } | null>(null);
+  const shownCardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (state.myShownCard && state.myShownCardFrom != null && state.myShownCardIndex != null) {
+      // New card shown: start face-down then flip face-up after a brief tick
+      setShownCard({ sourceId: state.myShownCardFrom, idx: state.myShownCardIndex, card: state.myShownCard, faceUp: false });
+      if (shownCardTimerRef.current) clearTimeout(shownCardTimerRef.current);
+      shownCardTimerRef.current = setTimeout(() => {
+        setShownCard(prev => prev ? { ...prev, faceUp: true } : null);
+      }, 50);
+    } else if (shownCard && shownCard.faceUp) {
+      // Card cleared by server: flip back face-down, then clear after animation
+      setShownCard(prev => prev ? { ...prev, faceUp: false } : null);
+      if (shownCardTimerRef.current) clearTimeout(shownCardTimerRef.current);
+      shownCardTimerRef.current = setTimeout(() => setShownCard(null), 1050);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.myShownCard, state.myShownCardFrom, state.myShownCardIndex]);
 
   const registerChip = useCallback((key: string, el: HTMLDivElement | null) => {
     if (el) chipElsRef.current.set(key, el);
@@ -292,7 +317,7 @@ export default function Table({ state, sendAction, readOnly }: Props) {
             </div>
 
             {/* Community cards */}
-            <CommunityCards cards={state.communityCards} blackAndRed={blackAndRed} />
+            <CommunityCards cards={state.communityCards} blackAndRed={blackAndRed} onCardClick={onCommonCardClick} />
 
             {/* Middle chips – fixed dedicated slots for every chip in the game */}
             {(() => {
@@ -318,8 +343,8 @@ export default function Table({ state, sendAction, readOnly }: Props) {
                         </div>
                         {!readOnly && (
                           <button
-                            onClick={inMiddle && !iHaveCurrentRoundChip ? () => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number }) : undefined}
-                            style={{ padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip ? 'pointer' : 'default' }}>
+                            onClick={inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? () => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number }) : undefined}
+                            style={{ padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'pointer' : 'default' }}>
                             Take
                           </button>
                         )}
@@ -400,7 +425,13 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               blackAndRed={blackAndRed}
               showRestartTick={showRestartTick}
               hasRestartVoted={state.restartVoterIds.includes(player.id)}
-              style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
+              onCardSelect={isMe ? onCardSelect : undefined}
+            onPlayerSelect={!isMe && onPlayerSelect ? () => onPlayerSelect(player.id) : undefined}
+            actionInProgress={actionInProgress}
+            onSeatElRef={onSeatElRef ? el => onSeatElRef(player.id, el) : undefined}
+            unsuitedJackIndex={state.unsuitedJacks[player.id]}
+            shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : null}
+            style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );
         })}

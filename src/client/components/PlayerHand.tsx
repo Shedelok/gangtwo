@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Card } from '@shared/types';
+import './PlayerHand.css';
 
 const SUIT_SYMBOLS: Record<string, string> = {
   spades: '♠',
@@ -41,6 +42,31 @@ function PlayingCard({ card, small, blackAndRed }: { card: Card; small: boolean;
   );
 }
 
+function UnsuitedJack({ small }: { small: boolean }) {
+  const w = small ? 52 : 80;
+  const h = small ? 78 : 120;
+  return (
+    <div style={{
+      width: w, height: h,
+      background: '#B87333',
+      borderRadius: small ? 5 : 8,
+      display: 'flex',
+      flexDirection: 'column',
+      padding: small ? 4 : 8,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+      userSelect: 'none',
+      flexShrink: 0,
+    }}>
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color: '#fff' }}>
+        <span style={{ fontSize: small ? 12 : 18, fontWeight: 'bold' }}>J</span>
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: small ? 20 : 32, color: '#fff', fontWeight: 'bold' }}>
+        J
+      </div>
+    </div>
+  );
+}
+
 function CardBack({ small }: { small: boolean }) {
   const w = small ? 52 : 80;
   const h = small ? 78 : 120;
@@ -71,29 +97,73 @@ interface Props {
   faceDown?: boolean;
   small?: boolean;
   blackAndRed?: boolean;
+  onCardClick?: (idx: 0 | 1) => void;
+  unsuitedJackIndex?: number;
+  // When set, the card at this index plays a flip animation (face-down → face-up or back)
+  shownCardInfo?: { idx: 0 | 1; card: Card; faceUp: boolean } | null;
 }
 
-export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false }: Props) {
+export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, onCardClick, unsuitedJackIndex, shownCardInfo }: Props) {
   const gap = small ? 6 : 12;
-  if (faceDown) {
-    return (
-      <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
-        <CardBack small={small} />
-        <CardBack small={small} />
-      </div>
-    );
-  }
-  if (!cards) {
+  // If neither card is special and we have no card data, show placeholder
+  if (!cards && unsuitedJackIndex === undefined && !faceDown && !shownCardInfo) {
     return (
       <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
         <div style={{ color: '#555', fontSize: 12 }}>—</div>
       </div>
     );
   }
+  const w = small ? 52 : 80;
+  const h = small ? 78 : 120;
   return (
     <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
-      <PlayingCard card={cards[0]} small={small} blackAndRed={blackAndRed} />
-      <PlayingCard card={cards[1]} small={small} blackAndRed={blackAndRed} />
+      {([0, 1] as const).map(idx => {
+        const isJack = unsuitedJackIndex === idx;
+        const glowing = !!onCardClick;
+        const isShown = shownCardInfo?.idx === idx;
+
+        if (isShown && shownCardInfo) {
+          const card = shownCardInfo.card;
+          const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
+          const suitColor = isRed ? '#c0392b' : '#1a1a2e';
+          const symbol = SUIT_SYMBOLS[card.suit];
+          return (
+            <div key={idx} className="ph-flip-container" style={{ width: w, height: h }}>
+              <div className={`ph-flipper ${shownCardInfo.faceUp ? 'face-up' : 'face-down'}`}>
+                <div className="ph-face ph-back" />
+                <div className="ph-face ph-front" style={{ color: suitColor }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+                    <span style={{ fontSize: small ? 12 : 18, fontWeight: 'bold' }}>{card.rank}</span>
+                    <span style={{ fontSize: small ? 10 : 14 }}>{symbol}</span>
+                  </div>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: small ? 20 : 32 }}>
+                    {symbol}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div
+            key={idx}
+            onClick={onCardClick ? () => onCardClick(idx) : undefined}
+            style={{
+              cursor: glowing ? 'pointer' : 'default',
+              borderRadius: small ? 5 : 8,
+              boxShadow: glowing ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
+            }}
+          >
+            {isJack
+              ? <UnsuitedJack small={small} />
+              : (faceDown || !cards)
+                ? <CardBack small={small} />
+                : <PlayingCard card={cards[idx]} small={small} blackAndRed={blackAndRed} />
+            }
+          </div>
+        );
+      })}
     </div>
   );
 }

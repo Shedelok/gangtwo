@@ -40,6 +40,14 @@ export interface ClientGameState {
   myRestartVote: boolean;     // whether the current player has voted to restart
   rankGuesses: Record<string, Record<string, string>>; // addonId → (voterId → rank); populated during guess-rank addons
   winningGuessRanks: Record<string, string>; // addonId → winning rank (set when voting locks)
+  showCardUsed: boolean;         // whether the show-1-card action has been used this game
+  myShownCard: Card | null;           // card that another player showed to me (null if none)
+  myShownCardFrom: string | null;     // id of the player who showed me a card
+  myShownCardIndex: 0 | 1 | null;    // which card index (0 or 1) of the source player was shown
+  actionCardLock: { addonId: string; playerId: string } | null; // which player is currently using which action card
+  unsuitedJacks: Record<string, number>; // playerId → card index (0 or 1) of unsuited jack
+  unsuitedJackUsed: boolean;     // whether the unsuited jack action has been used this game
+  rerollCommonUsed: boolean;     // whether the reroll-common action has been used this game
 }
 
 // Client → Server actions
@@ -55,7 +63,12 @@ export type ClientAction =
   | { type: 'REVEAL_CARDS' }
   | { type: 'SUBMIT_RANK_GUESS'; addonId: string; rank: string }
   | { type: 'TOGGLE_RESTART_VOTE' }
-  | { type: 'FINISH_GAME' };
+  | { type: 'FINISH_GAME' }
+  | { type: 'USE_SHOW_CARD'; targetPlayerId: string; cardIndex: 0 | 1 }
+  | { type: 'USE_UNSUITED_JACK'; cardIndex: 0 | 1 }
+  | { type: 'USE_REROLL_COMMON'; cardIndex: number }
+  | { type: 'LOCK_ACTION_CARD'; addonId: string }
+  | { type: 'UNLOCK_ACTION_CARD'; addonId: string };
 
 // Server → Client messages
 export type ServerMessage =

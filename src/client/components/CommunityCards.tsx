@@ -48,9 +48,10 @@ function CommunityCard({ card, animate, blackAndRed }: { card: Card; animate: bo
 interface Props {
   cards: Card[];
   blackAndRed?: boolean;
+  onCardClick?: (idx: number) => void;
 }
 
-export default function CommunityCards({ cards, blackAndRed = false }: Props) {
+export default function CommunityCards({ cards, blackAndRed = false, onCardClick }: Props) {
   // animateFromIndex: cards at index >= this value were newly added and should animate.
   // Initialized to cards.length so cards present on first render never animate.
   const [animateFromIndex, setAnimateFromIndex] = useState<number>(() => cards.length);
@@ -72,7 +73,17 @@ export default function CommunityCards({ cards, blackAndRed = false }: Props) {
   return (
     <div style={{ display: 'flex', gap: 5, justifyContent: 'center', flexWrap: 'wrap' }}>
       {cards.map((card, i) => (
-        <CommunityCard key={i} card={card} animate={i >= animateFromIndex} blackAndRed={blackAndRed} />
+        <div
+          key={i}
+          onClick={onCardClick ? () => onCardClick(i) : undefined}
+          style={{
+            cursor: onCardClick ? 'pointer' : 'default',
+            borderRadius: 4,
+            boxShadow: onCardClick ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
+          }}
+        >
+          <CommunityCard card={card} animate={i >= animateFromIndex} blackAndRed={blackAndRed} />
+        </div>
       ))}
     </div>
   );

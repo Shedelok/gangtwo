@@ -36,6 +36,12 @@ interface Props {
   // Guess-rank addon props
   guessRankUIs?: Array<{ addonId: string; myVote?: string; locked: boolean }>; // one per addon targeting this seat
   dialogueClouds?: Array<{ text: string; winner: boolean; locked: boolean }>; // one cloud per vote
+  onCardSelect?: (idx: 0 | 1) => void; // in-place card selection for action cards
+  onPlayerSelect?: () => void; // in-place player selection for action cards
+  actionInProgress?: boolean;
+  onSeatElRef?: (el: HTMLDivElement | null) => void;
+  unsuitedJackIndex?: number;
+  shownCardInfo?: { idx: 0 | 1; card: Card; faceUp: boolean } | null;
   style?: React.CSSProperties;
 }
 
@@ -44,7 +50,7 @@ export default function PlayerSeat({
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
   blackAndRed = false, showRestartTick = false, hasRestartVoted = false,
-  guessRankUIs = [], dialogueClouds = [], style,
+  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, shownCardInfo, style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
@@ -60,18 +66,23 @@ export default function PlayerSeat({
   );
 
   return (
-    <div style={{
-      background: isMe ? '#1a3050' : '#16213e',
-      border: `2px solid ${isMe ? '#3a6090' : '#2a3a4a'}`,
-      borderRadius: 10,
-      padding: !readOnly && isMe ? '8px 10px 30px' : '8px 10px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 5,
-      position: 'relative',
-      ...style,
-    }}>
+    <div
+      ref={onSeatElRef}
+      onClick={onPlayerSelect}
+      style={{
+        background: isMe ? '#1a3050' : '#16213e',
+        border: onPlayerSelect ? '2px solid #facc15' : `2px solid ${isMe ? '#3a6090' : '#2a3a4a'}`,
+        borderRadius: 10,
+        padding: !readOnly && isMe ? '8px 10px 30px' : '8px 10px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 5,
+        position: 'relative',
+        cursor: onPlayerSelect ? 'pointer' : 'default',
+        boxShadow: onPlayerSelect ? '0 0 10px 3px rgba(250,204,21,0.5)' : undefined,
+        ...style,
+      }}>
       {/* Dialogue clouds — shows this player's rank guess(es) above their seat */}
       {dialogueClouds.length > 0 && (
         <div style={{
@@ -108,7 +119,7 @@ export default function PlayerSeat({
       </div>
 
       {/* Cards */}
-      <PlayerHand cards={holeCards} faceDown={showFaceDown} small blackAndRed={blackAndRed} />
+      <PlayerHand cards={holeCards} faceDown={showFaceDown} small blackAndRed={blackAndRed} onCardClick={isMe && onCardSelect ? onCardSelect : undefined} unsuitedJackIndex={unsuitedJackIndex} shownCardInfo={shownCardInfo} />
 
       {/* Chips — sorted by round asc, number asc; always rendered to reserve height */}
       <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center', minHeight: 54 }}>
@@ -118,13 +129,13 @@ export default function PlayerSeat({
             return (
               <div key={`${chip.round}-${chip.number}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 <ChipCircle chip={chip} blackInside={isBlack} />
-                {!readOnly && isCurrent && isMe && !isBlack && (
+                {!readOnly && isCurrent && isMe && !isBlack && !actionInProgress && (
                   <button style={{ ...btn, background: '#7f1c1c', color: '#fca5a5' }}
                     onClick={() => sendAction({ type: 'DISCARD_CHIP', chipNumber: chip.number })}>
                     Return
                   </button>
                 )}
-                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && canStealFrom && (
+                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && canStealFrom && !actionInProgress && (
                   <button style={{ ...btn, background: '#5b21b6', color: '#ddd6fe' }}
                     onClick={() => sendAction({ type: 'STEAL_CHIP', fromPlayerId: player.id, chipNumber: chip.number })}>
                     Steal
@@ -180,7 +191,7 @@ export default function PlayerSeat({
       )}
 
       {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size */}
-      {!readOnly && isMe && (
+      {!readOnly && isMe && !actionInProgress && (
         <button
           style={{
             ...btn,

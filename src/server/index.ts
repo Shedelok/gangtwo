@@ -19,6 +19,12 @@ import {
   finishGame,
   toggleAddon,
   setAddonCount,
+  lockActionCard,
+  unlockActionCard,
+  useShowCard,
+  clearShowCardData,
+  useUnsuitedJack,
+  useRerollCommon,
   buildClientState,
 } from './gameState';
 
@@ -92,6 +98,22 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'TOGGLE_RESTART_VOTE':
       error = toggleRestartVote(socketId);
+      break;
+    case 'LOCK_ACTION_CARD':
+      error = lockActionCard(socketId, action.addonId);
+      break;
+    case 'UNLOCK_ACTION_CARD':
+      error = unlockActionCard(socketId, action.addonId);
+      break;
+    case 'USE_SHOW_CARD':
+      error = useShowCard(socketId, action.targetPlayerId, action.cardIndex);
+      if (!error) setTimeout(() => { clearShowCardData(); broadcastAll(); }, 5000);
+      break;
+    case 'USE_UNSUITED_JACK':
+      error = useUnsuitedJack(socketId, action.cardIndex);
+      break;
+    case 'USE_REROLL_COMMON':
+      error = useRerollCommon(socketId, action.cardIndex);
       break;
     case 'FINISH_GAME':
       finishGame(true, true);

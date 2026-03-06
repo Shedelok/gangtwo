@@ -21,10 +21,16 @@ of CHIP_MOVE sound is multiplied by 0.2.
 
 ## Card Flip
 
-When a card is flipped, all players hear "CARD_FLIP" sound which defaults to spec/resources/card-flip.mp3.
+When a card is flipped (regardless of where it is: on the table, in hand, etc.), all players hear "CARD_FLIP" sound
+which defaults to spec/resources/card-flip.mp3.
 
 ## Game Start
 
 At the beginning of the game, all players hear "GAME_START" sound which defaults to spec/resources/car-engine-start.mp3.
 This sound is also played after a restart, even if a restart happens immediately after the game starts (on the first
 round).
+
+## Action Card Played
+
+When any player commits an action of an action card, all players hear "ACTION_CARD_PLAYED" sound which defaults to
+spec/resources/magic-1.mp3.

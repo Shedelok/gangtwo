@@ -2,6 +2,8 @@
 
 ## General
 
+- Make UI look good at 100% scale
+- Get rid of spec duplication when describing different animations (chip move, card reveal, action card move)
 - (Maybe) Make chips clickable
 
 ## Addons
@@ -39,3 +41,35 @@
 24. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
 25. Kickers (non-scoring cards) are reversed (go in reversed order).
 26. After dealing cards everyone tells their sum (black-jack sum).
+27. No white chips
+28. No yellow chips
+29. No orange chips
+30. If at least one of the community cards in Round 2 is a J, Q, or K, the following
+    occurs: The player who has the white 1-star chip (from Round 1) must put their
+    pocket cards face down in the discard pile and draw new pocket cards from
+    the deck.
+31. This challenge adds an extra condition for a successful heist. Before the player
+    with the highest-value red chip reveals their hand in the showdown, you must
+    do the following: The other players must confer and agree together on a card
+    value (from 2 to ace) that they believe the player with the highest-value red
+    chip has at least one of in their pocket cards. The player with the highest￾value red chip obviously cannot take
+    part in this discussion or give hints. If the
+    players are incorrect, the heist is unsuccessful, even if the ranking of the red
+    chips was correct.
+32. If none of the community cards in Round 2 is a J, Q, or K, the following
+    occurs: The player who has the highest-value white chip (from Round 1) must
+    put their pocket cards face down in the discard pile and draw new pocket
+    cards from the deck.
+33. Decide which of you will share what hand ranking their current hand has
+    (pocket cards plus current community cards) with the rest of the players. They
+    cannot share further details.
+34. Once the pocket cards have been dealt in Round 1, each player says how
+    many “face cards” (J, Q, K) they have.
+35. Decide which of you will share with everyone how many cards of a specific
+    value they have in their hand
+36. Decide which of you will take one card from the deck and add it to their hand.
+    Afterward, this player must place one of their pocket cards face down on the
+    discard pile. This can be the card that they have just drawn from the deck.
+37. Once the pocket cards have been dealt in Round 1, each of you chooses one
+    of your pocket cards. Everyone then simultaneously passes their chosen card
+    to the player on their left as a pocket card.

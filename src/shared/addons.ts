@@ -3,6 +3,7 @@ export interface AddonDef {
   short: string;
   long: string;
   type: 'negative' | 'positive';
+  hasAction?: boolean;
 }
 
 export const ADDONS: AddonDef[] = [
@@ -65,5 +66,26 @@ export const ADDONS: AddonDef[] = [
     short: "See 1 Neighbor's Cards",
     long: "Besides your own cards you can also see pocket cards of the player next to your left.",
     type: 'positive',
+  },
+  {
+    id: 'show-1-card-to-1-player',
+    short: "[A] Show 1 Card to 1 Player",
+    long: "Once per game, one of the players can show one of their cards to another player for 5 seconds.",
+    type: 'positive',
+    hasAction: true,
+  },
+  {
+    id: 'action-unsuited-jack',
+    short: "[A] Unsuited Jack",
+    long: "Once per game, one of the players can replace one of their cards with a Jack. The player must discard one of their cards to do so. The Jack has no suit (can't be used for flash).",
+    type: 'positive',
+    hasAction: true,
+  },
+  {
+    id: 'action-reroll-common',
+    short: "[A] Reroll Common",
+    long: "Once per game, one of the players can replace one of the common cards with another random card.",
+    type: 'positive',
+    hasAction: true,
   },
 ];

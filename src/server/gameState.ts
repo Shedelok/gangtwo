@@ -40,6 +40,11 @@ interface ServerGameState {
   noOldChipsHidden: Map<string, Chip[]>; // playerId → chips hidden by no-old-chips addon
   rankGuesses: Map<string, Map<string, string>>; // addonId → (voterId → rank)
   winningGuessRanks: Map<string, string>; // addonId → winning rank (set when voting locks)
+  showCardUsed: boolean;
+  showCardData: { sourceId: string; targetId: string; card: Card; cardIndex: 0 | 1 } | null;
+  actionCardLock: { addonId: string; playerId: string } | null;
+  unsuitedJacks: Map<string, number>; // playerId → card index
+  rerollCommonUsed: boolean;
   gameId: string;
 }
 
@@ -65,6 +70,11 @@ const state: ServerGameState = {
   noOldChipsHidden: new Map(),
   rankGuesses: new Map(),
   winningGuessRanks: new Map(),
+  showCardUsed: false,
+  showCardData: null,
+  actionCardLock: null,
+  unsuitedJacks: new Map(),
+  rerollCommonUsed: false,
   gameId: '',
 };
 
@@ -168,6 +178,7 @@ export function removePlayer(socketId: string): void {
   state.playerIdToSocketId.delete(playerId);
   state.startGameVoters.delete(playerId);
   state.restartVoters.delete(playerId);
+  if (state.actionCardLock?.playerId === playerId) state.actionCardLock = null;
   if (state.phase === 'lobby') {
     state.players = state.players.filter((p) => p.id !== playerId);
     // Auto-start if all remaining players have voted and conditions are met
@@ -233,6 +244,11 @@ export function startGame(shufflePlayers = true): string | null {
     player.chips = [];
     player.readyForNextRound = false;
   }
+  state.showCardUsed = false;
+  state.showCardData = null;
+  state.actionCardLock = null;
+  state.unsuitedJacks = new Map();
+  state.rerollCommonUsed = false;
   state.gameId = randomUUID();
   state.phase = 'game';
   return null;
@@ -487,6 +503,11 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.noOldChipsHidden = new Map();
   state.rankGuesses = new Map();
   state.winningGuessRanks = new Map();
+  state.showCardUsed = false;
+  state.showCardData = null;
+  state.actionCardLock = null;
+  state.unsuitedJacks = new Map();
+  state.rerollCommonUsed = false;
   state.enabledAddons = new Set();
   state.blackXValue = null;
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
@@ -499,6 +520,72 @@ export function finishGame(keepNames = false, keepAddons = false): void {
     state.socketToPlayerId.set(socketId, '');
   }
   state.playerIdToSocketId.clear();
+}
+
+export function useUnsuitedJack(socketId: string, cardIndex: 0 | 1): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('action-unsuited-jack')) return 'Addon not active';
+  if (state.unsuitedJacks.size > 0) return 'Action already used this game';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  state.unsuitedJacks.set(playerId, cardIndex);
+  state.actionCardLock = null;
+  return null;
+}
+
+export function useRerollCommon(socketId: string, cardIndex: number): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('action-reroll-common')) return 'Addon not active';
+  if (state.rerollCommonUsed) return 'Action already used this game';
+  if (cardIndex < 0 || cardIndex >= state.communityCards.length) return 'Invalid card index';
+  if (state.deck.length === 0) return 'No cards left in deck';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  const [[newCard], remaining] = [state.deck.slice(0, 1), state.deck.slice(1)];
+  state.communityCards[cardIndex] = newCard;
+  state.deck = remaining;
+  state.rerollCommonUsed = true;
+  state.actionCardLock = null;
+  return null;
+}
+
+export function lockActionCard(socketId: string, addonId: string): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  if (state.actionCardLock) return 'Action card already in use';
+  state.actionCardLock = { addonId, playerId };
+  return null;
+}
+
+export function unlockActionCard(socketId: string, addonId: string): string | null {
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  if (state.actionCardLock?.playerId !== playerId || state.actionCardLock?.addonId !== addonId) return null; // nothing to unlock
+  state.actionCardLock = null;
+  return null;
+}
+
+export function useShowCard(socketId: string, targetPlayerId: string, cardIndex: 0 | 1): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('show-1-card-to-1-player')) return 'Addon not active';
+  if (state.showCardUsed) return 'Action already used this game';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  if (playerId === targetPlayerId) return 'Cannot show card to yourself';
+  const target = state.players.find((p) => p.id === targetPlayerId);
+  if (!target) return 'Target player not found';
+  const holeCards = state.holeCards[playerId];
+  if (!holeCards) return 'No hole cards';
+  const card = holeCards[cardIndex];
+  state.showCardUsed = true;
+  state.showCardData = { sourceId: playerId, targetId: targetPlayerId, card, cardIndex };
+  state.actionCardLock = null;
+  return null;
+}
+
+export function clearShowCardData(): void {
+  state.showCardData = null;
 }
 
 export function buildClientState(socketId: string): ClientGameState {
@@ -561,5 +648,13 @@ export function buildClientState(socketId: string): ClientGameState {
     winningGuessRanks: state.phase === 'finished'
       ? Object.fromEntries(state.winningGuessRanks)
       : {},
+    showCardUsed: state.showCardUsed,
+    myShownCard: (playerId && state.showCardData?.targetId === playerId) ? state.showCardData.card : null,
+    myShownCardFrom: (playerId && state.showCardData?.targetId === playerId) ? state.showCardData.sourceId : null,
+    myShownCardIndex: (playerId && state.showCardData?.targetId === playerId) ? state.showCardData.cardIndex : null,
+    actionCardLock: state.actionCardLock,
+    unsuitedJacks: Object.fromEntries(state.unsuitedJacks),
+    unsuitedJackUsed: state.unsuitedJacks.size > 0,
+    rerollCommonUsed: state.rerollCommonUsed,
   };
 }
