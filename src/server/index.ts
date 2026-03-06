@@ -6,6 +6,7 @@ import path from 'path';
 import type { ClientAction, ServerMessage, ClientGameState } from '../shared/types';
 import {
   registerConnection,
+  resumeSession,
   addPlayer,
   removePlayer,
   toggleStartGameVote,
@@ -60,6 +61,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
   let error: string | null = null;
 
   switch (action.type) {
+    case 'RESUME_SESSION':
+      resumeSession(socketId, action.sessionId);
+      break;
     case 'JOIN_LOBBY':
       error = addPlayer(socketId, action.name);
       break;
