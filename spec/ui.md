@@ -96,7 +96,8 @@ The Restart button works similar to the "Move to the next round" button. All pla
 effect. Each player can press and unpress it. Each player sees how many players have the button pressed.
 When the button is pressed by the player it reads "Waiting", still displays number of players who pressed it and has
 a less bright color.
-After the game is over and players don't have any available actions (including revealing cards) rather than restart/stop
+After the game is over and none of the players has any available action (including revealing cards) rather than
+restart/stop
 the game, each player has a tick right next to their name indicating
 that they have Restart button pressed. The tick should not move the name horizontally, it should appear to the right
 from the name, but the name should still be centered as if there was no tick. This helps players to see who hasn't

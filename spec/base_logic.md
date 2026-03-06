@@ -19,8 +19,8 @@ Players can also de-select some of the addons to prevent them from being randoml
 
 ## Game
 
-Once the "Start Game" button is pressed, the game begins and the set of players is fixed. Let N be
-the number of players in the game.
+Once the "Start Game" button is pressed, the game begins and the set of players is fixed. The players are random
+shuffled. Let N be the number of players in the game.
 
 The game uses standard deck of 52 cards. As soon as the game begins, each player is dealt a pair of
 cards. After that there are 4 rounds of bidding.
@@ -53,4 +53,4 @@ All the time each player has a button "Stop the game", which stops the current g
 the "Lobby" phase. For each of the players who participated in the game that was stopped by pressing "Stop the game",
 their name is pre-typed into the input field for the name for the next game to allow them to join the next lobby in
 just one click without having to retype their name. All the time, players also have a button "Restart" which starts the
-game with the same set of players and any other settings (including addons).
+game with the same set (and order) of players and any other settings (including addons).

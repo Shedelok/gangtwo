@@ -97,7 +97,8 @@ export default function Table({ state, sendAction, readOnly }: Props) {
   const myPlayer = state.players.find(p => p.id === state.myId);
   const iHaveCurrentRoundChip = !!myPlayer?.chips.some(c => c.round === currentRound);
   const myCardsRevealed = !!state.revealedHoleCards[state.myId];
-  const showRestartTick = readOnly && myCardsRevealed;
+  const allCardsRevealed = readOnly && state.players.every(p => !!state.revealedHoleCards[p.id]);
+  const showRestartTick = allCardsRevealed;
   const n = rotated.length;
   const blackNumbers: number[] = [];
   if (state.enabledAddons.includes('ones-are-black')) blackNumbers.push(1);

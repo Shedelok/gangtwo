@@ -3,7 +3,6 @@
 ## General
 
 - Full addon descriptions should be not on hover on an addon, but on hover on a question mark sign right to it
-- restart tick should not be visible until all other players reveal their cards
 - (Maybe) Make chips clickable
 
 ## Addons

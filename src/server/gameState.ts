@@ -178,9 +178,16 @@ export function removePlayer(socketId: string): void {
   // During game, keep the player to not break state; their socket is just gone
 }
 
-export function startGame(): string | null {
+export function startGame(shufflePlayers = true): string | null {
   if (state.phase !== 'lobby') return 'Game already running';
   if (state.players.length < 2) return 'Need at least 2 players';
+
+  if (shufflePlayers) {
+    for (let i = state.players.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [state.players[i], state.players[j]] = [state.players[j], state.players[i]];
+    }
+  }
 
   const negativePool = ADDONS
     .filter((a) => a.type === 'negative' && state.addonPool.has(a.id))
@@ -401,7 +408,7 @@ export function restartGame(): string | null {
   for (const { socketId, name } of socketNames) {
     addPlayer(socketId, name);
   }
-  return startGame();
+  return startGame(false);
 }
 
 export function toggleStartGameVote(socketId: string): string | null {
