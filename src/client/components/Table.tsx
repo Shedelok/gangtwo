@@ -96,6 +96,8 @@ export default function Table({ state, sendAction, readOnly }: Props) {
     : state.players;
   const myPlayer = state.players.find(p => p.id === state.myId);
   const iHaveCurrentRoundChip = !!myPlayer?.chips.some(c => c.round === currentRound);
+  const myCardsRevealed = !!state.revealedHoleCards[state.myId];
+  const showRestartTick = readOnly && myCardsRevealed;
   const n = rotated.length;
   const blackNumbers: number[] = [];
   if (state.enabledAddons.includes('ones-are-black')) blackNumbers.push(1);
@@ -341,7 +343,6 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               ? (state.revealedHoleCards[player.id] ?? null)
               : (state.neighborHoleCards[player.id] ?? null);
           const showFaceDown = !readOnly && !isMe && !state.neighborHoleCards[player.id];
-          const myCardsRevealed = !!state.revealedHoleCards[state.myId];
           const myRound4Chip = myPlayer?.chips.find((c) => c.round === 4);
           const chipOrderCanReveal = !myRound4Chip || state.players
             .filter((p) => p.id !== state.myId)
@@ -396,6 +397,8 @@ export default function Table({ state, sendAction, readOnly }: Props) {
               blackNumbers={blackNumbers}
               canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
               blackAndRed={blackAndRed}
+              showRestartTick={showRestartTick}
+              hasRestartVoted={state.restartVoterIds.includes(player.id)}
               style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );

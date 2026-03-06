@@ -31,6 +31,8 @@ interface Props {
   blackNumbers?: number[];
   canStealFrom?: boolean;
   blackAndRed?: boolean;
+  showRestartTick?: boolean;
+  hasRestartVoted?: boolean;
   // Guess-rank addon props
   guessRankUIs?: Array<{ addonId: string; myVote?: string; locked: boolean }>; // one per addon targeting this seat
   dialogueClouds?: Array<{ text: string; winner: boolean; locked: boolean }>; // one cloud per vote
@@ -41,7 +43,8 @@ export default function PlayerSeat({
   player, isMe, holeCards, showFaceDown,
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
-  blackAndRed = false, guessRankUIs = [], dialogueClouds = [], style,
+  blackAndRed = false, showRestartTick = false, hasRestartVoted = false,
+  guessRankUIs = [], dialogueClouds = [], style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
@@ -95,8 +98,13 @@ export default function PlayerSeat({
       )}
 
       {/* Name */}
-      <div style={{ fontSize: 12, fontWeight: 'bold', color: isMe ? '#90c0ff' : '#bbb', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
-        {player.name}{isMe ? ' (you)' : ''}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: 12, fontWeight: 'bold', color: isMe ? '#90c0ff' : '#bbb', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
+          {player.name}{isMe ? ' (you)' : ''}
+        </div>
+        {showRestartTick && (
+          <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: hasRestartVoted ? '#4ade80' : 'transparent', pointerEvents: 'none' }}>✓</span>
+        )}
       </div>
 
       {/* Cards */}

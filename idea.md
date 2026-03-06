@@ -2,10 +2,8 @@
 
 ## General
 
-- After the game is over, you should see who hasn't pressed restart
-- Fix UI of the "Haven't pressed yet" list under the Start Game button in lobby
 - Full addon descriptions should be not on hover on an addon, but on hover on a question mark sign right to it
-- Hide list of players who hasn't pressed restart until all cards are revealed
+- Change wording on the "Move to next round" button to avoid confusion of it being pressed or not
 - (Maybe) Make chips clickable
 
 ## Addons

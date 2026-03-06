@@ -31,12 +31,9 @@ player(s))", where X is the number of players currently in the lobby and "player
 One the player joins the lobby, they see the full list of players and "Start Game" button. If the game cannot start for
 any logical reason (for example because too many addons are requested), the "Start Game" button appears gray and cannot
 be pressed. Start Game button only takes effect once all players in the lobby have it pressed. Players can press/unpress
-it, and they can see how many players have it pressed.
-
-Once any player has pressed Start Game, players also see the names of players who have not yet pressed the Start Game
-button, displayed right below the button, prefixed with "Haven't pressed yet:". Each name is on its own line with a
-bullet point and is left-aligned. Long names are truncated with an ellipsis. The list disappears once all players have
-pressed Start Game.
+it, and they can see how many players have it pressed. Players who have the Start Game button pressed have a green tick
+on the right side. The space for the tick is always reserved, so that when it appears/disappears, the size of the
+player's row doesn't change.
 
 ### Addons
 
@@ -95,11 +92,12 @@ Pressing the Stop Game button sets up the new lobby exactly as the previous one 
 have the same addons code.
 
 The Restart button works similar to the "Move to the next round" button. All players must press it for it to take
-effect. Each player can press and unpress it. Players can see how many of them have this button pressed at the moment.
-Once the game is over (finished phase), players also see the names of players who have not yet pressed the Restart
-button, displayed right below the Restart button, prefixed with "Haven't pressed yet:". Each name is on its own line
-with a bullet point and is left-aligned. Long names are truncated with an ellipsis. The list disappears once all
-players have pressed Restart.
+effect. Each player can press and unpress it. After the game is over and players don't have any available actions (
+including revealing cards) rather than restart/stop the game, each player has a tick right next to their name indicating
+that they have Restart button pressed. The tick should not move the name horizontally, it should appear to the right
+from the name, but the name should still be centered as if there was no tick. This helps players to see who hasn't
+pressed the Restart button yet, but not
+before the game is over, not to reveal additional meta-information.
 
 ### Table
 
