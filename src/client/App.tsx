@@ -192,9 +192,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '5px',
     cursor: 'default',
   },
-  addonItemHovered: {
-    background: '#1e2d4a',
-  },
   addonShort: {
     fontSize: '12px',
     color: '#ccc',
@@ -231,6 +228,7 @@ export default function App() {
   const [soundPanelOpen, setSoundPanelOpen] = useState(false);
   const [handHintVisible, setHandHintVisible] = useState(false);
   const [hoveredAddon, setHoveredAddon] = useState<string | null>(null);
+  const [hoveredAddonRow, setHoveredAddonRow] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState('');
   const [codeFocused, setCodeFocused] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
@@ -341,13 +339,11 @@ export default function App() {
   const renderAddon = (addon: AddonDef) => {
     const inPool = state.addonPool.includes(addon.id);
     const hovered = hoveredAddon === addon.id;
+    const rowHovered = hoveredAddonRow === addon.id;
     return (
-      <div
-        key={addon.id}
-        style={{ ...styles.addonItem, ...(hovered ? styles.addonItemHovered : {}) }}
-        onMouseEnter={() => setHoveredAddon(addon.id)}
-        onMouseLeave={() => setHoveredAddon(null)}
-      >
+      <div key={addon.id} style={{ ...styles.addonItem, ...(rowHovered ? { background: '#1e2d4a' } : {}) }}
+        onMouseEnter={() => setHoveredAddonRow(addon.id)}
+        onMouseLeave={() => setHoveredAddonRow(null)}>
         {isLobby && (
           <input
             type="checkbox"
@@ -356,8 +352,13 @@ export default function App() {
             style={{ marginTop: '2px', flexShrink: 0, cursor: 'pointer' }}
           />
         )}
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={styles.addonShort}>{addon.short}</span>
+          <span
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, borderRadius: '50%', border: '1px solid #555', color: '#888', fontSize: 10, cursor: 'default', userSelect: 'none', flexShrink: 0 }}
+            onMouseEnter={() => setHoveredAddon(addon.id)}
+            onMouseLeave={() => setHoveredAddon(null)}
+          >?</span>
           {hovered && <div style={styles.addonTooltip} onMouseEnter={() => setHoveredAddon(null)}>{addon.long}</div>}
         </div>
       </div>
@@ -384,7 +385,7 @@ export default function App() {
               setHandHintVisible(true);
             }}
             onMouseLeave={() => setHandHintVisible(false)}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: '50%', border: '1px solid #555', color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none' }}>?</span>
+            <span style={{ color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none', textDecoration: 'underline dotted' }}>Hand Ranking</span>
             {handHintVisible && handHintPos && createPortal(
               <img src="/hand-ranking.png" alt="Hand rankings"
                 style={{ position: 'fixed', top: handHintPos.top, left: handHintPos.left, maxWidth: 320, borderRadius: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.6)', zIndex: 9999 }} />,

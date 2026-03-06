@@ -13,10 +13,13 @@ green background. Each list should take 14% of the entire screen in width. The o
 width accordingly.
 The order of the addons is exactly the same as the order they are described in spec/addons.md.
 The players see the list of short names
-of the addons. If they hover over an addon, they see the full description of it. Full description is shown as an
-additional panel that appears when the player hovers over the addon. Hovering over the description itself, but not
-hovering over
-the addon hides the description (it's not hoverable).
+of the addons. On the right side to each addon there's a question mark sign. All question marks are aligned in a single
+column. If player hovers over the sign, they see
+the full description of the addon. Full description is shown as an
+additional panel that appears when the player hovers over the question mark sign. Hovering over the description itself,
+but not hovering over the question mark sign hides the description (it's not hoverable).
+When hovering over a row thi an addon, the row becomes a bit lighter so that it's clearly visible which question mark
+sing corresponds to which addon name.
 
 Above these 2 columns there's a header "Addons" in the same style and color as "Volume" text above it, but in uppercase.
 
@@ -185,6 +188,6 @@ sounds (one mp3 can be used any number of times).
 
 ### Hand Rankings Hint
 
-To the right of the sound control elements there is a question mark icon. When hovered over that icon,
+To the right of the sound control elements there is a hoverable "Hand Ranking" text. When hovered over that text,
 spec/resources/hand-ranking.png is displayed to the user. The hand ranking should be displayed on top of any other
 UI element (including table and players), so it's fully visible and nothing blocks it.
