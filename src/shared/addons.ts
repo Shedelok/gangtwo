@@ -16,7 +16,7 @@ export const ADDONS: AddonDef[] = [
   {
     id: 'guess-2nd-highest-red-chip-hand-rank',
     short: "Guess Rank 2nd Highest",
-    long: "Before the player with the second highest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/street/etc.).",
+    long: "Before the player with the 2nd-highest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/street/etc.).",
     type: 'negative',
   },
   {
@@ -47,6 +47,24 @@ export const ADDONS: AddonDef[] = [
     id: 'xs-are-black',
     short: "Black Xs",
     long: "A random number X from 1 to N is determined at the start of the game. Chips with value X become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time. X stays the same through all rounds.",
+    type: 'negative',
+  },
+  {
+    id: 'no-white-chips',
+    short: "No White Chips",
+    long: "There is no distribution of white chips. The game starts from the 2nd round.",
+    type: 'negative',
+  },
+  {
+    id: 'no-yellow-chips',
+    short: "No Yellow Chips",
+    long: "There is no distribution of yellow chips. After the common cards of the 2nd round are revealed, the round is immediately over and the game moves to the 3rd round.",
+    type: 'negative',
+  },
+  {
+    id: 'no-orange-chips',
+    short: "No Orange Chips",
+    long: "There is no distribution of orange chips. After the common cards of the 3rd round are revealed, the round is immediately over and the game moves to the 4th round.",
     type: 'negative',
   },
   {

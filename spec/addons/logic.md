@@ -35,7 +35,7 @@ and text. 3 seconds after HRC reveals their cards, all the guesses disappear.
 
 ### Addon: Guess Rank 2nd Highest
 
-Same as "Guess Rank Highest" (including the functionality), but for second-highest red chip instead of the highest one.
+Same as "Guess Rank Highest" (including the functionality), but for 2nd-highest red chip instead of the highest one.
 
 ### Addon: Guess Rank Lowest
 
@@ -80,6 +80,28 @@ the game and chips with number X become black. X stays the same through all roun
 is already black (for example, because Black 1s addon is also enabled), then number X is rerolled until this doesn't
 happen. If it's impossible to find such X (for example, if there are 2 players and both Black 1s and Black Ns addons are
 enabled alongside this addon), then this addon has no effect.
+
+## Addon: No White Chips
+
+Short description: "No White Chips"
+
+Long description: There is no distribution of white chips. The game starts from the 2nd round.
+
+Functionality: Round 1 is skipped, the game starts from round 2. White chips never exist in the game.
+
+## Addon: No Yellow Chips
+
+Short description: "No Yellow Chips"
+
+Long description: There is no distribution of yellow chips. After the common cards of the 2nd round are revealed,
+the round is immediately over and the game moves to the 3rd round.
+
+Functionality: When round 2 starts, its common cards are revealed, but chips are not put on the table. Immediately after
+that round 2 ends and round 3 starts.
+
+## Addon: No Orange Chips
+
+Same as "No Yellow Chips", but for orange chips on the 3rd round rather than yellow chips on the 2nd round.
 
 ## Addon: No Old Chips
 

@@ -110,8 +110,19 @@ function getPlayerBySocket(socketId: string): PlayerPublicState | undefined {
   return state.players.find((p) => p.id === playerId);
 }
 
+function isRoundSkipped(round: number): boolean {
+  return (round === 1 && state.enabledAddons.has('no-white-chips')) ||
+         (round === 2 && state.enabledAddons.has('no-yellow-chips')) ||
+         (round === 3 && state.enabledAddons.has('no-orange-chips'));
+}
+
+function roundCommunityCardCount(round: number): number {
+  return round === 1 ? 3 : round <= 3 ? 1 : 0;
+}
+
 function advanceRound(): void {
-  const communityCount = state.currentRound === 1 ? 3 : state.currentRound <= 3 ? 1 : 0;
+  // Draw community cards for the current round ending
+  const communityCount = roundCommunityCardCount(state.currentRound);
   if (communityCount > 0) {
     const [drawn, remaining] = drawCards(state.deck, communityCount);
     state.communityCards.push(...drawn);
@@ -120,8 +131,18 @@ function advanceRound(): void {
 
   if (state.currentRound < 4) {
     const prevRound = state.currentRound;
-    const nextRound = (state.currentRound + 1) as RoundNumber;
-    state.currentRound = nextRound;
+    // Advance to next round; for each skipped round, immediately reveal its community cards
+    let nextRound = state.currentRound + 1;
+    while (nextRound < 4 && isRoundSkipped(nextRound)) {
+      const count = roundCommunityCardCount(nextRound);
+      if (count > 0) {
+        const [drawn, remaining] = drawCards(state.deck, count);
+        state.communityCards.push(...drawn);
+        state.deck = remaining;
+      }
+      nextRound++;
+    }
+    state.currentRound = nextRound as RoundNumber;
     state.middleChips = createChipsForRound(nextRound, state.players.length);
     for (const player of state.players) {
       player.readyForNextRound = false;
@@ -241,9 +262,21 @@ export function startGame(shufflePlayers = true): string | null {
 
   state.holeCards = assignments;
   state.deck = remainingDeck;
+
+  // Skip disabled starting rounds, immediately drawing their community cards
   state.communityCards = [];
-  state.currentRound = 1;
-  state.middleChips = createChipsForRound(1, state.players.length);
+  let startRound = 1;
+  while (startRound <= 3 && isRoundSkipped(startRound)) {
+    const count = roundCommunityCardCount(startRound);
+    if (count > 0) {
+      const [drawn, remaining] = drawCards(state.deck, count);
+      state.communityCards.push(...drawn);
+      state.deck = remaining;
+    }
+    startRound++;
+  }
+  state.currentRound = startRound as RoundNumber;
+  state.middleChips = createChipsForRound(startRound, state.players.length);
   for (const player of state.players) {
     player.chips = [];
     player.readyForNextRound = false;
