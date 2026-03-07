@@ -42,7 +42,7 @@ function PlayingCard({ card, small, blackAndRed }: { card: Card; small: boolean;
   );
 }
 
-function UnsuitedJack({ small }: { small: boolean }) {
+function UnsuitedCard({ small, rank }: { small: boolean; rank: string }) {
   const w = small ? 52 : 80;
   const h = small ? 78 : 120;
   return (
@@ -58,10 +58,10 @@ function UnsuitedJack({ small }: { small: boolean }) {
       flexShrink: 0,
     }}>
       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color: '#fff' }}>
-        <span style={{ fontSize: small ? 12 : 18, fontWeight: 'bold' }}>J</span>
+        <span style={{ fontSize: small ? 12 : 18, fontWeight: 'bold' }}>{rank}</span>
       </div>
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: small ? 20 : 32, color: '#fff', fontWeight: 'bold' }}>
-        J
+        {rank}
       </div>
     </div>
   );
@@ -99,14 +99,16 @@ interface Props {
   blackAndRed?: boolean;
   onCardClick?: (idx: 0 | 1) => void;
   unsuitedJackIndex?: number;
+  unsuitedXIndex?: number;
+  unsuitedXRank?: string;
   // When set, the card at this index plays a flip animation (face-down → face-up or back)
   shownCardInfo?: { idx: 0 | 1; card: Card; faceUp: boolean } | null;
 }
 
-export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, onCardClick, unsuitedJackIndex, shownCardInfo }: Props) {
+export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo }: Props) {
   const gap = small ? 6 : 12;
   // If neither card is special and we have no card data, show placeholder
-  if (!cards && unsuitedJackIndex === undefined && !faceDown && !shownCardInfo) {
+  if (!cards && unsuitedJackIndex === undefined && unsuitedXIndex === undefined && !faceDown && !shownCardInfo) {
     return (
       <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
         <div style={{ color: '#555', fontSize: 12 }}>—</div>
@@ -119,6 +121,7 @@ export default function PlayerHand({ cards, faceDown = false, small = false, bla
     <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
       {([0, 1] as const).map(idx => {
         const isJack = unsuitedJackIndex === idx;
+        const isX = unsuitedXIndex === idx;
         const glowing = !!onCardClick;
         const isShown = shownCardInfo?.idx === idx;
 
@@ -156,7 +159,9 @@ export default function PlayerHand({ cards, faceDown = false, small = false, bla
             }}
           >
             {isJack
-              ? <UnsuitedJack small={small} />
+              ? <UnsuitedCard small={small} rank="J" />
+              : isX
+                ? <UnsuitedCard small={small} rank={unsuitedXRank ?? 'X'} />
               : (faceDown || !cards)
                 ? <CardBack small={small} />
                 : <PlayingCard card={cards[idx]} small={small} blackAndRed={blackAndRed} />

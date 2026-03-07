@@ -82,6 +82,13 @@ export const ADDONS: AddonDef[] = [
     hasAction: true,
   },
   {
+    id: 'action-unsuited-x',
+    short: "[A] Unsuited X",
+    long: "Once per game, one of the players can replace one of their cards with a random-rank unsuited card determined at the start of the game. The player must discard one of their cards to do so. The card has no suit (can't be used for flush).",
+    type: 'positive',
+    hasAction: true,
+  },
+  {
     id: 'action-reroll-common',
     short: "[A] Reroll Common",
     long: "Once per game, one of the players can replace one of the common cards with another random card.",

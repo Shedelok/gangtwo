@@ -24,6 +24,7 @@ import {
   useShowCard,
   clearShowCardData,
   useUnsuitedJack,
+  useUnsuitedX,
   useRerollCommon,
   buildClientState,
 } from './gameState';
@@ -111,6 +112,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'USE_UNSUITED_JACK':
       error = useUnsuitedJack(socketId, action.cardIndex);
+      break;
+    case 'USE_UNSUITED_X':
+      error = useUnsuitedX(socketId, action.cardIndex);
       break;
     case 'USE_REROLL_COMMON':
       error = useRerollCommon(socketId, action.cardIndex);

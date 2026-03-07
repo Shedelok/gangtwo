@@ -430,6 +430,8 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             actionInProgress={actionInProgress}
             onSeatElRef={onSeatElRef ? el => onSeatElRef(player.id, el) : undefined}
             unsuitedJackIndex={state.unsuitedJacks[player.id]}
+            unsuitedXIndex={state.unsuitedXs[player.id]}
+            unsuitedXRank={state.unsuitedXRank ?? undefined}
             shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : null}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />

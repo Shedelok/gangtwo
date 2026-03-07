@@ -138,6 +138,11 @@ Both action card and the actual card in hand from this addon look the same: they
 similarly to other playing cards have "J" symbol in the top left corner, but also in the center in the card where a
 normal card would have its suit.
 
+## Addon: [A] Unsuited X
+
+Same as "Addon: [A] Unsuited Jack", but instead of Jack a random card Rank (from 2 to A) is determined at the beginning
+of the game and an unsuited card with rank X is available to be taken. X stays the same through all rounds.
+
 ## Addon: [A] Reroll Common
 
 Short description: "[A] Reroll Common"

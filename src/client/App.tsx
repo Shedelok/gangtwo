@@ -222,7 +222,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-function FlyingActionCard({ from, to, addonId, label, snap = false }: { from: { x: number; y: number }; to: { x: number; y: number }; addonId: string; label: string; snap?: boolean }) {
+function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRank }: { from: { x: number; y: number }; to: { x: number; y: number }; addonId: string; label: string; snap?: boolean; unsuitedXRank?: string | null }) {
   const [arrived, setArrived] = useState(snap);
   useEffect(() => {
     if (snap) return;
@@ -230,7 +230,8 @@ function FlyingActionCard({ from, to, addonId, label, snap = false }: { from: { 
     return () => cancelAnimationFrame(raf);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const atDest = arrived || snap;
-  const isJack = addonId === 'action-unsuited-jack';
+  const isUnsuited = addonId === 'action-unsuited-jack' || addonId === 'action-unsuited-x';
+  const unsuitedRank = addonId === 'action-unsuited-jack' ? 'J' : (unsuitedXRank ?? 'X');
   return createPortal(
     <div style={{
       position: 'fixed',
@@ -242,19 +243,19 @@ function FlyingActionCard({ from, to, addonId, label, snap = false }: { from: { 
       zIndex: 1000,
       pointerEvents: 'none',
       borderRadius: 6,
-      border: isJack ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
-      background: isJack ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : '#1a2d1a',
+      border: isUnsuited ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
+      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : '#1a2d1a',
       display: 'flex', flexDirection: 'column',
       padding: '6px 6px',
       userSelect: 'none',
     }}>
-      {isJack ? (
+      {isUnsuited ? (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color: '#fff' }}>
-            <span style={{ fontSize: 18, fontWeight: 'bold' }}>J</span>
+            <span style={{ fontSize: 18, fontWeight: 'bold' }}>{unsuitedRank}</span>
           </div>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: '#fff', fontWeight: 'bold' }}>
-            J
+            {unsuitedRank}
           </div>
         </>
       ) : addonId === 'show-1-card-to-1-player' ? (
@@ -371,6 +372,7 @@ export default function App() {
     const actionCardCommitted =
       (!prev.showCardUsed && state.showCardUsed) ||
       (!prev.unsuitedJackUsed && state.unsuitedJackUsed) ||
+      (!prev.unsuitedXUsed && state.unsuitedXUsed) ||
       (!prev.rerollCommonUsed && state.rerollCommonUsed);
     if (actionCardCommitted) {
       playSound(files.ACTION_CARD_PLAYED, vol, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_PLAYED);
@@ -432,6 +434,7 @@ export default function App() {
     if (prev && !curr) {
       const wasUsed = (prev.addonId === 'show-1-card-to-1-player' && state.showCardUsed)
         || (prev.addonId === 'action-unsuited-jack' && state.unsuitedJackUsed)
+        || (prev.addonId === 'action-unsuited-x' && state.unsuitedXUsed)
         || (prev.addonId === 'action-reroll-common' && state.rerollCommonUsed);
       if (wasUsed) {
         setFlyingCard(null);
@@ -671,6 +674,9 @@ export default function App() {
             if (activeAddonId === 'action-unsuited-jack') {
               sendAction({ type: 'USE_UNSUITED_JACK', cardIndex: idx });
               setActionStep('idle'); setActiveAddonId(null);
+            } else if (activeAddonId === 'action-unsuited-x') {
+              sendAction({ type: 'USE_UNSUITED_X', cardIndex: idx });
+              setActionStep('idle'); setActiveAddonId(null);
             } else {
               setActionCardIndex(idx); setActionStep('select-player');
             }
@@ -691,7 +697,7 @@ export default function App() {
           onCardElRef={(addonId, el) => { if (el) cardElsRef.current.set(addonId, el); else cardElsRef.current.delete(addonId); }}
         />
       )}
-      {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} addonId={flyingCard.addonId} label={flyingCard.label} snap={flyingCard.snap} />}
+      {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} addonId={flyingCard.addonId} label={flyingCard.label} snap={flyingCard.snap} unsuitedXRank={state?.unsuitedXRank} />}
     </div>
   );
 }

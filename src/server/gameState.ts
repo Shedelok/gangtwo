@@ -44,6 +44,8 @@ interface ServerGameState {
   showCardData: { sourceId: string; targetId: string; card: Card; cardIndex: 0 | 1 } | null;
   actionCardLock: { addonId: string; playerId: string } | null;
   unsuitedJacks: Map<string, number>; // playerId → card index
+  unsuitedXs: Map<string, number>;    // playerId → card index
+  unsuitedXRank: string | null;
   rerollCommonUsed: boolean;
   gameId: string;
 }
@@ -74,6 +76,8 @@ const state: ServerGameState = {
   showCardData: null,
   actionCardLock: null,
   unsuitedJacks: new Map(),
+  unsuitedXs: new Map(),
+  unsuitedXRank: null,
   rerollCommonUsed: false,
   gameId: '',
 };
@@ -244,10 +248,16 @@ export function startGame(shufflePlayers = true): string | null {
     player.chips = [];
     player.readyForNextRound = false;
   }
+  const ALL_RANKS: string[] = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  state.unsuitedXRank = state.enabledAddons.has('action-unsuited-x')
+    ? ALL_RANKS[Math.floor(Math.random() * ALL_RANKS.length)]
+    : null;
+
   state.showCardUsed = false;
   state.showCardData = null;
   state.actionCardLock = null;
   state.unsuitedJacks = new Map();
+  state.unsuitedXs = new Map();
   state.rerollCommonUsed = false;
   state.gameId = randomUUID();
   state.phase = 'game';
@@ -507,6 +517,8 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.showCardData = null;
   state.actionCardLock = null;
   state.unsuitedJacks = new Map();
+  state.unsuitedXs = new Map();
+  state.unsuitedXRank = null;
   state.rerollCommonUsed = false;
   state.enabledAddons = new Set();
   state.blackXValue = null;
@@ -529,6 +541,17 @@ export function useUnsuitedJack(socketId: string, cardIndex: 0 | 1): string | nu
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
   state.unsuitedJacks.set(playerId, cardIndex);
+  state.actionCardLock = null;
+  return null;
+}
+
+export function useUnsuitedX(socketId: string, cardIndex: 0 | 1): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('action-unsuited-x')) return 'Addon not active';
+  if (state.unsuitedXs.size > 0) return 'Action already used this game';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  state.unsuitedXs.set(playerId, cardIndex);
   state.actionCardLock = null;
   return null;
 }
@@ -655,6 +678,9 @@ export function buildClientState(socketId: string): ClientGameState {
     actionCardLock: state.actionCardLock,
     unsuitedJacks: Object.fromEntries(state.unsuitedJacks),
     unsuitedJackUsed: state.unsuitedJacks.size > 0,
+    unsuitedXs: Object.fromEntries(state.unsuitedXs),
+    unsuitedXUsed: state.unsuitedXs.size > 0,
+    unsuitedXRank: state.unsuitedXRank,
     rerollCommonUsed: state.rerollCommonUsed,
   };
 }

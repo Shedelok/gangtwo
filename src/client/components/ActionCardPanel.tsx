@@ -21,6 +21,7 @@ function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
   if (state.phase !== 'game') return false;
   if (addonId === 'show-1-card-to-1-player') return !state.showCardUsed && !!state.myHoleCards;
   if (addonId === 'action-unsuited-jack') return !state.unsuitedJackUsed && !!state.myHoleCards;
+  if (addonId === 'action-unsuited-x') return !state.unsuitedXUsed && !!state.myHoleCards;
   if (addonId === 'action-reroll-common') return !state.rerollCommonUsed && state.communityCards.length > 0;
   return false;
 }
@@ -28,6 +29,7 @@ function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
 function isAddonUsed(addonId: string, state: ClientGameState): boolean {
   if (addonId === 'show-1-card-to-1-player') return state.showCardUsed;
   if (addonId === 'action-unsuited-jack') return state.unsuitedJackUsed;
+  if (addonId === 'action-unsuited-x') return state.unsuitedXUsed;
   if (addonId === 'action-reroll-common') return state.rerollCommonUsed;
   return false;
 }
@@ -75,10 +77,10 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
                 borderRadius: 6,
                 border: active
                   ? '2px solid #f87171'
-                  : addon.id === 'action-unsuited-jack' ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
+                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
                 background: active
                   ? '#3d1515'
-                  : addon.id === 'action-unsuited-jack' ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : '#1a2d1a',
+                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : '#1a2d1a',
                 display: 'flex', flexDirection: 'column',
                 padding: '6px 6px', cursor: (locked || dimmed) ? 'default' : 'pointer',
                 userSelect: 'none',
@@ -87,16 +89,19 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
                 position: 'relative',
               }}
             >
-              {!active && addon.id === 'action-unsuited-jack' && (
-                <>
-                  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color: '#fff' }}>
-                    <span style={{ fontSize: 18, fontWeight: 'bold' }}>J</span>
-                  </div>
-                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: '#fff', fontWeight: 'bold' }}>
-                    J
-                  </div>
-                </>
-              )}
+              {!active && (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') && (() => {
+                const rank = addon.id === 'action-unsuited-jack' ? 'J' : (state.unsuitedXRank ?? 'X');
+                return (
+                  <>
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color: '#fff' }}>
+                      <span style={{ fontSize: 18, fontWeight: 'bold' }}>{rank}</span>
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: '#fff', fontWeight: 'bold' }}>
+                      {rank}
+                    </div>
+                  </>
+                );
+              })()}
               {!active && addon.id === 'show-1-card-to-1-player' && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#90c090" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -114,7 +119,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
                   </svg>
                 </div>
               )}
-              {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && (
+              {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'action-unsuited-x' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>
                   {addon.short}
                 </div>

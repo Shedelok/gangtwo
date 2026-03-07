@@ -47,6 +47,9 @@ export interface ClientGameState {
   actionCardLock: { addonId: string; playerId: string } | null; // which player is currently using which action card
   unsuitedJacks: Record<string, number>; // playerId → card index (0 or 1) of unsuited jack
   unsuitedJackUsed: boolean;     // whether the unsuited jack action has been used this game
+  unsuitedXs: Record<string, number>;    // playerId → card index (0 or 1) of unsuited X card
+  unsuitedXUsed: boolean;        // whether the unsuited-x action has been used this game
+  unsuitedXRank: string | null;  // the random rank for the unsuited-x addon, null if not active
   rerollCommonUsed: boolean;     // whether the reroll-common action has been used this game
 }
 
@@ -66,6 +69,7 @@ export type ClientAction =
   | { type: 'FINISH_GAME' }
   | { type: 'USE_SHOW_CARD'; targetPlayerId: string; cardIndex: 0 | 1 }
   | { type: 'USE_UNSUITED_JACK'; cardIndex: 0 | 1 }
+  | { type: 'USE_UNSUITED_X'; cardIndex: 0 | 1 }
   | { type: 'USE_REROLL_COMMON'; cardIndex: number }
   | { type: 'LOCK_ACTION_CARD'; addonId: string }
   | { type: 'UNLOCK_ACTION_CARD'; addonId: string };

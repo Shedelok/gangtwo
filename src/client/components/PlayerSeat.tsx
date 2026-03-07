@@ -41,6 +41,8 @@ interface Props {
   actionInProgress?: boolean;
   onSeatElRef?: (el: HTMLDivElement | null) => void;
   unsuitedJackIndex?: number;
+  unsuitedXIndex?: number;
+  unsuitedXRank?: string;
   shownCardInfo?: { idx: 0 | 1; card: Card; faceUp: boolean } | null;
   style?: React.CSSProperties;
 }
@@ -50,7 +52,7 @@ export default function PlayerSeat({
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
   blackAndRed = false, showRestartTick = false, hasRestartVoted = false,
-  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, shownCardInfo, style,
+  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
@@ -119,7 +121,7 @@ export default function PlayerSeat({
       </div>
 
       {/* Cards */}
-      <PlayerHand cards={holeCards} faceDown={showFaceDown} small blackAndRed={blackAndRed} onCardClick={isMe && onCardSelect ? onCardSelect : undefined} unsuitedJackIndex={unsuitedJackIndex} shownCardInfo={shownCardInfo} />
+      <PlayerHand cards={holeCards} faceDown={showFaceDown} small blackAndRed={blackAndRed} onCardClick={isMe && onCardSelect ? onCardSelect : undefined} unsuitedJackIndex={unsuitedJackIndex} unsuitedXIndex={unsuitedXIndex} unsuitedXRank={unsuitedXRank} shownCardInfo={shownCardInfo} />
 
       {/* Chips — sorted by round asc, number asc; always rendered to reserve height */}
       <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center', minHeight: 54 }}>
