@@ -121,6 +121,8 @@ Functionality: This addon adds an action card. When using the card, the player n
 then one of other players. After that the selected player sees the selected card flip face up in-place. 5 seconds after
 that the card flips back face down just as it was before.
 
+The action card for this addon has no text, has a simple eye image in its center and has a black background.
+
 ## Addon: [A] Unsuited Jack
 
 Short description: "[A] Unsuited Jack"
@@ -145,3 +147,6 @@ Long description: Once per game, one of the players can replace one of the commo
 Functionality: This addon adds an action card. When using the card, the player needs to select one of the common cards.
 That card is discarded and another card from the deck takes its place. This card can't be used if there are no common
 cards.
+
+The action card for this addon has no text, has a simple "refresh" sign image in its center and has a white background.
+

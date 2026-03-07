@@ -240,7 +240,7 @@ function FlyingActionCard({ from, to, addonId, label, snap = false }: { from: { 
       pointerEvents: 'none',
       borderRadius: 6,
       border: isJack ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
-      background: isJack ? '#B87333' : '#1a2d1a',
+      background: isJack ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : '#1a2d1a',
       display: 'flex', flexDirection: 'column',
       padding: '6px 6px',
       userSelect: 'none',
@@ -254,6 +254,21 @@ function FlyingActionCard({ from, to, addonId, label, snap = false }: { from: { 
             J
           </div>
         </>
+      ) : addonId === 'show-1-card-to-1-player' ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#90c090" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <ellipse cx="12" cy="12" rx="10" ry="6" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </div>
+      ) : addonId === 'action-reroll-common' ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="#333" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23,4 23,10 17,10" />
+            <polyline points="1,20 1,14 7,14" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+        </div>
       ) : (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>{label}</div>
       )}
