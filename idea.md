@@ -6,6 +6,7 @@
 - Get rid of spec duplication when describing different animations (chip move, card reveal, action card move)
 - spec/addons/logic.md should not have UI spec, it all should be moved to ui/
 - Fix that action card is appearing in 2 places when returned from another player to the table.
+- Create Claude Code aliases for implementing spec changes and verifying them against full spec
 - (Maybe) Make chips clickable
 
 ## Addons

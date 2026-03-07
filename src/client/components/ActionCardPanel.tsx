@@ -39,10 +39,12 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
   if (actionAddons.length === 0) return null;
 
   const lockedByOther = !!state.actionCardLock && state.actionCardLock.playerId !== state.myId;
+  const iAmUsingACard = step !== 'idle';
 
   const handleCardClick = (addonId: string) => {
     if (lockedByOther) return;
-    if (step !== 'idle' && activeAddonId === addonId) { onCancel(); return; }
+    if (iAmUsingACard && activeAddonId === addonId) { onCancel(); return; }
+    if (iAmUsingACard) return; // can't start another card while already using one
     if (!isAddonAvailable(addonId, state)) return;
     onStart(addonId);
   };
@@ -62,6 +64,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
         {actionAddons.map(addon => {
           const active = step !== 'idle' && activeAddonId === addon.id;
           const locked = lockedByOther && state.actionCardLock?.addonId === addon.id;
+          const dimmed = (lockedByOther && !locked) || (iAmUsingACard && !active);
           return (
             <div
               key={addon.id}
@@ -77,9 +80,10 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
                   ? '#3d1515'
                   : addon.id === 'action-unsuited-jack' ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : '#1a2d1a',
                 display: 'flex', flexDirection: 'column',
-                padding: '6px 6px', cursor: locked ? 'default' : 'pointer',
+                padding: '6px 6px', cursor: (locked || dimmed) ? 'default' : 'pointer',
                 userSelect: 'none',
                 visibility: locked ? 'hidden' : 'visible',
+                opacity: dimmed ? 0.4 : 1,
                 position: 'relative',
               }}
             >

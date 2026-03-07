@@ -25,7 +25,9 @@ done by pressing the same card again. During this time there's a big red cross d
 removed and the card's color becomes more red hinting the player the cancellation logic. While using the card, player
 cannot do any other action that is not required by this card, so that they are
 forced to either play the card or return it to the table. While one player is using a card, no other player can start
-using it.
+using any action cards (neither this nor other). All those cards change their color to a less bright one. The player
+using the card can't use any other card until they finish using this one (or cancel). All other cards change their color
+to a less bright one.
 
 When a card is played, all players hear "ACTION_CARD_PLAYED" sound which defaults to
 spec/base/resources/sounds/magic-1.mp3 and the card is used, it is removed from the UI completely.
