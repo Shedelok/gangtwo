@@ -19,10 +19,11 @@ Each card is a rectangle of the same size. Each card corresponds to one addon pr
 
 ## Using an Action Card
 
-If the action is available to the player, they can click the card and
-start workflow of using it. While selecting specifics of the action the player can cancel it at any time until it's
-commited. The cancellation is done by pressing the same card again. While using the card, player cannot do any other
-action that is not required by this card, so that they are
+If the action is available to the player, they can click the card and start workflow of using it.
+While selecting specifics of the action the player can cancel it at any time until it's commited. The cancellation is
+done by pressing the same card again. During this time there's a big red cross displayed on the card, all it's text is
+removed and the card's color becomes more red hinting the player the cancellation logic. While using the card, player
+cannot do any other action that is not required by this card, so that they are
 forced to either play the card or return it to the table. While one player is using a card, no other player can start
 using it.
 

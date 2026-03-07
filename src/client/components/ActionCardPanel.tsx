@@ -70,17 +70,28 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
               style={{
                 width: CARD_W, height: CARD_H,
                 borderRadius: 6,
-                border: active ? '2px solid #facc15' : '2px solid #4a7a4a',
-                background: active ? '#2a3a1a' : '#1a2d1a',
+                border: active ? '2px solid #f87171' : '2px solid #4a7a4a',
+                background: active ? '#3d1515' : '#1a2d1a',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 padding: '6px 4px', textAlign: 'center', cursor: locked ? 'default' : 'pointer',
                 userSelect: 'none',
                 visibility: locked ? 'hidden' : 'visible',
+                position: 'relative',
               }}
             >
-              <div style={{ fontSize: 9, color: '#90c090', lineHeight: 1.4 }}>
-                {addon.short}
-              </div>
+              {!active && (
+                <div style={{ fontSize: 9, color: '#90c090', lineHeight: 1.4 }}>
+                  {addon.short}
+                </div>
+              )}
+              {active && (
+                <div style={{
+                  position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  borderRadius: 6, pointerEvents: 'none',
+                }}>
+                  <span style={{ fontSize: 36, color: '#ef4444', lineHeight: 1, fontWeight: 'bold', textShadow: '0 0 6px rgba(239,68,68,0.6)' }}>✕</span>
+                </div>
+              )}
             </div>
           );
         })}
