@@ -364,6 +364,13 @@ export default function App() {
       playSound(files.CARD_FLIP, vol, SOUND_VOLUME_MULTIPLIER.CARD_FLIP);
     }
 
+    const rerollJustHappened = !prev.rerollCommonUsed && state.rerollCommonUsed;
+    if (rerollJustHappened) {
+      // Two flips: first flip-down (~50ms after action), then flip-up (~1100ms after action)
+      playSound(files.CARD_FLIP, vol, SOUND_VOLUME_MULTIPLIER.CARD_FLIP);
+      setTimeout(() => playSound(files.CARD_FLIP, vol, SOUND_VOLUME_MULTIPLIER.CARD_FLIP), 1100);
+    }
+
     const shownCardChanged = state.myShownCard !== prev.myShownCard;
     if (shownCardChanged) {
       playSound(files.CARD_FLIP, vol, SOUND_VOLUME_MULTIPLIER.CARD_FLIP);

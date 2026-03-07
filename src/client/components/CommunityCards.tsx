@@ -11,8 +11,9 @@ const SUIT_SYMBOLS: Record<string, string> = {
 
 const RED_SUITS = new Set(['hearts', 'diamonds']);
 
-function CommunityCard({ card, animate, blackAndRed }: { card: Card; animate: boolean; blackAndRed: boolean }) {
-  const [faceUp, setFaceUp] = useState(!animate);
+function CommunityCard({ card, animate, blackAndRed, rerollFrom }: { card: Card; animate: boolean; blackAndRed: boolean; rerollFrom?: Card }) {
+  const [faceUp, setFaceUp] = useState(!animate && rerollFrom == null);
+  const [displayCard, setDisplayCard] = useState<Card>(rerollFrom ?? card);
 
   useEffect(() => {
     if (animate) {
@@ -22,10 +23,27 @@ function CommunityCard({ card, animate, blackAndRed }: { card: Card; animate: bo
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const isRed = RED_SUITS.has(card.suit);
+  // Reroll animation: show old card flipping down, then new card flipping up
+  const rerollInProgressRef = useRef(false);
+  useEffect(() => {
+    if (!rerollFrom || rerollInProgressRef.current) return;
+    rerollInProgressRef.current = true;
+    setDisplayCard(rerollFrom);
+    setFaceUp(true);
+    const t1 = setTimeout(() => setFaceUp(false), 50);
+    const t2 = setTimeout(() => setDisplayCard(card), 1050);
+    const t3 = setTimeout(() => {
+      setFaceUp(true);
+      rerollInProgressRef.current = false;
+    }, 1100);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [rerollFrom]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const c = displayCard;
+  const isRed = RED_SUITS.has(c.suit);
   const suitBg = isRed ? '#c0392b' : '#1a1a2e';
   const color = blackAndRed ? 'white' : (isRed ? '#c0392b' : '#1a1a2e');
-  const symbol = SUIT_SYMBOLS[card.suit];
+  const symbol = SUIT_SYMBOLS[c.suit];
 
   return (
     <div className="cc-flip-container">
@@ -33,7 +51,7 @@ function CommunityCard({ card, animate, blackAndRed }: { card: Card; animate: bo
         <div className="cc-face cc-back" />
         <div className="cc-face cc-front" style={blackAndRed ? { background: suitBg } : undefined}>
           <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color }}>
-            <span style={{ fontSize: 11, fontWeight: 'bold' }}>{card.rank}</span>
+            <span style={{ fontSize: 11, fontWeight: 'bold' }}>{c.rank}</span>
             <span style={{ fontSize: 9 }}>{symbol}</span>
           </div>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color }}>
@@ -56,8 +74,28 @@ export default function CommunityCards({ cards, blackAndRed = false, onCardClick
   // Initialized to cards.length so cards present on first render never animate.
   const [animateFromIndex, setAnimateFromIndex] = useState<number>(() => cards.length);
   const prevCountRef = useRef<number | null>(null);
+  const [rerollingCards, setRerollingCards] = useState<Map<number, Card>>(new Map());
+  const prevCardsRef = useRef<Card[]>([]);
+  const rerollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    const prev = prevCardsRef.current;
+
+    // Detect in-place card replacements (reroll common addon)
+    if (prev.length === cards.length && cards.length > 0) {
+      const replaced = new Map<number, Card>();
+      for (let i = 0; i < cards.length; i++) {
+        if (prev[i] && (prev[i].rank !== cards[i].rank || prev[i].suit !== cards[i].suit)) {
+          replaced.set(i, prev[i]);
+        }
+      }
+      if (replaced.size > 0) {
+        setRerollingCards(replaced);
+        if (rerollTimerRef.current) clearTimeout(rerollTimerRef.current);
+        rerollTimerRef.current = setTimeout(() => setRerollingCards(new Map()), 2500);
+      }
+    }
+
     if (prevCountRef.current === null) {
       prevCountRef.current = cards.length;
     } else if (cards.length > prevCountRef.current) {
@@ -67,8 +105,12 @@ export default function CommunityCards({ cards, blackAndRed = false, onCardClick
       // Cards were cleared (new round started); reset tracking without animating
       prevCountRef.current = cards.length;
       setAnimateFromIndex(cards.length);
+      if (rerollTimerRef.current) clearTimeout(rerollTimerRef.current);
+      setRerollingCards(new Map());
     }
-  }, [cards.length]);
+
+    prevCardsRef.current = [...cards];
+  }, [cards]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ display: 'flex', gap: 5, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -82,7 +124,7 @@ export default function CommunityCards({ cards, blackAndRed = false, onCardClick
             boxShadow: onCardClick ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
           }}
         >
-          <CommunityCard card={card} animate={i >= animateFromIndex} blackAndRed={blackAndRed} />
+          <CommunityCard card={card} animate={i >= animateFromIndex} blackAndRed={blackAndRed} rerollFrom={rerollingCards.get(i)} />
         </div>
       ))}
     </div>

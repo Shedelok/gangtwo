@@ -177,3 +177,6 @@ cards.
 
 The action card for this addon has no text, has a simple "refresh" sign image in its center and has a white background.
 
+When this action is commited, the chosen common card flips face down, then it flips again face up, but now it's a new
+card from the deck. Both flips happen with the flipping card animation.
+

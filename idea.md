@@ -7,7 +7,6 @@
 - spec/addons/logic.md should not have UI spec, it all should be moved to ui/
 - Fix that action card is appearing in 2 places when returned from another player to the table.
 - Create Claude Code aliases for implementing spec changes and verifying them against full spec
-- Add animation when a common card is changed to clearly show which one it was and that it happened.
 - (Maybe) Make chips clickable
 
 ## Addons
@@ -33,23 +32,20 @@
     are used for the rest of the game.
 14. You get 3 cards on preflop, but on flop you have to discard one of them.
 15. One player once can swap one of their cards with one of the common cards.
-16. One player once can show one of their cards to another player
-17. Jocker X: X is a random card. One player can once change on of their cards to X that would have no suit.
-18. Right after dealing the cards each player says how many J,Q,K they have.
-19. Cards of rank >10 are removed from the deck
-20. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
+16. Right after dealing the cards each player says how many J,Q,K they have.
+17. Cards of rank >10 are removed from the deck
+18. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
     one).
-21. One player can once reroll one of the common cards (for everyone)
-22. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
-23. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
-24. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
-25. Kickers (non-scoring cards) are reversed (go in reversed order).
-26. After dealing cards everyone tells their sum (black-jack sum).
-27. If at least one of the community cards in Round 2 is a J, Q, or K, the following
+19. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
+20. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
+21. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
+22. Kickers (non-scoring cards) are reversed (go in reversed order).
+23. After dealing cards everyone tells their sum (black-jack sum).
+24. If at least one of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the white 1-star chip (from Round 1) must put their
     pocket cards face down in the discard pile and draw new pocket cards from
     the deck.
-28. This challenge adds an extra condition for a successful heist. Before the player
+25. This challenge adds an extra condition for a successful heist. Before the player
     with the highest-value red chip reveals their hand in the showdown, you must
     do the following: The other players must confer and agree together on a card
     value (from 2 to ace) that they believe the player with the highest-value red
@@ -57,20 +53,20 @@
     part in this discussion or give hints. If the
     players are incorrect, the heist is unsuccessful, even if the ranking of the red
     chips was correct.
-29. If none of the community cards in Round 2 is a J, Q, or K, the following
+26. If none of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the highest-value white chip (from Round 1) must
     put their pocket cards face down in the discard pile and draw new pocket
     cards from the deck.
-30. Decide which of you will share what hand ranking their current hand has
+27. Decide which of you will share what hand ranking their current hand has
     (pocket cards plus current community cards) with the rest of the players. They
     cannot share further details.
-31. Once the pocket cards have been dealt in Round 1, each player says how
+28. Once the pocket cards have been dealt in Round 1, each player says how
     many “face cards” (J, Q, K) they have.
-32. Decide which of you will share with everyone how many cards of a specific
+29. Decide which of you will share with everyone how many cards of a specific
     value they have in their hand
-33. Decide which of you will take one card from the deck and add it to their hand.
+30. Decide which of you will take one card from the deck and add it to their hand.
     Afterward, this player must place one of their pocket cards face down on the
     discard pile. This can be the card that they have just drawn from the deck.
-34. Once the pocket cards have been dealt in Round 1, each of you chooses one
+31. Once the pocket cards have been dealt in Round 1, each of you chooses one
     of your pocket cards. Everyone then simultaneously passes their chosen card
     to the player on their left as a pocket card.
