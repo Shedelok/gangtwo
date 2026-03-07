@@ -70,17 +70,31 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
               style={{
                 width: CARD_W, height: CARD_H,
                 borderRadius: 6,
-                border: active ? '2px solid #f87171' : '2px solid #4a7a4a',
-                background: active ? '#3d1515' : '#1a2d1a',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                padding: '6px 4px', textAlign: 'center', cursor: locked ? 'default' : 'pointer',
+                border: active
+                  ? '2px solid #f87171'
+                  : addon.id === 'action-unsuited-jack' ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
+                background: active
+                  ? '#3d1515'
+                  : addon.id === 'action-unsuited-jack' ? '#B87333' : '#1a2d1a',
+                display: 'flex', flexDirection: 'column',
+                padding: '6px 6px', cursor: locked ? 'default' : 'pointer',
                 userSelect: 'none',
                 visibility: locked ? 'hidden' : 'visible',
                 position: 'relative',
               }}
             >
-              {!active && (
-                <div style={{ fontSize: 9, color: '#90c090', lineHeight: 1.4 }}>
+              {!active && addon.id === 'action-unsuited-jack' && (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color: '#fff' }}>
+                    <span style={{ fontSize: 18, fontWeight: 'bold' }}>J</span>
+                  </div>
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: '#fff', fontWeight: 'bold' }}>
+                    J
+                  </div>
+                </>
+              )}
+              {!active && addon.id !== 'action-unsuited-jack' && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>
                   {addon.short}
                 </div>
               )}

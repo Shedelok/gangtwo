@@ -132,6 +132,10 @@ Functionality: This addon adds an action card. When using the card, the player n
 that, that card is discarded and the player gets an orange #B87333) Jack. For the rest of the game the player has this
 Jack as one of their cards. This Jack is always face up for all players.
 
+Both action card and the actual card in hand from this addon look the same: they have orange (#B87333) background and
+similarly to other playing cards have "J" symbol in the top left corner, but also in the center in the card where a
+normal card would have its suit.
+
 ## Addon: [A] Reroll Common
 
 Short description: "[A] Reroll Common"

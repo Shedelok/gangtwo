@@ -219,7 +219,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-function FlyingActionCard({ from, to, label, snap = false }: { from: { x: number; y: number }; to: { x: number; y: number }; label: string; snap?: boolean }) {
+function FlyingActionCard({ from, to, addonId, label, snap = false }: { from: { x: number; y: number }; to: { x: number; y: number }; addonId: string; label: string; snap?: boolean }) {
   const [arrived, setArrived] = useState(snap);
   useEffect(() => {
     if (snap) return;
@@ -227,6 +227,7 @@ function FlyingActionCard({ from, to, label, snap = false }: { from: { x: number
     return () => cancelAnimationFrame(raf);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const atDest = arrived || snap;
+  const isJack = addonId === 'action-unsuited-jack';
   return createPortal(
     <div style={{
       position: 'fixed',
@@ -238,13 +239,24 @@ function FlyingActionCard({ from, to, label, snap = false }: { from: { x: number
       zIndex: 1000,
       pointerEvents: 'none',
       borderRadius: 6,
-      border: '2px solid #4a7a4a',
-      background: '#1a2d1a',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: '6px 4px', textAlign: 'center',
+      border: isJack ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
+      background: isJack ? '#B87333' : '#1a2d1a',
+      display: 'flex', flexDirection: 'column',
+      padding: '6px 6px',
       userSelect: 'none',
     }}>
-      <div style={{ fontSize: 9, color: '#90c090', lineHeight: 1.4 }}>{label}</div>
+      {isJack ? (
+        <>
+          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color: '#fff' }}>
+            <span style={{ fontSize: 18, fontWeight: 'bold' }}>J</span>
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, color: '#fff', fontWeight: 'bold' }}>
+            J
+          </div>
+        </>
+      ) : (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>{label}</div>
+      )}
     </div>,
     document.body
   );
@@ -275,7 +287,7 @@ export default function App() {
   const cardElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const seatElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const prevLockRef = useRef<ClientGameState['actionCardLock'] | undefined>(undefined);
-  const [flyingCard, setFlyingCard] = useState<{ from: { x: number; y: number }; to: { x: number; y: number }; label: string; snap?: boolean } | null>(null);
+  const [flyingCard, setFlyingCard] = useState<{ from: { x: number; y: number }; to: { x: number; y: number }; addonId: string; label: string; snap?: boolean } | null>(null);
   const flyingCardRef = useRef(flyingCard);
   flyingCardRef.current = flyingCard;
   const returnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -361,7 +373,7 @@ export default function App() {
         const sr = seatEl.getBoundingClientRect();
         const addonDef = ADDONS.find(a => a.id === addonId);
         const pos = { x: sr.left + sr.width / 2 - CARD_W / 2, y: sr.top + sr.height / 2 - CARD_H / 2 };
-        setFlyingCard({ from: pos, to: pos, label: addonDef?.short ?? addonId, snap: true });
+        setFlyingCard({ from: pos, to: pos, addonId, label: addonDef?.short ?? addonId, snap: true });
       }
     };
 
@@ -387,6 +399,7 @@ export default function App() {
           setFlyingCard({
             from: { x: cr.left, y: cr.top },
             to: { x: sr.left + sr.width / 2 - CARD_W / 2, y: sr.top + sr.height / 2 - CARD_H / 2 },
+            addonId: curr.addonId,
             label: addonDef?.short ?? curr.addonId,
           });
         }
@@ -405,7 +418,7 @@ export default function App() {
         const cardEl = cardElsRef.current.get(prev.addonId);
         if (current && cardEl) {
           const cr = cardEl.getBoundingClientRect();
-          setFlyingCard({ from: current.to, to: { x: cr.left, y: cr.top }, label: current.label });
+          setFlyingCard({ from: current.to, to: { x: cr.left, y: cr.top }, addonId: current.addonId, label: current.label });
           returnTimerRef.current = setTimeout(() => { setFlyingCard(null); returnTimerRef.current = null; }, 2100);
         } else {
           setFlyingCard(null);
@@ -420,7 +433,7 @@ export default function App() {
       if (document.visibilityState === 'visible') {
         const fc = flyingCardRef.current;
         if (fc && returnTimerRef.current === null) {
-          setFlyingCard({ from: fc.to, to: fc.to, label: fc.label, snap: true });
+          setFlyingCard({ from: fc.to, to: fc.to, addonId: fc.addonId, label: fc.label, snap: true });
         }
       }
     };
@@ -655,7 +668,7 @@ export default function App() {
           onCardElRef={(addonId, el) => { if (el) cardElsRef.current.set(addonId, el); else cardElsRef.current.delete(addonId); }}
         />
       )}
-      {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} label={flyingCard.label} snap={flyingCard.snap} />}
+      {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} addonId={flyingCard.addonId} label={flyingCard.label} snap={flyingCard.snap} />}
     </div>
   );
 }
