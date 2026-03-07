@@ -42,7 +42,8 @@ to hint that.
 No additional general text or panel is shown when a player uses a card to guide them through that.
 
 When another player using a card, it moves away from the action cards table to that player and is displayed on top of
-them for everyone else.
+them for everyone else. Also, the "ACTION_CARD_TAKEN" sound which defaults to spec/base/resources/sounds/minutochku.mp3
+is played.
 
 Every time a card is moved, visually it doesn't teleport immediately, but rather
 a moving animation is played that lasts 2 second and moves the card from its origin to destination. This animation is

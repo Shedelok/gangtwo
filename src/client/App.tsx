@@ -7,15 +7,16 @@ import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H } from './comp
 import type { ClientGameState } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 
-const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'punch-1.mp3', 'punch-2.mp3'];
+const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
-type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED';
+type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN';
 const SOUND_DEFAULTS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'bell-1.mp3',
   CHIP_MOVE: 'fast-woosh.mp3',
   CARD_FLIP: 'card-flip.mp3',
   GAME_START: 'car-engine-start.mp3',
   ACTION_CARD_PLAYED: 'magic-1.mp3',
+  ACTION_CARD_TAKEN: 'minutochku.mp3',
 };
 const SOUND_LABELS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'Steal from you',
@@ -23,6 +24,7 @@ const SOUND_LABELS: Record<SoundKey, string> = {
   CARD_FLIP: 'Card flip',
   GAME_START: 'Game start',
   ACTION_CARD_PLAYED: 'Action card played',
+  ACTION_CARD_TAKEN: 'Action card taken',
 };
 const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   STEAL_FROM_YOU: 1,
@@ -30,6 +32,7 @@ const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   CARD_FLIP: 1,
   GAME_START: 1,
   ACTION_CARD_PLAYED: 1,
+  ACTION_CARD_TAKEN: 1,
 };
 
 const preloadedAudio: Record<string, HTMLAudioElement> = {};
@@ -396,6 +399,11 @@ export default function App() {
     if (isInitial) {
       if (curr && curr.playerId !== state.myId) snapToSeat(curr.addonId, curr.playerId);
       return;
+    }
+
+    // Lock acquired — play sound
+    if (!prev && curr) {
+      playSound(soundFilesRef.current.ACTION_CARD_TAKEN, volumeRef.current, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_TAKEN);
     }
 
     // Lock acquired by another player — animate card to their seat
