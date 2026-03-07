@@ -37,12 +37,11 @@
 17. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
 18. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
 19. Kickers (non-scoring cards) are reversed (go in reversed order).
-20. After dealing cards everyone tells their sum (black-jack sum).
-21. If at least one of the community cards in Round 2 is a J, Q, or K, the following
+20. If at least one of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the white 1-star chip (from Round 1) must put their
     pocket cards face down in the discard pile and draw new pocket cards from
     the deck.
-22. This challenge adds an extra condition for a successful heist. Before the player
+21. This challenge adds an extra condition for a successful heist. Before the player
     with the highest-value red chip reveals their hand in the showdown, you must
     do the following: The other players must confer and agree together on a card
     value (from 2 to ace) that they believe the player with the highest-value red
@@ -50,20 +49,22 @@
     part in this discussion or give hints. If the
     players are incorrect, the heist is unsuccessful, even if the ranking of the red
     chips was correct.
-23. If none of the community cards in Round 2 is a J, Q, or K, the following
+22. If none of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the highest-value white chip (from Round 1) must
     put their pocket cards face down in the discard pile and draw new pocket
     cards from the deck.
-24. Decide which of you will share what hand ranking their current hand has
+23. Decide which of you will share what hand ranking their current hand has
     (pocket cards plus current community cards) with the rest of the players. They
     cannot share further details.
-25. Once the pocket cards have been dealt in Round 1, each player says how
+24. Once the pocket cards have been dealt in Round 1, each player says how
     many “face cards” (J, Q, K) they have.
-26. Decide which of you will share with everyone how many cards of a specific
+25. Decide which of you will share with everyone how many cards of a specific
     value they have in their hand
-27. Decide which of you will take one card from the deck and add it to their hand.
+26. Decide which of you will take one card from the deck and add it to their hand.
     Afterward, this player must place one of their pocket cards face down on the
     discard pile. This can be the card that they have just drawn from the deck.
-28. Once the pocket cards have been dealt in Round 1, each of you chooses one
+27. Once the pocket cards have been dealt in Round 1, each of you chooses one
     of your pocket cards. Everyone then simultaneously passes their chosen card
     to the player on their left as a pocket card.
+28. On a random round R a random player P is "prisoned". They can't do anything until the next round starts. There's 1
+    less chip distributed in that round (or maybe not).

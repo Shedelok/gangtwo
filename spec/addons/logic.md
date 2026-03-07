@@ -46,7 +46,6 @@ Same as "Guess Rank Highest" (including the functionality), but for the lowest r
 When the same player is under multiple "guess rank" addons, it is logically and visually equal to them being under just
 one. There's no point in having players to guess the same thing twice.
 
-
 ## Addon: Only Neighbors Steal
 
 Short description: "Only Neighbors Steal"
@@ -149,6 +148,20 @@ Short description: "See 1 Neighbor's Cards"
 Long description: Besides your own cards you can also see pocket cards of the player next to your left.
 
 Functionality: During the game each player sees the cards of their immediate neighbors on the left face up.
+
+## Addon: Share Blackjack Sum
+
+Short description: "Share Blackjack Sum"
+
+Long description: Once the pocket cards have been dealt in Round 1, everyone states the sum of the value of their pocket
+cards. 2 to 10 have the values 2–10. J, Q, and K have the value of 10. A has the value of 11. This is done as a separate
+pre-game round, which ends when everyone has the ready button pressed.
+
+Functionality: After the pocket cards in the beginning of the game are dealt, but before any other aspects of the normal
+rounds have happened (for example, dealing chips or cards), above each player (including the current one) there's a
+dialogue cloud with the sum of the value of their pocket cards as described above. Also, there's "Blackjack Sum" written
+at the middle of the table during this phase. No other text is written on the table during this phase. Each player has
+the normal ready button. Once everyone is ready, the rest of the first round happens as normal.
 
 ## Addon: [A] Show 1 Card to 1 Player
 

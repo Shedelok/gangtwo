@@ -104,6 +104,12 @@ export const ADDONS: AddonDef[] = [
     type: 'positive',
   },
   {
+    id: 'share-blackjack-sum',
+    short: "Share Blackjack Sum",
+    long: "Once the pocket cards have been dealt in Round 1, everyone states the sum of the value of their pocket cards. 2 to 10 have the values 2–10. J, Q, and K have the value of 10. A has the value of 11. This is done as a separate pre-game round, which ends when everyone has the ready button pressed.",
+    type: 'positive',
+  },
+  {
     id: 'show-1-card-to-1-player',
     short: "[A] Show 1 Card to 1 Player",
     long: "Once per game, one of the players can show one of their cards to another player for 5 seconds.",

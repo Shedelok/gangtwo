@@ -47,6 +47,7 @@ interface ServerGameState {
   unsuitedXs: Map<string, number>;    // playerId → card index
   unsuitedXRank: string | null;
   rerollCommonUsed: boolean;
+  blackjackPhase: boolean;
   gameId: string;
 }
 
@@ -79,6 +80,7 @@ const state: ServerGameState = {
   unsuitedXs: new Map(),
   unsuitedXRank: null,
   rerollCommonUsed: false,
+  blackjackPhase: false,
   gameId: '',
 };
 
@@ -167,6 +169,7 @@ function advanceRound(): void {
 }
 
 function checkAndAdvance(): void {
+  if (state.blackjackPhase) return;
   if (state.phase === 'game' && isRoundComplete(state.players, state.currentRound)) {
     advanceRound();
   }
@@ -267,24 +270,30 @@ export function startGame(shufflePlayers = true): string | null {
   state.holeCards = assignments;
   state.deck = remainingDeck;
 
-  // Skip disabled starting rounds, immediately drawing their community cards
   state.communityCards = [];
+  const blackjackActive = state.enabledAddons.has('share-blackjack-sum');
   let startRound = 1;
+  // Skip disabled starting rounds; if blackjack phase is active, defer their community cards
+  // until the phase ends (spec: "before any other aspects of the normal rounds have happened,
+  // for example, dealing chips or cards")
   while (startRound <= 3 && isRoundSkipped(startRound)) {
-    const count = roundCommunityCardCount(startRound);
-    if (count > 0) {
-      const [drawn, remaining] = drawCards(state.deck, count);
-      state.communityCards.push(...drawn);
-      state.deck = remaining;
+    if (!blackjackActive) {
+      const count = roundCommunityCardCount(startRound);
+      if (count > 0) {
+        const [drawn, remaining] = drawCards(state.deck, count);
+        state.communityCards.push(...drawn);
+        state.deck = remaining;
+      }
     }
     startRound++;
   }
   state.currentRound = startRound as RoundNumber;
-  state.middleChips = createChipsForRound(startRound, state.players.length);
   for (const player of state.players) {
     player.chips = [];
     player.readyForNextRound = false;
   }
+  state.blackjackPhase = blackjackActive;
+  state.middleChips = blackjackActive ? [] : createChipsForRound(startRound, state.players.length);
   const ALL_RANKS: string[] = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
   state.unsuitedXRank = state.enabledAddons.has('action-unsuited-x')
     ? ALL_RANKS[Math.floor(Math.random() * ALL_RANKS.length)]
@@ -303,6 +312,7 @@ export function startGame(shufflePlayers = true): string | null {
 
 export function discardChip(socketId: string, chipNumber: number): string | null {
   if (state.phase !== 'game') return 'Not in game';
+  if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
 
@@ -319,6 +329,7 @@ export function discardChip(socketId: string, chipNumber: number): string | null
 
 export function takeFromMiddle(socketId: string, chipNumber: number): string | null {
   if (state.phase !== 'game') return 'Not in game';
+  if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
 
@@ -344,6 +355,7 @@ export function stealChip(
   chipNumber: number
 ): string | null {
   if (state.phase !== 'game') return 'Not in game';
+  if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
 
@@ -384,6 +396,25 @@ export function setReady(socketId: string, ready: boolean): string | null {
   if (!player) return 'Player not found';
 
   player.readyForNextRound = ready;
+
+  if (state.blackjackPhase) {
+    if (state.players.every(p => p.readyForNextRound)) {
+      state.blackjackPhase = false;
+      for (const p of state.players) p.readyForNextRound = false;
+      // Draw community cards for any rounds that were skipped at game start (deferred during blackjack phase)
+      for (let r = 1; r < state.currentRound; r++) {
+        const count = roundCommunityCardCount(r);
+        if (count > 0) {
+          const [drawn, remaining] = drawCards(state.deck, count);
+          state.communityCards.push(...drawn);
+          state.deck = remaining;
+        }
+      }
+      state.middleChips = createChipsForRound(state.currentRound, state.players.length);
+    }
+    return null;
+  }
+
   checkAndAdvance();
   return null;
 }
@@ -557,6 +588,7 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.unsuitedXs = new Map();
   state.unsuitedXRank = null;
   state.rerollCommonUsed = false;
+  state.blackjackPhase = false;
   state.enabledAddons = new Set();
   state.blackXValue = null;
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
@@ -648,6 +680,12 @@ export function clearShowCardData(): void {
   state.showCardData = null;
 }
 
+function bjValue(rank: string): number {
+  if (rank === 'A') return 11;
+  if (rank === 'J' || rank === 'Q' || rank === 'K') return 10;
+  return parseInt(rank, 10);
+}
+
 export function buildClientState(socketId: string): ClientGameState {
   const playerId = state.socketToPlayerId.get(socketId) ?? '';
   const myHoleCards = playerId && state.holeCards[playerId] ? state.holeCards[playerId] : null;
@@ -719,5 +757,15 @@ export function buildClientState(socketId: string): ClientGameState {
     unsuitedXUsed: state.unsuitedXs.size > 0,
     unsuitedXRank: state.unsuitedXRank,
     rerollCommonUsed: state.rerollCommonUsed,
+    blackjackPhase: state.blackjackPhase,
+    blackjackSums: (() => {
+      if (!state.blackjackPhase) return {};
+      const sums: Record<string, number> = {};
+      for (const p of state.players) {
+        const cards = state.holeCards[p.id];
+        if (cards) sums[p.id] = bjValue(cards[0].rank) + bjValue(cards[1].rank);
+      }
+      return sums;
+    })(),
   };
 }

@@ -311,10 +311,19 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
         }}>
           <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
 
-            {/* Round / Game Over badge */}
-            <div style={{ background: 'rgba(0,0,0,0.45)', color: '#f0c040', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
-              {readOnly ? 'GAME OVER' : `ROUND ${currentRound} / 4`}
-            </div>
+            {/* Round / Game Over badge — hidden during blackjack phase (only "Blackjack Sum" shown then) */}
+            {!state.blackjackPhase && (
+              <div style={{ background: 'rgba(0,0,0,0.45)', color: '#f0c040', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
+                {readOnly ? 'GAME OVER' : `ROUND ${currentRound} / 4`}
+              </div>
+            )}
+
+            {/* Blackjack Sum phase label */}
+            {state.blackjackPhase && (
+              <div style={{ background: 'rgba(0,0,0,0.45)', color: '#a0d8ff', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
+                Blackjack Sum
+              </div>
+            )}
 
             {/* Community cards */}
             <CommunityCards cards={state.communityCards} blackAndRed={blackAndRed} onCardClick={onCommonCardClick} />
@@ -393,6 +402,10 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               const addonVotes = state.rankGuesses[addonId] ?? {};
               return { addonId, myVote: addonVotes[state.myId] as string | undefined, locked: info.locked };
             });
+          // Blackjack sum cloud (shown during blackjack phase)
+          const blackjackSumCloud = state.blackjackPhase && state.blackjackSums[player.id] !== undefined
+            ? [{ text: String(state.blackjackSums[player.id]), winner: false, locked: false }]
+            : [];
           // Dialogue clouds: one per unique target player this voter has guessed
           const dialogueClouds = (() => {
             const seenTargets = new Set<string | null>();
@@ -419,7 +432,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
               canReveal={canReveal}
               guessRankUIs={guessRankUIs}
-              dialogueClouds={dialogueClouds}
+              dialogueClouds={[...blackjackSumCloud, ...dialogueClouds]}
               blackNumbers={blackNumbers}
               canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
               blackAndRed={blackAndRed}
