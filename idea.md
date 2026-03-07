@@ -17,35 +17,32 @@
 2. Each player starts with a counter (for example, 10) each time they steal from another player the counter is
    decreased.
    Once the counter becomes zero, the player can't still anymore, they can only take from the middle of the table.
-3. Additional card on flop
-4. Additional card on turn
-5. Additional card on river
-6. Everyone has 3 pocket cards instead of 2
-7. After the turn is over, its card is randomly rerolled
-8. After the flop is over, a random card from it is rerolled
-9. One player doesn't see one of their cards
-10. You can see all other players' pocket hands, but you can't see yours
-11. At preflop you give one of your cards to the person to your left
-12. At preflop you look at your cards and then all hands are randomly shuffled and redistributed.
-13. Somewhere in the middle of the game the hand rankings are random shuffled, shown to all players and these new
+3. Everyone has 3 pocket cards instead of 2
+4. After the turn is over, its card is randomly rerolled
+5. After the flop is over, a random card from it is rerolled
+6. One player doesn't see one of their cards
+7. You can see all other players' pocket hands, but you can't see yours
+8. At preflop you give one of your cards to the person to your left
+9. At preflop you look at your cards and then all hands are randomly shuffled and redistributed.
+10. Somewhere in the middle of the game the hand rankings are random shuffled, shown to all players and these new
     rankings
     are used for the rest of the game.
-14. You get 3 cards on preflop, but on flop you have to discard one of them.
-15. One player once can swap one of their cards with one of the common cards.
-16. Right after dealing the cards each player says how many J,Q,K they have.
-17. Cards of rank >10 are removed from the deck
-18. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
+11. You get 3 cards on preflop, but on flop you have to discard one of them.
+12. One player once can swap one of their cards with one of the common cards.
+13. Right after dealing the cards each player says how many J,Q,K they have.
+14. Cards of rank >10 are removed from the deck
+15. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
     one).
-19. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
-20. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
-21. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
-22. Kickers (non-scoring cards) are reversed (go in reversed order).
-23. After dealing cards everyone tells their sum (black-jack sum).
-24. If at least one of the community cards in Round 2 is a J, Q, or K, the following
+16. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
+17. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
+18. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
+19. Kickers (non-scoring cards) are reversed (go in reversed order).
+20. After dealing cards everyone tells their sum (black-jack sum).
+21. If at least one of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the white 1-star chip (from Round 1) must put their
     pocket cards face down in the discard pile and draw new pocket cards from
     the deck.
-25. This challenge adds an extra condition for a successful heist. Before the player
+22. This challenge adds an extra condition for a successful heist. Before the player
     with the highest-value red chip reveals their hand in the showdown, you must
     do the following: The other players must confer and agree together on a card
     value (from 2 to ace) that they believe the player with the highest-value red
@@ -53,20 +50,20 @@
     part in this discussion or give hints. If the
     players are incorrect, the heist is unsuccessful, even if the ranking of the red
     chips was correct.
-26. If none of the community cards in Round 2 is a J, Q, or K, the following
+23. If none of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the highest-value white chip (from Round 1) must
     put their pocket cards face down in the discard pile and draw new pocket
     cards from the deck.
-27. Decide which of you will share what hand ranking their current hand has
+24. Decide which of you will share what hand ranking their current hand has
     (pocket cards plus current community cards) with the rest of the players. They
     cannot share further details.
-28. Once the pocket cards have been dealt in Round 1, each player says how
+25. Once the pocket cards have been dealt in Round 1, each player says how
     many “face cards” (J, Q, K) they have.
-29. Decide which of you will share with everyone how many cards of a specific
+26. Decide which of you will share with everyone how many cards of a specific
     value they have in their hand
-30. Decide which of you will take one card from the deck and add it to their hand.
+27. Decide which of you will take one card from the deck and add it to their hand.
     Afterward, this player must place one of their pocket cards face down on the
     discard pile. This can be the card that they have just drawn from the deck.
-31. Once the pocket cards have been dealt in Round 1, each of you chooses one
+28. Once the pocket cards have been dealt in Round 1, each of you chooses one
     of your pocket cards. Everyone then simultaneously passes their chosen card
     to the player on their left as a pocket card.

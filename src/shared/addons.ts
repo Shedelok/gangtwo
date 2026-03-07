@@ -26,9 +26,33 @@ export const ADDONS: AddonDef[] = [
     type: 'negative',
   },
   {
+    id: 'only-neighbors-steal',
+    short: "Only Neighbors Steal",
+    long: "You can only steal chips from players sitting next to your left and right (neighbors).",
+    type: 'negative',
+  },
+  {
     id: 'clubs-spades-diamonds-hearth',
     short: "Black & Red",
     long: "Instead of 4 logical suits, there are only 2: black (represented by clubs and spades) and red (represented by diamonds and hearths).",
+    type: 'negative',
+  },
+  {
+    id: 'additional-card-flop',
+    short: "Additional Card Flop",
+    long: "When the 2nd round begins, 4 community cards are placed on the table instead of usual 3.",
+    type: 'negative',
+  },
+  {
+    id: 'additional-card-turn',
+    short: "Additional Card Turn",
+    long: "When the 3rd round begins, 2 community cards are placed on the table instead of usual 1.",
+    type: 'negative',
+  },
+  {
+    id: 'additional-card-river',
+    short: "Additional Card River",
+    long: "When the 4th round begins, 2 community cards are placed on the table instead of usual 1.",
     type: 'negative',
   },
   {
@@ -71,12 +95,6 @@ export const ADDONS: AddonDef[] = [
     id: 'no-old-chips',
     short: "No Old Chips",
     long: "At the beginning of each round (after the first one), all chips from the previous round are removed and player cannot see them.",
-    type: 'negative',
-  },
-  {
-    id: 'only-neighbors-steal',
-    short: "Only Neighbors Steal",
-    long: "You can only steal chips from players sitting next to your left and right (neighbors).",
     type: 'negative',
   },
   {

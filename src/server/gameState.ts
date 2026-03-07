@@ -117,7 +117,11 @@ function isRoundSkipped(round: number): boolean {
 }
 
 function roundCommunityCardCount(round: number): number {
-  return round === 1 ? 3 : round <= 3 ? 1 : 0;
+  let base = round === 1 ? 3 : round <= 3 ? 1 : 0;
+  if (round === 1 && state.enabledAddons.has('additional-card-flop')) base += 1;
+  if (round === 2 && state.enabledAddons.has('additional-card-turn')) base += 1;
+  if (round === 3 && state.enabledAddons.has('additional-card-river')) base += 1;
+  return base;
 }
 
 function advanceRound(): void {

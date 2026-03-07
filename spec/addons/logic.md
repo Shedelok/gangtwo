@@ -46,6 +46,16 @@ Same as "Guess Rank Highest" (including the functionality), but for the lowest r
 When the same player is under multiple "guess rank" addons, it is logically and visually equal to them being under just
 one. There's no point in having players to guess the same thing twice.
 
+
+## Addon: Only Neighbors Steal
+
+Short description: "Only Neighbors Steal"
+
+Long description: You can only steal chips from players sitting next to your left and right (neighbors).
+
+Functionality: The "Steal" option is not available for the chips that are currently at players that are not neighbors
+of the current player.
+
 ## Addon: Black & Red
 
 Short description: "Black & Red"
@@ -55,6 +65,22 @@ represented by diamonds and hearths).
 
 Functionality: All cards revert their colors, meaning the following: cards have the background of their suit color
 (red or black) and card's rank and suit symbols become white.
+
+## Addon: Additional Card Flop
+
+Short description: "Additional Card Flop"
+
+Long description: When the 2nd round begins, 4 community cards are placed on the table instead of usual 3.
+
+Functionality: The first round's number of community cards is increased by 1.
+
+## Addon: Additional Card Turn
+
+Same as "Additional Card Flop", but for 3rd round instead of the 2nd one.
+
+## Addon: Additional Card River
+
+Same as "Additional Card Flop", but for 4th round instead of the 2nd one.
 
 ## Black Chip
 
@@ -113,15 +139,6 @@ and player cannot see them.
 Functionality: When a new round starts and chips for this new round are placed on the table, all chips from the previous
 round are removed as if they were never in the game. Once the game is over and all players have revealed their cards,
 the chips are shown for the players to better analyze the game.
-
-## Addon: Only Neighbors Steal
-
-Short description: "Only Neighbors Steal"
-
-Long description: You can only steal chips from players sitting next to your left and right (neighbors).
-
-Functionality: The "Steal" option is not available for the chips that are currently at players that are not neighbors
-of the current player.
 
 # Positive Addons
 
