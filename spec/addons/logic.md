@@ -1,14 +1,19 @@
-# Addons
+# About This File
 
-## About This File
+This file describes the logic augments that addons bring to the base version of the game.
 
-This file describes the addons (toggleable modifications of the base game).
+# Lobby
 
-## Negative Addons
+If any addons are defined, there's a mechanism in the lobby for selecting which addons to play the game with.
+Players specify the addons collectively. Addons can be of two types: negative and positive. For each type players
+choose number of addons to be played with and a set of addons to choose those from. Once the game starts (or restarts)
+the specified number of addons are randomly chosen for each of the types.
 
-### Guess Rank
+# Negative Addons
 
-#### Addon: Guess Rank Highest
+## Guess Rank
+
+### Addon: Guess Rank Highest
 
 Short description: "Guess Rank Highest"
 
@@ -28,20 +33,20 @@ determined. If there are multiple guesses with maximum number of votes, a pure r
 the players who voted for that chosen option get yellow background, other guesses get more subtle more gray background
 and text. 3 seconds after HRC reveals their cards, all the guesses disappear.
 
-#### Addon: Guess Rank 2nd Highest
+### Addon: Guess Rank 2nd Highest
 
 Same as "Guess Rank Highest" (including the functionality), but for second-highest red chip instead of the highest one.
 
-#### Addon: Guess Rank Lowest
+### Addon: Guess Rank Lowest
 
 Same as "Guess Rank Highest" (including the functionality), but for the lowest red chip instead of the highest one.
 
-#### General Details
+### General Details
 
 When the same player is under multiple "guess rank" addons, it is logically and visually equal to them being under just
 one. There's no point in having players to guess the same thing twice.
 
-### Addon: Black & Red
+## Addon: Black & Red
 
 Short description: "Black & Red"
 
@@ -51,9 +56,9 @@ represented by diamonds and hearths).
 Functionality: All cards revert their colors, meaning the following: cards have the background of their suit color
 (red or black) and card's rank and suit symbols become white.
 
-### Black Chip
+## Black Chip
 
-#### Addon: Black 1s
+### Addon: Black 1s
 
 Short description: "Black 1s"
 
@@ -63,12 +68,12 @@ taken from the middle of the table for the first time.
 Functionality: All chips of value 1 have black circle inside them (the border is still of their color, but the middle is
 black). There's no steal or drop option for a black chip.
 
-#### Addon: Black Ns
+### Addon: Black Ns
 
 Same as "Black 1s", but the highest value (equal to the number of players) chips become black instead of the chips
 with the value 1.
 
-#### Addon: Black Xs
+### Addon: Black Xs
 
 Same as "Black 1s", but instead of chips with value 1, a random number X (from 1 to N) is determined at the beginning of
 the game and chips with number X become black. X stays the same through all rounds. If this addon affects a chip that
@@ -76,7 +81,7 @@ is already black (for example, because Black 1s addon is also enabled), then num
 happen. If it's impossible to find such X (for example, if there are 2 players and both Black 1s and Black Ns addons are
 enabled alongside this addon), then this addon has no effect.
 
-### Addon: No Old Chips
+## Addon: No Old Chips
 
 Short description: "No Old Chips"
 
@@ -87,7 +92,7 @@ Functionality: When a new round starts and chips for this new round are placed o
 round are removed as if they were never in the game. Once the game is over and all players have revealed their cards,
 the chips are shown for the players to better analyze the game.
 
-### Addon: Only Neighbors Steal
+## Addon: Only Neighbors Steal
 
 Short description: "Only Neighbors Steal"
 
@@ -96,9 +101,9 @@ Long description: You can only steal chips from players sitting next to your lef
 Functionality: The "Steal" option is not available for the chips that are currently at players that are not neighbors
 of the current player.
 
-## Positive Addons
+# Positive Addons
 
-### Addon: See 1 Neighbor's Cards
+## Addon: See 1 Neighbor's Cards
 
 Short description: "See 1 Neighbor's Cards"
 
@@ -106,7 +111,7 @@ Long description: Besides your own cards you can also see pocket cards of the pl
 
 Functionality: During the game each player sees the cards of their immediate neighbors on the left face up.
 
-### Addon: [A] Show 1 Card to 1 Player
+## Addon: [A] Show 1 Card to 1 Player
 
 Short description: "[A] Show 1 Card to 1 Player"
 
@@ -116,7 +121,7 @@ Functionality: This addon adds an action card. When using the card, the player n
 then one of other players. After that the selected player sees the selected card flip face up in-place. 5 seconds after
 that the card flips back face down just as it was before.
 
-### Addon: [A] Unsuited Jack
+## Addon: [A] Unsuited Jack
 
 Short description: "[A] Unsuited Jack"
 
@@ -127,7 +132,7 @@ Functionality: This addon adds an action card. When using the card, the player n
 that, that card is discarded and the player gets an orange #B87333) Jack. For the rest of the game the player has this
 Jack as one of their cards. This Jack is always face up for all players.
 
-### Addon: [A] Reroll Common
+## Addon: [A] Reroll Common
 
 Short description: "[A] Reroll Common"
 
