@@ -241,6 +241,10 @@ export function removePlayer(socketId: string): void {
     }
   }
   // During game, keep the player to not break state; their socket is just gone
+  if (state.phase !== 'lobby') {
+    const player = state.players.find((p) => p.id === playerId);
+    if (player) player.readyForNextRound = false;
+  }
 }
 
 export function startGame(shufflePlayers = true): string | null {

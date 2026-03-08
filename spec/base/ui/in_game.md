@@ -91,4 +91,5 @@ affect the size of the player seat.
 
 Initially the player is not ready. When the player's current round chip is
 stolen or discarded, their state resets to not ready. When a new round starts, the ready button is automatically reset
-to not ready state.
+to not ready state. When a player disconnects the state is reset to not ready, so that the new round doesn't start until
+they are back and pressed the button again.
