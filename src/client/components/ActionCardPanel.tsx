@@ -35,10 +35,26 @@ function isAddonUsed(addonId: string, state: ClientGameState): boolean {
   return false;
 }
 
+const UNSUITED_RANK_ORDER = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+
+function getUnsuitedSortKey(addonId: string, state: ClientGameState): number | null {
+  if (addonId === 'action-unsuited-jack') return UNSUITED_RANK_ORDER.indexOf('J');
+  if (addonId === 'action-unsuited-x') {
+    const rank = state.unsuitedXRank ?? null;
+    return rank !== null ? UNSUITED_RANK_ORDER.indexOf(rank) : null;
+  }
+  return null;
+}
+
 export default function ActionCardPanel({ state, step, activeAddonId, returningAddonId, onStart, onCancel, onCardElRef }: Props) {
   const actionAddons = ADDONS.filter(a =>
     a.hasAction && state.enabledAddons.includes(a.id) && !isAddonUsed(a.id, state)
-  );
+  ).sort((a, b) => {
+    const aKey = getUnsuitedSortKey(a.id, state);
+    const bKey = getUnsuitedSortKey(b.id, state);
+    if (aKey !== null && bKey !== null) return aKey - bKey;
+    return 0;
+  });
   if (actionAddons.length === 0) return null;
 
   const lockedByOther = !!state.actionCardLock && state.actionCardLock.playerId !== state.myId;

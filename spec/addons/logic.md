@@ -175,7 +175,9 @@ that the card flips back face down just as it was before.
 
 The action card for this addon has no text, has a simple eye image in its center and has a black background.
 
-## Addon: [A] Unsuited Jack
+## Unsuited Card
+
+### Addon: [A] Unsuited Jack
 
 Short description: "[A] Unsuited Jack"
 
@@ -190,10 +192,15 @@ Both action card and the actual card in hand from this addon look the same: they
 similarly to other playing cards have "J" symbol in the top left corner, but also in the center in the card where a
 normal card would have its suit.
 
-## Addon: [A] Unsuited X
+### Addon: [A] Unsuited X
 
 Same as "Addon: [A] Unsuited Jack", but instead of Jack a random card Rank (from 2 to A) is determined at the beginning
 of the game and an unsuited card with rank X is available to be taken. X stays the same through all rounds.
+
+### General Details
+
+When multiple unsuited action cards are put on the action cards table, they are sorted by rank (top to bottom A, K, Q,
+J, 10, 9, 8, 7, 6, 5, 4, 3, 2).
 
 ## Addon: [A] Reroll Common
 
