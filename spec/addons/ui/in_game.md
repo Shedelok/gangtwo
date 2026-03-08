@@ -60,4 +60,5 @@ should never magically "teleport". When it moves, it always looks the same as on
 realistic and the card should never appear in multiple places at the same time. For example, when the card is flying,
 it should not be visible at its origin or destination places. The animation is played for all players
 at the same time. If a player was in a different tab when the animation was played, they just won't see it, they would
-see the card already at player who uses it.
+see the card already at player who uses it. While the card is flying back to the table, the flying card becomes
+clickable and available for all players.

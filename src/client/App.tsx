@@ -222,7 +222,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
-function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRank }: { from: { x: number; y: number }; to: { x: number; y: number }; addonId: string; label: string; snap?: boolean; unsuitedXRank?: string | null }) {
+function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRank, onClick }: { from: { x: number; y: number }; to: { x: number; y: number }; addonId: string; label: string; snap?: boolean; unsuitedXRank?: string | null; onClick?: () => void }) {
   const [arrived, setArrived] = useState(snap);
   useEffect(() => {
     if (snap) return;
@@ -233,7 +233,7 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
   const isUnsuited = addonId === 'action-unsuited-jack' || addonId === 'action-unsuited-x';
   const unsuitedRank = addonId === 'action-unsuited-jack' ? 'J' : (unsuitedXRank ?? 'X');
   return createPortal(
-    <div style={{
+    <div onClick={onClick} style={{
       position: 'fixed',
       left: atDest ? to.x : from.x,
       top: atDest ? to.y : from.y,
@@ -241,7 +241,8 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
       height: CARD_H,
       transition: atDest && !snap ? 'left 2s ease, top 2s ease' : 'none',
       zIndex: 1000,
-      pointerEvents: 'none',
+      pointerEvents: onClick ? 'auto' : 'none',
+      cursor: onClick ? 'pointer' : 'default',
       borderRadius: 6,
       border: isUnsuited ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
       background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : '#1a2d1a',
@@ -476,6 +477,20 @@ export default function App() {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
+  const handleReturnCardClick = () => {
+    if (!flyingCard || !state) return;
+    const lockedByOther = !!state.actionCardLock && state.actionCardLock.playerId !== state.myId;
+    if (lockedByOther || actionStep !== 'idle') return;
+    const addonId = flyingCard.addonId;
+    if (returnTimerRef.current) { clearTimeout(returnTimerRef.current); returnTimerRef.current = null; }
+    setFlyingCard(null);
+    setReturningAddonId(null);
+    sendAction({ type: 'LOCK_ACTION_CARD', addonId });
+    setActiveAddonId(addonId);
+    setActionStep('select-card');
+    setActionCardIndex(null);
+  };
+
   if (status === 'disconnected' && !state) {
     return (
       <div style={styles.container}>
@@ -707,7 +722,7 @@ export default function App() {
           onCardElRef={(addonId, el) => { if (el) cardElsRef.current.set(addonId, el); else cardElsRef.current.delete(addonId); }}
         />
       )}
-      {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} addonId={flyingCard.addonId} label={flyingCard.label} snap={flyingCard.snap} unsuitedXRank={state?.unsuitedXRank} />}
+      {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} addonId={flyingCard.addonId} label={flyingCard.label} snap={flyingCard.snap} unsuitedXRank={state?.unsuitedXRank} onClick={returningAddonId === flyingCard.addonId ? handleReturnCardClick : undefined} />}
     </div>
   );
 }
