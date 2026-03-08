@@ -153,7 +153,7 @@ function advanceRound(): void {
       nextRound++;
     }
     state.currentRound = nextRound as RoundNumber;
-    state.middleChips = createChipsForRound(nextRound, state.players.length);
+    state.middleChips = createChipsForRound(nextRound as RoundNumber, state.players.length);
     for (const player of state.players) {
       player.readyForNextRound = false;
     }
@@ -319,7 +319,7 @@ export function startGame(shufflePlayers = true): string | null {
     player.readyForNextRound = false;
   }
   state.blackjackPhase = blackjackActive;
-  state.middleChips = blackjackActive ? [] : createChipsForRound(startRound, state.players.length);
+  state.middleChips = blackjackActive ? [] : createChipsForRound(startRound as RoundNumber, state.players.length);
   const ALL_RANKS: string[] = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
   state.unsuitedXRank = state.enabledAddons.has('action-unsuited-x')
     ? ALL_RANKS[Math.floor(Math.random() * ALL_RANKS.length)]
