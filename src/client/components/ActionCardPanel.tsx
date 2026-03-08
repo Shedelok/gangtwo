@@ -11,6 +11,7 @@ interface Props {
   state: ClientGameState;
   step: ActionWorkflowStep;
   activeAddonId: string | null;
+  returningAddonId: string | null;
   onStart: (addonId: string) => void;
   onCancel: () => void;
   onCardElRef: (addonId: string, el: HTMLDivElement | null) => void;
@@ -34,7 +35,7 @@ function isAddonUsed(addonId: string, state: ClientGameState): boolean {
   return false;
 }
 
-export default function ActionCardPanel({ state, step, activeAddonId, onStart, onCancel, onCardElRef }: Props) {
+export default function ActionCardPanel({ state, step, activeAddonId, returningAddonId, onStart, onCancel, onCardElRef }: Props) {
   const actionAddons = ADDONS.filter(a =>
     a.hasAction && state.enabledAddons.includes(a.id) && !isAddonUsed(a.id, state)
   );
@@ -65,7 +66,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, onStart, o
         <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Actions</div>
         {actionAddons.map(addon => {
           const active = step !== 'idle' && activeAddonId === addon.id;
-          const locked = lockedByOther && state.actionCardLock?.addonId === addon.id;
+          const locked = (lockedByOther && state.actionCardLock?.addonId === addon.id) || returningAddonId === addon.id;
           const dimmed = (lockedByOther && !locked) || (iAmUsingACard && !active);
           return (
             <div

@@ -307,6 +307,7 @@ export default function App() {
   const seatElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const prevLockRef = useRef<ClientGameState['actionCardLock'] | undefined>(undefined);
   const [flyingCard, setFlyingCard] = useState<{ from: { x: number; y: number }; to: { x: number; y: number }; addonId: string; label: string; snap?: boolean } | null>(null);
+  const [returningAddonId, setReturningAddonId] = useState<string | null>(null);
   const flyingCardRef = useRef(flyingCard);
   flyingCardRef.current = flyingCard;
   const returnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -452,7 +453,8 @@ export default function App() {
         if (current && cardEl) {
           const cr = cardEl.getBoundingClientRect();
           setFlyingCard({ from: current.to, to: { x: cr.left, y: cr.top }, addonId: current.addonId, label: current.label });
-          returnTimerRef.current = setTimeout(() => { setFlyingCard(null); returnTimerRef.current = null; }, 2100);
+          setReturningAddonId(prev.addonId);
+          returnTimerRef.current = setTimeout(() => { setFlyingCard(null); setReturningAddonId(null); returnTimerRef.current = null; }, 2100);
         } else {
           setFlyingCard(null);
         }
@@ -699,6 +701,7 @@ export default function App() {
           state={state}
           step={actionStep}
           activeAddonId={activeAddonId}
+          returningAddonId={returningAddonId}
           onStart={(addonId) => { sendAction({ type: 'LOCK_ACTION_CARD', addonId }); setActiveAddonId(addonId); setActionStep('select-card'); setActionCardIndex(null); }}
           onCancel={() => { if (activeAddonId) sendAction({ type: 'UNLOCK_ACTION_CARD', addonId: activeAddonId }); setActionStep('idle'); setActionCardIndex(null); setActiveAddonId(null); }}
           onCardElRef={(addonId, el) => { if (el) cardElsRef.current.set(addonId, el); else cardElsRef.current.delete(addonId); }}

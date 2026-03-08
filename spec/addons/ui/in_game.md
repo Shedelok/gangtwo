@@ -57,6 +57,7 @@ the animation must start from the card's table spot; if a card is being returned
 its table spot.
 These table spot positions must remain trackable at all times, including while the card is held by a player. A card
 should never magically "teleport". When it moves, it always looks the same as on the table. The animation should be
-realistic and the card should never appear in multiple places at the same time. The animation is played for all players
+realistic and the card should never appear in multiple places at the same time. For example, when the card is flying,
+it should not be visible at its origin or destination places. The animation is played for all players
 at the same time. If a player was in a different tab when the animation was played, they just won't see it, they would
 see the card already at player who uses it.
