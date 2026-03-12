@@ -14,6 +14,8 @@ Players can uncheck the checkbox next to each addon to remove them from the pool
 random selection. The hover description of each asset doesn't cover the checkboxes, so they always stay visible
 If the number of requested addons is bigger than the number of enabled checkboxes, the game cannot start.
 
+Each (negative and positive) list should take 14% of the entire screen in width.
+
 ## Setup Code
 
 At the top of the addons side-panel right next to the word "Addons" (also on the left side of the panel) there's a code

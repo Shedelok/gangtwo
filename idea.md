@@ -8,11 +8,9 @@
   restructured and split in a different way rather than ui vs logic
 - When lobby is deleted (during lobby phase) the nickname is prefilled as well
 - Show who didn't press ready when everyone has during the game
-- Unsuited jack doesn't show full description
-- Maybe create a bot that would help with testing by doing randim stuff
 - On share round everyone sees who's ready
-- Copy button doesn't work currently
 - Player using show card should also have the flipping card animation
+- (Maybe) Create a bot that would help with testing by doing random stuff
 - (Maybe) Make chips clickable
 
 ## Addons

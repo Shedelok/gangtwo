@@ -154,6 +154,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     fontSize: '12px',
     color: '#aaa',
+    zIndex: 300,
   },
   soundBarRow: {
     display: 'flex',
@@ -646,7 +647,7 @@ export default function App() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'flex-start' }}>
               {negativeAddons.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#2d1515', borderRadius: 6, padding: '4px 6px', width: '14vw' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#2d1515', borderRadius: 6, padding: '4px 6px', width: isLobby ? '14vw' : '10vw' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: '#a05050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
                     <span>Negative</span>
                     {isLobby && (
@@ -661,7 +662,7 @@ export default function App() {
                 </div>
               )}
               {positiveAddons.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#152d15', borderRadius: 6, padding: '4px 6px', width: '14vw' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#152d15', borderRadius: 6, padding: '4px 6px', width: isLobby ? '14vw' : '10vw' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: '#50a050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
                     <span>Positive</span>
                     {isLobby && (

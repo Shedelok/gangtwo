@@ -5,7 +5,7 @@ This file describes the UI augments that addons bring to the base version of the
 # Addons
 
 On the left, players can see the full list of addons that take part in the game as a side-panel under the sound control
-elements.
+elements. Each (negative and positive) list should take 10% of the entire screen in width.
 
 The players can also see the code of the current addons setup.
 
