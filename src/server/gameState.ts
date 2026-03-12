@@ -297,7 +297,7 @@ export function startGame(shufflePlayers = true): string | null {
   state.deck = remainingDeck;
 
   state.communityCards = [];
-  const blackjackActive = state.enabledAddons.has('share-blackjack-sum');
+  const blackjackActive = state.enabledAddons.has('share-blackjack-sum') || state.enabledAddons.has('share-number-of-faces');
   let startRound = 1;
   // Skip disabled starting rounds; if blackjack phase is active, defer their community cards
   // until the phase ends (spec: "before any other aspects of the normal rounds have happened,
@@ -788,11 +788,22 @@ export function buildClientState(socketId: string): ClientGameState {
     blackjackSums: (() => {
       if (!state.blackjackPhase) return {};
       const sums: Record<string, number> = {};
+      const isFaces = state.enabledAddons.has('share-number-of-faces');
       for (const p of state.players) {
         const cards = state.holeCards[p.id];
-        if (cards) sums[p.id] = bjValue(cards[0].rank) + bjValue(cards[1].rank);
+        if (cards) {
+          if (isFaces) {
+            sums[p.id] = (cards[0].rank === 'J' || cards[0].rank === 'Q' || cards[0].rank === 'K' ? 1 : 0)
+                       + (cards[1].rank === 'J' || cards[1].rank === 'Q' || cards[1].rank === 'K' ? 1 : 0);
+          } else {
+            sums[p.id] = bjValue(cards[0].rank) + bjValue(cards[1].rank);
+          }
+        }
       }
       return sums;
     })(),
+    shareInfoLabel: state.blackjackPhase
+      ? (state.enabledAddons.has('share-number-of-faces') ? 'Number of Faces' : 'Blackjack Sum')
+      : '',
   };
 }

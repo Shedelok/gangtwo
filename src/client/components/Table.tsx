@@ -318,10 +318,10 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               </div>
             )}
 
-            {/* Blackjack Sum phase label */}
+            {/* Share info phase label */}
             {state.blackjackPhase && (
               <div style={{ background: 'rgba(0,0,0,0.45)', color: '#a0d8ff', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
-                Blackjack Sum
+                {state.shareInfoLabel}
               </div>
             )}
 

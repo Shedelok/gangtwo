@@ -110,6 +110,12 @@ export const ADDONS: AddonDef[] = [
     type: 'positive',
   },
   {
+    id: 'share-number-of-faces',
+    short: "Share Number of Faces",
+    long: "Once the pocket cards have been dealt in Round 1, each player says how many \"face cards\" (J, Q, K) they have. This is done as a separate pre-game round, which ends when everyone has the ready button pressed.",
+    type: 'positive',
+  },
+  {
     id: 'show-1-card-to-1-player',
     short: "[A] Show 1 Card to 1 Player",
     long: "Once per game, one of the players can show one of their cards to another player for 5 seconds.",

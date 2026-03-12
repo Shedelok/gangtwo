@@ -51,8 +51,9 @@ export interface ClientGameState {
   unsuitedXUsed: boolean;        // whether the unsuited-x action has been used this game
   unsuitedXRank: string | null;  // the random rank for the unsuited-x addon, null if not active
   rerollCommonUsed: boolean;     // whether the reroll-common action has been used this game
-  blackjackPhase: boolean;       // true during the Share Blackjack Sum pre-game round
-  blackjackSums: Record<string, number>; // playerId → blackjack sum (only populated during blackjackPhase)
+  blackjackPhase: boolean;       // true during any share-info pre-game round
+  blackjackSums: Record<string, number>; // playerId → share-info value (only populated during blackjackPhase)
+  shareInfoLabel: string;        // label shown on the table during the share-info phase
 }
 
 // Client → Server actions
