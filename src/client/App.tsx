@@ -379,6 +379,11 @@ export default function App() {
       playSound(files.CARD_FLIP, vol, SOUND_VOLUME_MULTIPLIER.CARD_FLIP);
     }
 
+    const shownCardOutChanged = state.myShownCardOutIndex !== prev.myShownCardOutIndex;
+    if (shownCardOutChanged) {
+      playSound(files.CARD_FLIP, vol, SOUND_VOLUME_MULTIPLIER.CARD_FLIP);
+    }
+
     const actionCardCommitted =
       (!prev.showCardUsed && state.showCardUsed) ||
       (!prev.unsuitedJackUsed && state.unsuitedJackUsed) ||

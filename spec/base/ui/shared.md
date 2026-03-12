@@ -46,5 +46,6 @@ a different tab when the animation was played, they just won't see it, they woul
 state. When there are multiple cards being flipped, their animations are played at the same time (they all flip
 together).
 
-When a card is flipped (regardless of where it is: on the table, in hand, etc.), all players hear "CARD_FLIP" sound
-which defaults to spec/base/resources/sounds/card-flip.mp3.
+Every time a player sees a card flip animation (regardless of where it is: on the table, in their hand, in other
+player's hand, etc.), they hear "CARD_FLIP" sound which defaults to
+spec/base/resources/sounds/card-flip.mp3.

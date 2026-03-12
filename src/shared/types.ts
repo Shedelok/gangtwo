@@ -44,6 +44,7 @@ export interface ClientGameState {
   myShownCard: Card | null;           // card that another player showed to me (null if none)
   myShownCardFrom: string | null;     // id of the player who showed me a card
   myShownCardIndex: 0 | 1 | null;    // which card index (0 or 1) of the source player was shown
+  myShownCardOutIndex: 0 | 1 | null; // index of my card I am currently showing to someone else (null if not showing)
   actionCardLock: { addonId: string; playerId: string } | null; // which player is currently using which action card
   unsuitedJacks: Record<string, number>; // playerId → card index (0 or 1) of unsuited jack
   unsuitedJackUsed: boolean;     // whether the unsuited jack action has been used this game

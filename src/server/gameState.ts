@@ -777,6 +777,7 @@ export function buildClientState(socketId: string): ClientGameState {
     myShownCard: (playerId && state.showCardData?.targetId === playerId) ? state.showCardData.card : null,
     myShownCardFrom: (playerId && state.showCardData?.targetId === playerId) ? state.showCardData.sourceId : null,
     myShownCardIndex: (playerId && state.showCardData?.targetId === playerId) ? state.showCardData.cardIndex : null,
+    myShownCardOutIndex: (playerId && state.showCardData?.sourceId === playerId) ? state.showCardData.cardIndex : null,
     actionCardLock: state.actionCardLock,
     unsuitedJacks: Object.fromEntries(state.unsuitedJacks),
     unsuitedJackUsed: state.unsuitedJacks.size > 0,

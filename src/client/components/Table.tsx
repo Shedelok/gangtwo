@@ -210,6 +210,27 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.myShownCard, state.myShownCardFrom, state.myShownCardIndex]);
 
+  // Track outgoing shown card: the card the current player is showing to someone else
+  const [sourceShownCard, setSourceShownCard] = useState<{ idx: 0 | 1; card: Card; faceUp: boolean } | null>(null);
+  const sourceShownCardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    const outIdx = state.myShownCardOutIndex;
+    if (outIdx != null && state.myHoleCards) {
+      // Card being shown: starts face-up, then flips face-down after a brief tick
+      setSourceShownCard({ idx: outIdx, card: state.myHoleCards[outIdx], faceUp: true });
+      if (sourceShownCardTimerRef.current) clearTimeout(sourceShownCardTimerRef.current);
+      sourceShownCardTimerRef.current = setTimeout(() => {
+        setSourceShownCard(prev => prev ? { ...prev, faceUp: false } : null);
+      }, 50);
+    } else if (sourceShownCard && !sourceShownCard.faceUp) {
+      // Card reveal ended: flip back face-up, then clear after animation
+      setSourceShownCard(prev => prev ? { ...prev, faceUp: true } : null);
+      if (sourceShownCardTimerRef.current) clearTimeout(sourceShownCardTimerRef.current);
+      sourceShownCardTimerRef.current = setTimeout(() => setSourceShownCard(null), 1050);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.myShownCardOutIndex]);
+
   const registerChip = useCallback((key: string, el: HTMLDivElement | null) => {
     if (el) chipElsRef.current.set(key, el);
     else    chipElsRef.current.delete(key);
@@ -445,7 +466,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             unsuitedJackIndex={state.unsuitedJacks[player.id]}
             unsuitedXIndex={state.unsuitedXs[player.id]}
             unsuitedXRank={state.unsuitedXRank ?? undefined}
-            shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : null}
+            shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : (isMe && sourceShownCard ? { idx: sourceShownCard.idx, card: sourceShownCard.card, faceUp: sourceShownCard.faceUp } : null)}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );

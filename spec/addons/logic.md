@@ -189,7 +189,8 @@ Long description: Once per game, one of the players can show one of their cards 
 
 Functionality: This addon adds an action card. When using the card, the player needs to first select one of their cards,
 then one of other players. After that the selected player sees the selected card flip face up in-place. 5 seconds after
-that the card flips back face down just as it was before.
+that the card flips back face down just as it was before. The player using the card also sees the flipping card
+animation (from face up to face down, and then after 5 seconds from face down to face up).
 
 The action card for this addon has no text, has a simple eye image in its center and has a black background.
 

@@ -9,7 +9,7 @@
 - When lobby is deleted (during lobby phase) the nickname is prefilled as well
 - Show who didn't press ready when everyone has during the game
 - On share round everyone sees who's ready
-- Player using show card should also have the flipping card animation
+- When someone shows you a card with an addon, its back is changed for the animation. This shouldn't happen.
 - (Maybe) Create a bot that would help with testing by doing random stuff
 - (Maybe) Make chips clickable
 
