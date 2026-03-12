@@ -10,19 +10,19 @@ export const ADDONS: AddonDef[] = [
   {
     id: 'guess-highest-red-chip-hand-rank',
     short: "Guess Rank Highest",
-    long: "Before the player with the highest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/street/etc.).",
+    long: "Before the player with the highest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
     type: 'negative',
   },
   {
     id: 'guess-2nd-highest-red-chip-hand-rank',
     short: "Guess Rank 2nd Highest",
-    long: "Before the player with the 2nd-highest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/street/etc.).",
+    long: "Before the player with the 2nd-highest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
     type: 'negative',
   },
   {
     id: 'guess-lowest-red-chip-hand-rank',
     short: "Guess Rank Lowest",
-    long: "Before the player with the lowest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/street/etc.).",
+    long: "Before the player with the lowest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
     type: 'negative',
   },
   {

@@ -18,7 +18,7 @@ the specified number of addons are randomly chosen for each of the types.
 Short description: "Guess Rank Highest"
 
 Long description: Before the player with the highest value red chip reveals their hand, other players must collectively
-agree on what hand rank that player has (pair/two pairs/street/etc.).
+agree on what hand rank that player has (pair/two pairs/straight/etc.).
 
 Functionality: Here, let's call the player with the highest value red chip HRC. Once it's HRC's turn to reveal the
 cards, they can't do so until all other players submit votes for their hand rank. Each other player has to submit a
