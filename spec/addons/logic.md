@@ -181,6 +181,10 @@ Also, there's an addon-specific text written at the middle of the table during t
 the table during this phase. Each player has the normal ready button. Once everyone is ready, the rest of the first
 round happens as normal.
 
+When multiple share info addons are in the same game, they take effect one by one: for each of them there's info shared
+by each player and a table text. Once everyone is ready, the next addon changes the current one, until there are no more
+share info addons.
+
 ## Addon: [A] Show 1 Card to 1 Player
 
 Short description: "[A] Show 1 Card to 1 Player"

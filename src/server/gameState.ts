@@ -50,6 +50,8 @@ interface ServerGameState {
   unsuitedXRank: string | null;
   rerollCommonUsed: boolean;
   blackjackPhase: boolean;
+  shareInfoQueue: string[];  // ordered list of share-info addon IDs to process
+  shareInfoIndex: number;    // index into shareInfoQueue of the current addon
   gameId: string;
 }
 
@@ -85,6 +87,8 @@ const state: ServerGameState = {
   unsuitedXRank: null,
   rerollCommonUsed: false,
   blackjackPhase: false,
+  shareInfoQueue: [],
+  shareInfoIndex: 0,
   gameId: '',
 };
 
@@ -297,7 +301,10 @@ export function startGame(shufflePlayers = true): string | null {
   state.deck = remainingDeck;
 
   state.communityCards = [];
-  const blackjackActive = state.enabledAddons.has('share-blackjack-sum') || state.enabledAddons.has('share-number-of-faces');
+  const SHARE_INFO_ADDON_IDS = ['share-blackjack-sum', 'share-number-of-faces'];
+  state.shareInfoQueue = SHARE_INFO_ADDON_IDS.filter(id => state.enabledAddons.has(id));
+  state.shareInfoIndex = 0;
+  const blackjackActive = state.shareInfoQueue.length > 0;
   let startRound = 1;
   // Skip disabled starting rounds; if blackjack phase is active, defer their community cards
   // until the phase ends (spec: "before any other aspects of the normal rounds have happened,
@@ -425,18 +432,23 @@ export function setReady(socketId: string, ready: boolean): string | null {
 
   if (state.blackjackPhase) {
     if (state.players.every(p => p.readyForNextRound)) {
-      state.blackjackPhase = false;
+      state.shareInfoIndex++;
       for (const p of state.players) p.readyForNextRound = false;
-      // Draw community cards for any rounds that were skipped at game start (deferred during blackjack phase)
-      for (let r = 1; r < state.currentRound; r++) {
-        const count = roundCommunityCardCount(r);
-        if (count > 0) {
-          const [drawn, remaining] = drawCards(state.deck, count);
-          state.communityCards.push(...drawn);
-          state.deck = remaining;
+      if (state.shareInfoIndex >= state.shareInfoQueue.length) {
+        // All share-info addons processed — end the phase
+        state.blackjackPhase = false;
+        // Draw community cards for any rounds that were skipped at game start (deferred during blackjack phase)
+        for (let r = 1; r < state.currentRound; r++) {
+          const count = roundCommunityCardCount(r);
+          if (count > 0) {
+            const [drawn, remaining] = drawCards(state.deck, count);
+            state.communityCards.push(...drawn);
+            state.deck = remaining;
+          }
         }
+        state.middleChips = createChipsForRound(state.currentRound, state.players.length);
       }
-      state.middleChips = createChipsForRound(state.currentRound, state.players.length);
+      // else: stay in blackjackPhase for the next share-info addon
     }
     return null;
   }
@@ -615,6 +627,8 @@ export function finishGame(keepNames = false, keepAddons = false): void {
   state.unsuitedXRank = null;
   state.rerollCommonUsed = false;
   state.blackjackPhase = false;
+  state.shareInfoQueue = [];
+  state.shareInfoIndex = 0;
   state.enabledAddons = new Set();
   state.blackXValue = null;
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
@@ -788,8 +802,9 @@ export function buildClientState(socketId: string): ClientGameState {
     blackjackPhase: state.blackjackPhase,
     blackjackSums: (() => {
       if (!state.blackjackPhase) return {};
+      const currentAddon = state.shareInfoQueue[state.shareInfoIndex];
       const sums: Record<string, number> = {};
-      const isFaces = state.enabledAddons.has('share-number-of-faces');
+      const isFaces = currentAddon === 'share-number-of-faces';
       for (const p of state.players) {
         const cards = state.holeCards[p.id];
         if (cards) {
@@ -804,7 +819,7 @@ export function buildClientState(socketId: string): ClientGameState {
       return sums;
     })(),
     shareInfoLabel: state.blackjackPhase
-      ? (state.enabledAddons.has('share-number-of-faces') ? 'Number of Faces' : 'Blackjack Sum')
+      ? (state.shareInfoQueue[state.shareInfoIndex] === 'share-number-of-faces' ? 'Number of Faces' : 'Blackjack Sum')
       : '',
   };
 }
