@@ -34,7 +34,6 @@ interface ServerGameState {
   positiveAddonCount: number;
   socketToPlayerId: Map<string, string>;
   playerIdToSocketId: Map<string, string>;
-  prefillNames: Map<string, string>;
   sessionIdToPlayerId: Map<string, string>;
   socketToSessionId: Map<string, string>;
   startGameVoters: Set<string>;
@@ -71,7 +70,6 @@ const state: ServerGameState = {
   positiveAddonCount: 0,
   socketToPlayerId: new Map(),
   playerIdToSocketId: new Map(),
-  prefillNames: new Map(),
   sessionIdToPlayerId: new Map(),
   socketToSessionId: new Map(),
   startGameVoters: new Set(),
@@ -213,7 +211,6 @@ export function addPlayer(socketId: string, name: string): string | null {
   const playerId = randomUUID();
   state.socketToPlayerId.set(socketId, playerId);
   state.playerIdToSocketId.set(playerId, socketId);
-  state.prefillNames.delete(socketId);
   const sessionId = state.socketToSessionId.get(socketId);
   if (sessionId) state.sessionIdToPlayerId.set(sessionId, playerId);
   state.players.push({
@@ -598,13 +595,7 @@ export function toggleRestartVote(socketId: string): string | null {
   return null;
 }
 
-export function finishGame(keepNames = false, keepAddons = false): void {
-  if (keepNames) {
-    for (const player of state.players) {
-      const socketId = state.playerIdToSocketId.get(player.id);
-      if (socketId) state.prefillNames.set(socketId, player.name);
-    }
-  }
+export function finishGame(keepAddons = false): void {
   const savedAddonPool = keepAddons ? new Set(state.addonPool) : null;
   const savedNegativeCount = keepAddons ? state.negativeAddonCount : 0;
   const savedPositiveCount = keepAddons ? state.positiveAddonCount : 0;
@@ -774,7 +765,6 @@ export function buildClientState(socketId: string): ClientGameState {
     addonPool: [...state.addonPool],
     negativeAddonCount: state.negativeAddonCount,
     positiveAddonCount: state.positiveAddonCount,
-    prefilledName: state.prefillNames.get(socketId) ?? null,
     startGameVotes: state.startGameVoters.size,
     startGameVoterIds: [...state.startGameVoters],
     myStartGameVote: playerId ? state.startGameVoters.has(playerId) : false,

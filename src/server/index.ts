@@ -124,7 +124,7 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       error = useRerollCommon(socketId, action.cardIndex);
       break;
     case 'FINISH_GAME':
-      finishGame(true, true);
+      finishGame(true);
       break;
     default:
       error = 'Unknown action';

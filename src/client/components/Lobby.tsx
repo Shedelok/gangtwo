@@ -106,8 +106,10 @@ interface Props {
   sendAction: (a: ClientAction) => void;
 }
 
+const LAST_NAME_KEY = 'gang_last_name';
+
 export default function Lobby({ state, sendAction }: Props) {
-  const [nameInput, setNameInput] = useState(state.prefilledName ?? '');
+  const [nameInput, setNameInput] = useState(() => localStorage.getItem(LAST_NAME_KEY) ?? '');
 
   const hasJoined = state.myId !== '';
 
@@ -122,8 +124,8 @@ export default function Lobby({ state, sendAction }: Props) {
   function handleJoin(e: React.FormEvent) {
     e.preventDefault();
     if (nameInput.trim()) {
+      localStorage.setItem(LAST_NAME_KEY, nameInput.trim());
       sendAction({ type: 'JOIN_LOBBY', name: nameInput.trim() });
-      setNameInput('');
     }
   }
 

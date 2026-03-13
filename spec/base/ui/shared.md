@@ -24,10 +24,6 @@ UI element (including table and players), so it's fully visible and nothing bloc
 
 The Stop Game and Restart buttons are displayed side by side with a gap between them.
 
-For each of the players who participated in the game that was stopped by pressing Stop
-Game button, their name is pre-typed into the input field for the name for the next game to allow them to join the next
-lobby in just one click without having to retype their name.
-
 The Restart button works similar to the "Move to the next round" button. All players must press it for it to take
 effect. Each player can press and unpress it. Each player sees how many players have the button pressed.
 When the button is pressed by the player it reads "Waiting", still displays number of players who pressed it and has
