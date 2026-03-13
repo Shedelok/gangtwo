@@ -117,10 +117,10 @@ export default function PlayerSeat({
           {player.name}{isMe ? ' (you)' : ''}
         </div>
         {showRestartTick && (
-          <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: hasRestartVoted ? '#4ade80' : 'transparent', pointerEvents: 'none' }}>✓</span>
+          <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: hasRestartVoted ? '#4ade80' : '#f87171', pointerEvents: 'none' }}>{hasRestartVoted ? '✓' : '✕'}</span>
         )}
         {showShareInfoTick && (
-          <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: player.readyForNextRound ? '#4ade80' : 'transparent', pointerEvents: 'none' }}>✓</span>
+          <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: player.readyForNextRound ? '#4ade80' : '#f87171', pointerEvents: 'none' }}>{player.readyForNextRound ? '✓' : '✕'}</span>
         )}
       </div>
 

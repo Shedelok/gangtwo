@@ -35,8 +35,9 @@ a less bright color.
 After the game is over and none of the players has any available action (including revealing cards) besides restart/stop
 the game, each player has a tick right next to their name indicating that they have Restart button pressed. The tick
 should not move the name horizontally, it should appear to the right from the name, but the name should still be
-centered as if there was no tick. This helps players to see who hasn't pressed the Restart button yet, but not
-before the game is over, not to reveal additional meta-information.
+centered as if there was no tick. Players who are not ready have a red cross (U+2715) next to their name instead. This
+helps players to see who hasn't pressed the Restart button yet, but not before the game is over, not to reveal
+additional meta-information.
 
 # Card Flip
 
