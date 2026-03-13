@@ -185,6 +185,10 @@ When multiple share info addons are in the same game, they take effect one by on
 by each player and a table text. Once everyone is ready, the next addon changes the current one, until there are no more
 share info addons.
 
+During a share info phase move to next round readiness is public: each player has a tick right next to their name
+indicating that they have the button pressed. The tick should not move the name horizontally, it should appear to the
+right from the name, but the name should still be centered as if there was no tick.
+
 ## Addon: [A] Show 1 Card to 1 Player
 
 Short description: "[A] Show 1 Card to 1 Player"

@@ -459,6 +459,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               blackAndRed={blackAndRed}
               showRestartTick={showRestartTick}
               hasRestartVoted={state.restartVoterIds.includes(player.id)}
+              showShareInfoTick={state.blackjackPhase}
               onCardSelect={isMe ? onCardSelect : undefined}
             onPlayerSelect={!isMe && onPlayerSelect ? () => onPlayerSelect(player.id) : undefined}
             actionInProgress={actionInProgress}
