@@ -35,6 +35,18 @@ centered as if there was no tick. Players who are not ready have a red cross (U+
 helps players to see who hasn't pressed the Restart button yet, but not before the game is over, not to reveal
 additional meta-information.
 
+# Card Back
+
+The back of a card has a dark blue background with a border. Inside is a centered (both horizontally and vertically)
+inner rectangle showing a diagonal stripe pattern (alternating stripes at 45 degrees) with a decorative border. The card
+uses border-box sizing, so the border is included in the card's stated width and height. The inner rectangle's outer
+dimensions, including its own border, are 80% of the card's total width and height (measured to the card's outer
+edge). It is centered within the card with strictly equal gaps on all four sides between the card's border and the inner
+rectangle's border. This appearance must be identical whether the card is displayed statically or mid-flip animation.
+
+All face down cards on the screen always look the same pixel-to-pixel. Cards of the same player should look identical to
+each other, identical to cards of other players and identical to any other face down cards on the screen.
+
 # Card Flip
 
 When a card is flipped there's an animation that lasts 1 second and turns the card. The animation is played for

@@ -76,16 +76,18 @@ function CardBack({ small }: { small: boolean }) {
       background: '#1a3a6e',
       borderRadius: small ? 5 : 8,
       border: '2px solid #2255aa',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+      boxSizing: 'border-box',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       flexShrink: 0,
     }}>
       <div style={{
-        width: w - 14, height: h - 14,
+        width: '80%', height: '80%',
         borderRadius: 3,
         border: '2px solid #3366cc',
+        boxSizing: 'border-box',
         background: 'repeating-linear-gradient(45deg, #1a3a6e 0px, #1a3a6e 4px, #1e42a0 4px, #1e42a0 8px)',
       }} />
     </div>

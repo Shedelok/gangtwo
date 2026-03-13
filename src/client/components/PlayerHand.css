@@ -43,10 +43,11 @@
 .ph-back::after {
   content: '';
   display: block;
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
+  width: 80%;
+  height: 80%;
   border-radius: 3px;
   border: 2px solid #3366cc;
+  box-sizing: border-box;
   background: repeating-linear-gradient(45deg, #1a3a6e 0px, #1a3a6e 4px, #1e42a0 4px, #1e42a0 8px);
 }
 

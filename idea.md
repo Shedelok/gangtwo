@@ -2,6 +2,8 @@
 
 ## General
 
+### Maybe Later
+
 - (Maybe) Make chips clickable
 - (Maybe) Create a bot that would help with testing by doing random stuff
 - Maybe move "tick/cross next to player's name" UI spec into a single place (now it's in 3+ places).
@@ -9,8 +11,12 @@
 - Get rid of spec duplication when describing different animations (chip move, card reveal, action card move)
 - spec/addons/logic.md should not have UI spec, it all should be moved to ui/. Probably whole spec/logic should be
   restructured and split in a different way rather than ui vs logic
-- When someone shows you a card with an addon, its back is changed for the animation. This shouldn't happen.
 - Top of the table area is hidden under the top panel
+
+### Maybe Now
+
+- Add system instructions for claude saying this is spec-driven development application
+- Maybe create 2 different claude agents (one for working with spec, another for working with code based on spec)
 
 ## Addons
 
