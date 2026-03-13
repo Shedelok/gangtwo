@@ -471,10 +471,6 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               const addonVotes = state.rankGuesses[addonId] ?? {};
               return { addonId, myVote: addonVotes[state.myId] as string | undefined, locked: info.locked };
             });
-          // Blackjack sum cloud (shown during blackjack phase)
-          const blackjackSumCloud = state.blackjackPhase && state.blackjackSums[player.id] !== undefined
-            ? [{ text: String(state.blackjackSums[player.id]), winner: false, locked: false }]
-            : [];
           // Dialogue clouds: one per unique target player this voter has guessed
           const dialogueClouds = (() => {
             const seenTargets = new Set<string | null>();
@@ -501,7 +497,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
               canReveal={canReveal}
               guessRankUIs={guessRankUIs}
-              dialogueClouds={[...blackjackSumCloud, ...dialogueClouds]}
+              dialogueClouds={dialogueClouds}
               blackNumbers={blackNumbers}
               canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
               blackAndRed={blackAndRed}
@@ -519,6 +515,35 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : (isMe && sourceShownCard ? { idx: sourceShownCard.idx, card: sourceShownCard.card, faceUp: sourceShownCard.faceUp } : null)}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
+          );
+        })}
+
+        {/* Share info clouds — rendered above all other UI at the Table level */}
+        {state.blackjackPhase && rotated.map((player, i) => {
+          const sum = state.blackjackSums[player.id];
+          if (sum === undefined) return null;
+          const { x, y } = getSeatPos(i, n);
+          // Seat height: others ~175px (padding 8+10, name 15, gap 5, cards 78, gap 5, chips-min 54)
+          // Me: ~195px (30px bottom padding). Name is 8px from seat top.
+          // Cloud bottom should be just above the name top (~2px gap).
+          const isPlayerMe = player.id === state.myId;
+          const cloudBottom = isPlayerMe ? y - 92 : y - 82;
+          return (
+            <div key={player.id} style={{
+              position: 'absolute', left: x, top: cloudBottom,
+              transform: 'translate(-50%, -100%)',
+              pointerEvents: 'none', zIndex: 9000,
+            }}>
+              <div style={{
+                background: '#f0f4ff', color: '#1e293b',
+                borderRadius: 8, padding: '2px 8px',
+                fontSize: 11, fontWeight: 'bold',
+                border: '1px solid #94a3b8',
+                whiteSpace: 'nowrap',
+              }}>
+                {String(sum)}
+              </div>
+            </div>
           );
         })}
 
