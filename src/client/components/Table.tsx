@@ -150,6 +150,54 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     guessRankInfo.set(addonId, { targetId, locked, targetCanReveal, targetRevealed });
   }
 
+  // ── Readiness ticks: show after all hold current-round chip for 5s without movement ──
+  const [showReadinessTicks, setShowReadinessTicks] = useState(false);
+  const readinessTickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showReadinessTicksRef = useRef(false);
+  const prevChipLocsForReadinessRef = useRef<Map<string, string>>(new Map());
+  const prevReadinessGameIdRef = useRef('');
+
+  useEffect(() => {
+    if (state.gameId !== prevReadinessGameIdRef.current) {
+      prevReadinessGameIdRef.current = state.gameId;
+      if (readinessTickTimerRef.current) { clearTimeout(readinessTickTimerRef.current); readinessTickTimerRef.current = null; }
+      setShowReadinessTicks(false); showReadinessTicksRef.current = false;
+      prevChipLocsForReadinessRef.current = new Map();
+    }
+
+    if (readOnly || state.phase !== 'game' || state.blackjackPhase || state.players.length === 0) {
+      if (readinessTickTimerRef.current) { clearTimeout(readinessTickTimerRef.current); readinessTickTimerRef.current = null; }
+      if (showReadinessTicksRef.current) { setShowReadinessTicks(false); showReadinessTicksRef.current = false; }
+      return;
+    }
+
+    const currLocs = new Map<string, string>();
+    for (const c of state.middleChips) currLocs.set(`${c.round}-${c.number}`, 'middle');
+    for (const p of state.players) for (const c of p.chips) currLocs.set(`${c.round}-${c.number}`, p.id);
+
+    let chipMoved = false;
+    for (const [key, loc] of currLocs) {
+      const prev = prevChipLocsForReadinessRef.current.get(key);
+      if (prev !== undefined && prev !== loc) { chipMoved = true; break; }
+    }
+    prevChipLocsForReadinessRef.current = currLocs;
+
+    const allHold = state.players.every(p => p.chips.some(c => c.round === currentRound));
+
+    if (!allHold || chipMoved) {
+      if (readinessTickTimerRef.current) { clearTimeout(readinessTickTimerRef.current); readinessTickTimerRef.current = null; }
+      setShowReadinessTicks(false); showReadinessTicksRef.current = false;
+      if (!allHold) return;
+    }
+
+    if (!readinessTickTimerRef.current && !showReadinessTicksRef.current) {
+      readinessTickTimerRef.current = setTimeout(() => {
+        setShowReadinessTicks(true); showReadinessTicksRef.current = true;
+        readinessTickTimerRef.current = null;
+      }, 5000);
+    }
+  }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // 5s per-addon timer: hide guesses after each target reveals
   const [hiddenGuessRankAddons, setHiddenGuessRankAddons] = useState<Set<string>>(new Set);
   const guessTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -460,6 +508,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               showRestartTick={showRestartTick}
               hasRestartVoted={state.restartVoterIds.includes(player.id)}
               showShareInfoTick={state.blackjackPhase}
+              showReadinessTick={showReadinessTicks}
               onCardSelect={isMe ? onCardSelect : undefined}
             onPlayerSelect={!isMe && onPlayerSelect ? () => onPlayerSelect(player.id) : undefined}
             actionInProgress={actionInProgress}

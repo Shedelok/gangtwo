@@ -93,3 +93,10 @@ Initially the player is not ready. When the player's current round chip is
 stolen or discarded, their state resets to not ready. When a new round starts, the ready button is automatically reset
 to not ready state. When a player disconnects the state is reset to not ready, so that the new round doesn't start until
 they are back and pressed the button again.
+
+Once all players hold a chip for the current round and no chip has moved for 5 consecutive seconds, readiness becomes
+public: each player has a tick right next to their name indicating that they have the button pressed, and players who
+are not ready have a red cross (U+2715) next to their name instead. The tick should not move the name horizontally, it
+should appear to the right from the name, but the name should still be centered as if there was no tick. If any chip
+moves (taken, stolen, returned) while the ticks are shown or before the 5 seconds have elapsed, the
+5-second timer resets and the ticks/crosses are hidden until the condition is met again.

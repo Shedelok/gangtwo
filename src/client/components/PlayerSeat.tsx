@@ -34,6 +34,7 @@ interface Props {
   showRestartTick?: boolean;
   hasRestartVoted?: boolean;
   showShareInfoTick?: boolean;
+  showReadinessTick?: boolean;
   // Guess-rank addon props
   guessRankUIs?: Array<{ addonId: string; myVote?: string; locked: boolean }>; // one per addon targeting this seat
   dialogueClouds?: Array<{ text: string; winner: boolean; locked: boolean }>; // one cloud per vote
@@ -52,7 +53,7 @@ export default function PlayerSeat({
   player, isMe, holeCards, showFaceDown,
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
-  blackAndRed = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false,
+  blackAndRed = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
   guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
@@ -121,6 +122,9 @@ export default function PlayerSeat({
         )}
         {showShareInfoTick && (
           <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: player.readyForNextRound ? '#4ade80' : '#f87171', pointerEvents: 'none' }}>{player.readyForNextRound ? '✓' : '✕'}</span>
+        )}
+        {showReadinessTick && (
+          <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: player.readyForNextRound ? '#4ade80' : '#f87171', pointerEvents: 'none' }}>{player.readyForNextRound ? '✓' : '\u2715'}</span>
         )}
       </div>
 
