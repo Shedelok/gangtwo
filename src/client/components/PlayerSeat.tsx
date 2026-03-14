@@ -187,7 +187,7 @@ export default function PlayerSeat({
           {ui.myVote ? (
             <button style={{ ...btn, background: '#1e3a5f', color: '#93c5fd', cursor: ui.locked ? 'default' : 'pointer' }}
               onClick={(e) => { if (!ui.locked) { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); } }}>
-              {ui.myVote}
+              {ui.myVote}{!ui.locked && <span style={{ marginLeft: 4 }}>🖉</span>}
             </button>
           ) : (
             <button style={{ ...btn, background: '#7c3aed', color: '#ede9fe' }}

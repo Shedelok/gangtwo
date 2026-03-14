@@ -4,7 +4,6 @@
 
 ### Maybe Now
 
-- Make it easier to understand that guesses are editable
 - Another player can use swap card while I'm holding it
 - Make caching not too persistent
 
