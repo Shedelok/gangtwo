@@ -26,12 +26,15 @@ vote, the voting is over once all votes are submitted. Once it's HRC's turn to r
 sees a button "Guess Rank" under HRC's chips. If a player presses that button, a list of all ranks pops up. The ranks
 are, top-to-down: Royal Flush, Straight Flush, Four of a Kind, Full House, Flush, Straight, Three of a Kind, Two Pair,
 One Pair, High Card. If the player presses one of these options, the list disappears and the chosen rank is displayed
-where the "Guess Rank" button was. The player can click the chosen rank to change their vote. Once the player made a
-guess everyone else sees their guess above them in a style of a text a dialogue cloud. Once everyone has made a guess,
-the guesses are fixed and HRC can reveal their cards as normal. When guesses are fixed, the most popular guess is
-determined. If there are multiple guesses with maximum number of votes, a pure random chooses one of them. Guesses of
-the players who voted for that chosen option get yellow background, other guesses get more subtle more gray background
-and text. 3 seconds after HRC reveals their cards, all the guesses disappear.
+where the "Guess Rank" button was. If the player clicks anywhere on the entire screen outside the list of options, the
+list is closed and the player sees "Guess Rank" button again, this should work for in any area of the screen. Clicking
+the "Guess Rank" button itself when the list is visible, also closes it. The player
+can click the chosen rank to change their vote. Once the player made a guess everyone else sees their guess above them
+in a style of a text a dialogue cloud. Once everyone has
+made a guess, the guesses are fixed and HRC can reveal their cards as normal. When guesses are fixed, the most popular
+guess is determined. If there are multiple guesses with maximum number of votes, a pure random chooses one of them.
+Guesses of the players who voted for that chosen option get yellow background, other guesses get more subtle more gray
+background and text. 3 seconds after HRC reveals their cards, all the guesses disappear.
 
 ### Addon: Guess Rank 2nd Highest
 

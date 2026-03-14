@@ -2,6 +2,12 @@
 
 ## General
 
+### Maybe Now
+
+- Make it easier to understand that guesses are editable
+- Another player can use swap card while I'm holding it
+- Make caching not too persistent
+
 ### Maybe Later
 
 - (Maybe) Make chips clickable
@@ -12,9 +18,6 @@
 - spec/addons/logic.md should not have UI spec, it all should be moved to ui/. Probably whole spec/logic should be
   restructured and split in a different way rather than ui vs logic
 - Top of the table area is hidden under the top panel
-
-### Maybe Now
-
 - Add system instructions for claude saying this is spec-driven development application
 - Maybe create 2 different claude agents (one for working with spec, another for working with code based on spec)
 

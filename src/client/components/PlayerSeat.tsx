@@ -63,6 +63,12 @@ export default function PlayerSeat({
       if (!ui || ui.locked) setActivePickerAddon(null);
     }
   }, [guessRankUIs, activePickerAddon]);
+  useEffect(() => {
+    if (activePickerAddon === null) return;
+    const handler = () => setActivePickerAddon(null);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [activePickerAddon]);
 
   // Sort by round asc, then number asc within the same round
   const sortedChips = [...player.chips].sort((a, b) =>
@@ -165,7 +171,8 @@ export default function PlayerSeat({
               background: '#1e293b', border: '1px solid #475569', borderRadius: 8,
               padding: 4, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 1,
               marginBottom: 2,
-            }}>
+            }}
+              onClick={(e) => e.stopPropagation()}>
               {HAND_RANKS.map(r => (
                 <button key={r} style={{
                   ...btn, background: r === ui.myVote ? '#3b5bdb' : '#334155',
@@ -179,12 +186,12 @@ export default function PlayerSeat({
           )}
           {ui.myVote ? (
             <button style={{ ...btn, background: '#1e3a5f', color: '#93c5fd', cursor: ui.locked ? 'default' : 'pointer' }}
-              onClick={() => { if (!ui.locked) setActivePickerAddon(ui.addonId); }}>
+              onClick={(e) => { if (!ui.locked) { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); } }}>
               {ui.myVote}
             </button>
           ) : (
             <button style={{ ...btn, background: '#7c3aed', color: '#ede9fe' }}
-              onClick={() => setActivePickerAddon(ui.addonId)}>
+              onClick={(e) => { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); }}>
               Guess Rank
             </button>
           )}
