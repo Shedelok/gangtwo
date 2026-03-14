@@ -6,6 +6,9 @@
 
 - Another player can use swap card while I'm holding it
 - Make caching not too persistent
+- Make addons choice more variable (not too many "additional cards" in the same game, etc.)
+- Make it clear when someone's hand is going to be guessed so their don't spoil it (for example during guessing another
+  player's hand)
 
 ### Maybe Later
 
@@ -76,3 +79,4 @@
     to the player on their left as a pocket card.
 26. On a random round R a random player P is "prisoned". They can't do anything until the next round starts. There's 1
     less chip distributed in that round (or maybe not).
+27. All names are hidden (you don't know where is who) and players are random shuffled every time.
