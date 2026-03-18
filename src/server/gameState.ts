@@ -664,7 +664,10 @@ export function lockActionCard(socketId: string, addonId: string): string | null
   if (state.phase !== 'game') return 'Not in game';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
-  if (state.actionCardLock) return 'Action card already in use';
+  // Race condition guard: if the lock is already held, silently ignore the attempt
+  // (spec: "at most one of them enters the usage workflow; the other's attempt is silently ignored").
+  // We return null (no error) so the server broadcasts state, letting the client see who holds the lock.
+  if (state.actionCardLock) return null;
   state.actionCardLock = { addonId, playerId };
   return null;
 }

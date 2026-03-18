@@ -423,6 +423,14 @@ export default function App() {
       playSound(soundFilesRef.current.ACTION_CARD_TAKEN, volumeRef.current, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_TAKEN);
     }
 
+    // Race condition guard: if another player won the lock while we were optimistically
+    // in a workflow, silently reset our local workflow state (spec: "silently ignored").
+    if (curr && curr.playerId !== state.myId && actionStep !== 'idle') {
+      setActionStep('idle');
+      setActionCardIndex(null);
+      setActiveAddonId(null);
+    }
+
     // Lock acquired by another player — animate card to their seat
     if (!prev && curr && curr.playerId !== state.myId) {
       if (returnTimerRef.current) { clearTimeout(returnTimerRef.current); returnTimerRef.current = null; }

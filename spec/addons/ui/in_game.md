@@ -30,6 +30,10 @@ using any action cards (neither this nor other). All those cards change their co
 using the card can't use any other card until they finish using this one (or cancel). All other cards change their color
 to a less bright one.
 
+There must be no race condition possible: if one player starts using a card, all other players immediately see it as
+unavailable and cannot start using any action card themselves. If two players attempt to pick up a card at the same
+time, at most one of them enters the usage workflow; the other's attempt is silently ignored.
+
 When a card is played, all players hear "ACTION_CARD_PLAYED" sound which defaults to
 spec/base/resources/sounds/magic-1.mp3 and the card is used, it is removed from the UI completely.
 
