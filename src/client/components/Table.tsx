@@ -459,6 +459,14 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             info => info.targetId === state.myId && !info.locked
           );
           const canReveal = chipOrderCanReveal && !guessRankBlock;
+          // Show dark gray diagonal stripes on the player's own cards when they are a
+          // guess-rank target and guessing for them is still pending (not yet locked).
+          // Spec: "During the guessing phase if the current player is going to be guessed
+          // later, their cards have dark gray diagonal stripes up until there's nothing to
+          // guess on them for the rest of the game. This is only visible to the player themself."
+          const showStripes = isMe && readOnly && [...guessRankInfo.values()].some(
+            info => info.targetId === player.id && !info.locked
+          );
           // Guess-rank UIs shown on this seat (one per unique target — dedup if multiple addons target same player)
           const guessRankUIs = activeGuessRankAddons
             .filter(addonId => {
@@ -513,6 +521,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             unsuitedXIndex={state.unsuitedXs[player.id]}
             unsuitedXRank={state.unsuitedXRank ?? undefined}
             shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : (isMe && sourceShownCard ? { idx: sourceShownCard.idx, card: sourceShownCard.card, faceUp: sourceShownCard.faceUp } : null)}
+            striped={showStripes}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );

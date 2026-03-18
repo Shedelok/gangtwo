@@ -4,8 +4,6 @@
 
 ### Maybe Now
 
-- Make it clear when someone's hand is going to be guessed so their don't spoil it (for example during guessing another
-  player's hand)
 
 ### Maybe Later
 

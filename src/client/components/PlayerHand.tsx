@@ -105,9 +105,11 @@ interface Props {
   unsuitedXRank?: string;
   // When set, the card at this index plays a flip animation (face-down → face-up or back)
   shownCardInfo?: { idx: 0 | 1; card: Card; faceUp: boolean } | null;
+  // When true, dark gray diagonal stripes are overlaid on the cards (guess-rank pending indicator)
+  striped?: boolean;
 }
 
-export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo }: Props) {
+export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false }: Props) {
   const gap = small ? 6 : 12;
   // If neither card is special and we have no card data, show placeholder
   if (!cards && unsuitedJackIndex === undefined && unsuitedXIndex === undefined && !faceDown && !shownCardInfo) {
@@ -158,6 +160,7 @@ export default function PlayerHand({ cards, faceDown = false, small = false, bla
               cursor: glowing ? 'pointer' : 'default',
               borderRadius: small ? 5 : 8,
               boxShadow: glowing ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
+              position: 'relative',
             }}
           >
             {isJack
@@ -168,6 +171,18 @@ export default function PlayerHand({ cards, faceDown = false, small = false, bla
                 ? <CardBack small={small} />
                 : <PlayingCard card={cards[idx]} small={small} blackAndRed={blackAndRed} />
             }
+            {striped && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                borderRadius: small ? 5 : 8,
+                background: 'repeating-linear-gradient(135deg, transparent 0px, transparent 8px, rgba(59,59,59,0.8) 8px, rgba(59,59,59,0.8) 18px)',
+                pointerEvents: 'none',
+              }} />
+            )}
           </div>
         );
       })}

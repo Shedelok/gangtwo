@@ -55,6 +55,10 @@ Same as "Guess Rank Highest" (including the functionality), but for the lowest r
 When the same player is under multiple "guess rank" addons, it is logically and visually equal to them being under just
 one. There's no point in having players to guess the same thing twice.
 
+During the guessing phase if the current player is going to be guessed later, their cards have dark gray (#3b3b3b)
+wide diagonal (top-right to bottom-left) 20% transparent stripes up until there's nothing to guess on them for the rest
+of the game. This is only visible to the player themself.
+
 ## Addon: Only Neighbors Steal
 
 Short description: "Only Neighbors Steal"
