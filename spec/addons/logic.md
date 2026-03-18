@@ -242,6 +242,28 @@ of the game and an unsuited card with rank X is available to be taken. X stays t
 When multiple unsuited action cards are put on the action cards table, they are sorted by rank (top to bottom A, K, Q,
 J, 10, 9, 8, 7, 6, 5, 4, 3, 2).
 
+## Addon: Prison
+
+Short description: "Prison"
+
+Long description: On a random round (except the last one), a random player is imprisoned and can't participate in that
+round. One fewer chip is placed on the table that round.
+
+Functionality: At the start of the game, a random round R (from 1 to 3, excluding any rounds skipped by other addons)
+and a random player P are determined. If all rounds are skipped by other addons, this addon has no effect.
+When round R starts, vertical black lines are displayed over the player (imitating prison bars), visible to all players.
+Also, sound "PRISON_TAKEN_EFFECT" which defaults to spec/base/resources/sounds/prison-close.mp3 is played for all
+players.
+During round R, player P cannot take a chip from the table, cannot steal a chip from another player, cannot use action
+cards. All action cards become unavailable for the prisoned player and they can't click them. Player P is automatically
+treated as ready during whole round R. The ready button is not shown to player P.
+
+During round R, one fewer chips are placed on the table. The round ends when all non-imprisoned players have a chip for
+the current round and are ready.
+
+The prison effect lasts only for round R (the chip-distribution phase). It does not extend into any card-revealing or
+rank-guessing phase.
+
 ## Addon: [A] Reroll Common
 
 Short description: "[A] Reroll Common"
@@ -287,6 +309,7 @@ addon names mean leaf nodes with that addon.
     2. No Yellow Chips
     3. No Orange Chips
 7. No Old Chips
+8. Prison
 
 ## Positive Addons
 

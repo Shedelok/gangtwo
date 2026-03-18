@@ -47,6 +47,7 @@ interface Props {
   unsuitedXRank?: string;
   shownCardInfo?: { idx: 0 | 1; card: Card; faceUp: boolean } | null;
   striped?: boolean;
+  imprisoned?: boolean;
   style?: React.CSSProperties;
 }
 
@@ -55,7 +56,7 @@ export default function PlayerSeat({
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
   blackAndRed = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
-  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, style,
+  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
@@ -208,8 +209,8 @@ export default function PlayerSeat({
         </button>
       )}
 
-      {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size */}
-      {!readOnly && isMe && !actionInProgress && (
+      {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size; hidden when imprisoned */}
+      {!readOnly && isMe && !actionInProgress && !imprisoned && (
         <button
           style={{
             ...btn,
@@ -221,6 +222,25 @@ export default function PlayerSeat({
           onClick={() => sendAction({ type: 'SET_READY', ready: !player.readyForNextRound })}>
           {player.readyForNextRound ? 'Waiting' : 'Move to next round'}
         </button>
+      )}
+
+      {/* Prison bars overlay — vertical black lines imitating prison bars */}
+      {imprisoned && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 10,
+          pointerEvents: 'none',
+          zIndex: 50,
+          display: 'flex',
+          justifyContent: 'space-evenly',
+          alignItems: 'stretch',
+          overflow: 'hidden',
+        }}>
+          {Array.from({ length: 7 }, (_, i) => (
+            <div key={i} style={{ width: 3, background: '#000', opacity: 0.7 }} />
+          ))}
+        </div>
       )}
     </div>
   );

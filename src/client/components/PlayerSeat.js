@@ -1,0 +1,94 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState, useEffect } from 'react';
+import PlayerHand from './PlayerHand';
+import ChipCircle from './ChipCircle';
+const HAND_RANKS = [
+    'Royal Flush', 'Straight Flush', 'Four of a Kind', 'Full House',
+    'Flush', 'Straight', 'Three of a Kind', 'Two Pair', 'One Pair', 'High Card',
+];
+const btn = {
+    padding: '2px 7px',
+    borderRadius: 10,
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 11,
+    fontWeight: 'bold',
+};
+export default function PlayerSeat({ player, isMe, holeCards, showFaceDown, currentRound, iHaveCurrentRoundChip, sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true, blackAndRed = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false, guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, style, }) {
+    const [activePickerAddon, setActivePickerAddon] = useState(null);
+    useEffect(() => {
+        if (activePickerAddon !== null) {
+            const ui = guessRankUIs.find(u => u.addonId === activePickerAddon);
+            if (!ui || ui.locked)
+                setActivePickerAddon(null);
+        }
+    }, [guessRankUIs, activePickerAddon]);
+    useEffect(() => {
+        if (activePickerAddon === null)
+            return;
+        const handler = () => setActivePickerAddon(null);
+        document.addEventListener('click', handler);
+        return () => document.removeEventListener('click', handler);
+    }, [activePickerAddon]);
+    // Sort by round asc, then number asc within the same round
+    const sortedChips = [...player.chips].sort((a, b) => a.round !== b.round ? a.round - b.round : a.number - b.number);
+    return (_jsxs("div", { ref: onSeatElRef, onClick: onPlayerSelect, style: {
+            background: isMe ? '#1a3050' : '#16213e',
+            border: onPlayerSelect ? '2px solid #facc15' : `2px solid ${isMe ? '#3a6090' : '#2a3a4a'}`,
+            borderRadius: 10,
+            padding: !readOnly && isMe ? '8px 10px 30px' : '8px 10px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 5,
+            position: 'relative',
+            cursor: onPlayerSelect ? 'pointer' : 'default',
+            boxShadow: onPlayerSelect ? '0 0 10px 3px rgba(250,204,21,0.5)' : undefined,
+            ...style,
+        }, children: [dialogueClouds.length > 0 && (_jsx("div", { style: {
+                    position: 'absolute', top: -26 * dialogueClouds.length, left: '50%', transform: 'translateX(-50%)',
+                    display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', pointerEvents: 'none',
+                }, children: dialogueClouds.map((cloud, idx) => (_jsx("div", { style: {
+                        background: cloud.locked
+                            ? cloud.winner ? '#fef08a' : '#4b5563'
+                            : '#f0f4ff',
+                        color: cloud.locked
+                            ? cloud.winner ? '#713f12' : '#9ca3af'
+                            : '#1e293b',
+                        borderRadius: 8, padding: '2px 8px',
+                        fontSize: 11, fontWeight: 'bold',
+                        border: `1px solid ${cloud.locked ? (cloud.winner ? '#ca8a04' : '#374151') : '#94a3b8'}`,
+                        whiteSpace: 'nowrap',
+                    }, children: cloud.text }, idx))) })), _jsxs("div", { style: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }, children: [_jsxs("div", { style: { fontSize: 12, fontWeight: 'bold', color: isMe ? '#90c0ff' : '#bbb', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }, children: [player.name, isMe ? ' (you)' : ''] }), showRestartTick && (_jsx("span", { style: { position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: hasRestartVoted ? '#4ade80' : '#f87171', pointerEvents: 'none' }, children: hasRestartVoted ? '✓' : '✕' })), showShareInfoTick && (_jsx("span", { style: { position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: player.readyForNextRound ? '#4ade80' : '#f87171', pointerEvents: 'none' }, children: player.readyForNextRound ? '✓' : '✕' })), showReadinessTick && (_jsx("span", { style: { position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: player.readyForNextRound ? '#4ade80' : '#f87171', pointerEvents: 'none' }, children: player.readyForNextRound ? '✓' : '\u2715' }))] }), _jsx(PlayerHand, { cards: holeCards, faceDown: showFaceDown, small: true, blackAndRed: blackAndRed, onCardClick: isMe && onCardSelect ? onCardSelect : undefined, unsuitedJackIndex: unsuitedJackIndex, unsuitedXIndex: unsuitedXIndex, unsuitedXRank: unsuitedXRank, shownCardInfo: shownCardInfo, striped: striped }), _jsx("div", { style: { display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center', minHeight: 54 }, children: sortedChips.map(chip => {
+                    const isCurrent = chip.round === currentRound;
+                    const isBlack = blackNumbers.includes(chip.number);
+                    return (_jsxs("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }, children: [_jsx(ChipCircle, { chip: chip, blackInside: isBlack }), !readOnly && isCurrent && isMe && !isBlack && !actionInProgress && (_jsx("button", { style: { ...btn, background: '#7f1c1c', color: '#fca5a5' }, onClick: () => sendAction({ type: 'DISCARD_CHIP', chipNumber: chip.number }), children: "Return" })), !readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && canStealFrom && !actionInProgress && (_jsx("button", { style: { ...btn, background: '#5b21b6', color: '#ddd6fe' }, onClick: () => sendAction({ type: 'STEAL_CHIP', fromPlayerId: player.id, chipNumber: chip.number }), children: "Steal" }))] }, `${chip.round}-${chip.number}`));
+                }) }), guessRankUIs.map(ui => (_jsxs("div", { style: { position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }, children: [activePickerAddon === ui.addonId && (_jsx("div", { style: {
+                            position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+                            background: '#1e293b', border: '1px solid #475569', borderRadius: 8,
+                            padding: 4, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 1,
+                            marginBottom: 2,
+                        }, onClick: (e) => e.stopPropagation(), children: HAND_RANKS.map(r => (_jsx("button", { style: {
+                                ...btn, background: r === ui.myVote ? '#3b5bdb' : '#334155',
+                                color: '#e2e8f0', textAlign: 'left', whiteSpace: 'nowrap',
+                            }, onClick: () => { sendAction({ type: 'SUBMIT_RANK_GUESS', addonId: ui.addonId, rank: r }); setActivePickerAddon(null); }, children: r }, r))) })), ui.myVote ? (_jsxs("button", { style: { ...btn, background: '#1e3a5f', color: '#93c5fd', cursor: ui.locked ? 'default' : 'pointer' }, onClick: (e) => { if (!ui.locked) {
+                            e.stopPropagation();
+                            setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId);
+                        } }, children: [ui.myVote, !ui.locked && _jsx("span", { style: { marginLeft: 4 }, children: "\uD83D\uDD89" })] })) : (_jsx("button", { style: { ...btn, background: '#7c3aed', color: '#ede9fe' }, onClick: (e) => { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); }, children: "Guess Rank" }))] }, ui.addonId))), readOnly && isMe && !myCardsRevealed && (_jsx("button", { style: { ...btn, background: canReveal ? '#166534' : '#374151', color: canReveal ? '#bbf7d0' : '#9ca3af', cursor: canReveal ? 'pointer' : 'not-allowed' }, disabled: !canReveal, onClick: () => sendAction({ type: 'REVEAL_CARDS' }), children: "Reveal cards" })), !readOnly && isMe && !actionInProgress && !imprisoned && (_jsx("button", { style: {
+                    ...btn,
+                    position: 'absolute',
+                    bottom: 8,
+                    background: player.readyForNextRound ? '#555' : '#1d4ed8',
+                    color: player.readyForNextRound ? '#aaa' : '#fff',
+                }, onClick: () => sendAction({ type: 'SET_READY', ready: !player.readyForNextRound }), children: player.readyForNextRound ? 'Waiting' : 'Move to next round' })), imprisoned && (_jsx("div", { style: {
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: 10,
+                    pointerEvents: 'none',
+                    zIndex: 50,
+                    display: 'flex',
+                    justifyContent: 'space-evenly',
+                    alignItems: 'stretch',
+                    overflow: 'hidden',
+                }, children: Array.from({ length: 7 }, (_, i) => (_jsx("div", { style: { width: 3, background: '#000', opacity: 0.7 } }, i))) }))] }));
+}

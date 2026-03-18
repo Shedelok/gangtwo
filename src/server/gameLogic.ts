@@ -40,11 +40,12 @@ export function createChipsForRound(round: RoundNumber, N: number): Chip[] {
   return chips;
 }
 
-export function isRoundComplete(players: PlayerPublicState[], currentRound: RoundNumber): boolean {
+export function isRoundComplete(players: PlayerPublicState[], currentRound: RoundNumber, excludePlayerIds?: Set<string>): boolean {
   return players.every(
     (p) =>
-      p.chips.some((c) => c.round === currentRound) &&
-      p.readyForNextRound === true
+      (excludePlayerIds?.has(p.id)) ||
+      (p.chips.some((c) => c.round === currentRound) &&
+      p.readyForNextRound === true)
   );
 }
 

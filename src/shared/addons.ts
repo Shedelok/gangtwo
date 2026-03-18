@@ -40,6 +40,7 @@ export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
     { addonId: 'no-orange-chips' },
   ]},
   { addonId: 'no-old-chips' },
+  { addonId: 'prison' },
 ];
 
 /** Positive addons grouping tree as defined in the spec's "Addon Groupings" section. */
@@ -215,6 +216,12 @@ export const ADDONS: AddonDef[] = [
     id: 'no-old-chips',
     short: "No Old Chips",
     long: "At the beginning of each round (after the first one), all chips from the previous round are removed and player cannot see them.",
+    type: 'negative',
+  },
+  {
+    id: 'prison',
+    short: "Prison",
+    long: "On a random round (except the last one), a random player is imprisoned and can't participate in that round. One fewer chip is placed on the table that round.",
     type: 'negative',
   },
   {

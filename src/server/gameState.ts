@@ -42,6 +42,8 @@ interface ServerGameState {
   blackjackPhase: boolean;
   shareInfoQueue: string[];  // ordered list of share-info addon IDs to process
   shareInfoIndex: number;    // index into shareInfoQueue of the current addon
+  prisonRound: number | null;    // the round where prison takes effect
+  prisonPlayerId: string | null; // the player who is imprisoned
   gameId: string;
 }
 
@@ -78,6 +80,8 @@ const state: ServerGameState = {
   blackjackPhase: false,
   shareInfoQueue: [],
   shareInfoIndex: 0,
+  prisonRound: null,
+  prisonPlayerId: null,
   gameId: '',
 };
 
@@ -115,6 +119,21 @@ function isRoundSkipped(round: number): boolean {
          (round === 3 && state.enabledAddons.has('no-orange-chips'));
 }
 
+function isPlayerImprisoned(playerId: string): boolean {
+  return state.enabledAddons.has('prison') &&
+         state.prisonRound === state.currentRound &&
+         state.prisonPlayerId === playerId;
+}
+
+/** Returns the set of chip values that are "black" (immovable once taken from the middle). */
+function getBlackChipNumbers(): Set<number> {
+  const black = new Set<number>();
+  if (state.enabledAddons.has('ones-are-black')) black.add(1);
+  if (state.enabledAddons.has('ns-are-black')) black.add(state.players.length);
+  if (state.enabledAddons.has('xs-are-black') && state.blackXValue !== null) black.add(state.blackXValue);
+  return black;
+}
+
 function roundCommunityCardCount(round: number): number {
   let base = round === 1 ? 3 : round <= 3 ? 1 : 0;
   if (round === 1 && state.enabledAddons.has('additional-card-flop')) base += 1;
@@ -146,9 +165,16 @@ function advanceRound(): void {
       nextRound++;
     }
     state.currentRound = nextRound as RoundNumber;
-    state.middleChips = createChipsForRound(nextRound as RoundNumber, state.players.length);
+    const isPrisonRound = state.enabledAddons.has('prison') && state.prisonRound === nextRound;
+    const chipCount = isPrisonRound ? state.players.length - 1 : state.players.length;
+    state.middleChips = createChipsForRound(nextRound as RoundNumber, chipCount);
     for (const player of state.players) {
-      player.readyForNextRound = false;
+      // Imprisoned player is automatically ready during their prison round
+      if (isPrisonRound && player.id === state.prisonPlayerId) {
+        player.readyForNextRound = true;
+      } else {
+        player.readyForNextRound = false;
+      }
     }
     if (state.enabledAddons.has('no-old-chips')) {
       for (const player of state.players) {
@@ -167,7 +193,11 @@ function advanceRound(): void {
 
 function checkAndAdvance(): void {
   if (state.blackjackPhase) return;
-  if (state.phase === 'game' && isRoundComplete(state.players, state.currentRound)) {
+  const excludeIds = new Set<string>();
+  if (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId) {
+    excludeIds.add(state.prisonPlayerId);
+  }
+  if (state.phase === 'game' && isRoundComplete(state.players, state.currentRound, excludeIds)) {
     advanceRound();
   }
 }
@@ -235,7 +265,8 @@ export function removePlayer(socketId: string): void {
   // During game, keep the player to not break state; their socket is just gone
   if (state.phase !== 'lobby') {
     const player = state.players.find((p) => p.id === playerId);
-    if (player) player.readyForNextRound = false;
+    // Don't reset readiness for imprisoned players — they are always auto-ready during their prison round
+    if (player && !isPlayerImprisoned(playerId)) player.readyForNextRound = false;
   }
 }
 
@@ -322,8 +353,38 @@ export function startGame(shufflePlayers = true): string | null {
   state.unsuitedJacks = new Map();
   state.unsuitedXs = new Map();
   state.rerollCommonUsed = false;
+
+  // Prison addon: determine random round R and random player P
+  if (state.enabledAddons.has('prison')) {
+    // Spec: "a random round R (from 1 to 3, excluding any rounds skipped by other addons)"
+    const availableRounds = [1, 2, 3].filter(r => !isRoundSkipped(r));
+    if (availableRounds.length > 0) {
+      state.prisonRound = availableRounds[Math.floor(Math.random() * availableRounds.length)];
+      state.prisonPlayerId = state.players[Math.floor(Math.random() * state.players.length)].id;
+    } else {
+      // All rounds are skipped by other addons — prison has no effect
+      state.prisonRound = null;
+      state.prisonPlayerId = null;
+    }
+  } else {
+    state.prisonRound = null;
+    state.prisonPlayerId = null;
+  }
+
   state.gameId = randomUUID();
   state.phase = 'game';
+
+  // If prison round is the starting round, set up accordingly
+  const isPrisonStartRound = state.enabledAddons.has('prison') && state.prisonRound === state.currentRound;
+  if (isPrisonStartRound && !state.blackjackPhase) {
+    // Reduce chips by 1 for prison round
+    const chipCount = state.players.length - 1;
+    state.middleChips = createChipsForRound(state.currentRound, chipCount);
+    // Auto-ready the imprisoned player
+    const prisonPlayer = state.players.find(p => p.id === state.prisonPlayerId);
+    if (prisonPlayer) prisonPlayer.readyForNextRound = true;
+  }
+
   return null;
 }
 
@@ -332,11 +393,15 @@ export function discardChip(socketId: string, chipNumber: number): string | null
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
+  if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
 
   const idx = player.chips.findIndex(
     (c) => c.round === state.currentRound && c.number === chipNumber
   );
   if (idx === -1) return 'You do not hold that chip for the current round';
+
+  // Black chips cannot be returned after being taken from the middle
+  if (getBlackChipNumbers().has(chipNumber)) return 'Black chips cannot be returned';
 
   const [chip] = player.chips.splice(idx, 1);
   state.middleChips.push(chip);
@@ -349,6 +414,7 @@ export function takeFromMiddle(socketId: string, chipNumber: number): string | n
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
+  if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
 
   if (player.chips.some((c) => c.round === state.currentRound)) {
     return 'You already hold a chip for this round';
@@ -375,6 +441,7 @@ export function stealChip(
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
+  if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
 
   if (player.chips.some((c) => c.round === state.currentRound)) {
     return 'You already hold a chip for this round';
@@ -399,6 +466,9 @@ export function stealChip(
   );
   if (idx === -1) return 'Target does not hold that chip for this round';
 
+  // Black chips cannot be stolen
+  if (getBlackChipNumbers().has(chipNumber)) return 'Black chips cannot be stolen';
+
   const [chip] = victim.chips.splice(idx, 1);
   victim.readyForNextRound = false;
   player.chips.push(chip);
@@ -411,6 +481,7 @@ export function setReady(socketId: string, ready: boolean): string | null {
   if (state.phase !== 'game') return 'Not in game';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
+  if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
 
   player.readyForNextRound = ready;
 
@@ -430,7 +501,14 @@ export function setReady(socketId: string, ready: boolean): string | null {
             state.deck = remaining;
           }
         }
-        state.middleChips = createChipsForRound(state.currentRound, state.players.length);
+        const isPrisonRoundAfterBJ = state.enabledAddons.has('prison') && state.prisonRound === state.currentRound;
+        const chipCountAfterBJ = isPrisonRoundAfterBJ ? state.players.length - 1 : state.players.length;
+        state.middleChips = createChipsForRound(state.currentRound, chipCountAfterBJ);
+        // Auto-ready imprisoned player after blackjack phase ends
+        if (isPrisonRoundAfterBJ && state.prisonPlayerId) {
+          const prisonPlayer = state.players.find(p => p.id === state.prisonPlayerId);
+          if (prisonPlayer) prisonPlayer.readyForNextRound = true;
+        }
       }
       // else: stay in blackjackPhase for the next share-info addon
     }
@@ -607,6 +685,8 @@ export function finishGame(keepAddons = false): void {
   state.blackjackPhase = false;
   state.shareInfoQueue = [];
   state.shareInfoIndex = 0;
+  state.prisonRound = null;
+  state.prisonPlayerId = null;
   state.enabledAddons = new Set();
   state.blackXValue = null;
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
@@ -664,6 +744,7 @@ export function lockActionCard(socketId: string, addonId: string): string | null
   if (state.phase !== 'game') return 'Not in game';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
+  if (isPlayerImprisoned(playerId)) return 'You are imprisoned this round';
   // Race condition guard: if the lock is already held, silently ignore the attempt
   // (spec: "at most one of them enters the usage workflow; the other's attempt is silently ignored").
   // We return null (no error) so the server broadcasts state, letting the client see who holds the lock.
@@ -801,5 +882,9 @@ export function buildClientState(socketId: string): ClientGameState {
     shareInfoLabel: state.blackjackPhase
       ? (state.shareInfoQueue[state.shareInfoIndex] === 'share-number-of-faces' ? 'Number of Faces' : 'Blackjack Sum')
       : '',
+    prisonPlayerId: (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId)
+      ? state.prisonPlayerId
+      : null,
+    prisonRound: state.enabledAddons.has('prison') ? state.prisonRound : null,
   };
 }

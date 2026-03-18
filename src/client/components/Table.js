@@ -1,0 +1,469 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import PlayerSeat from './PlayerSeat';
+import ChipCircle from './ChipCircle';
+import CommunityCards from './CommunityCards';
+import { ChipAnimContext } from './ChipAnimContext';
+// ── Layout constants ───────────────────────────────────────────────────────────
+const CONTAINER_W = 860;
+const CONTAINER_H = 600;
+const OVAL_W = 440;
+const OVAL_H = 230;
+const OVAL_LEFT = (CONTAINER_W - OVAL_W) / 2;
+const OVAL_TOP = (CONTAINER_H - OVAL_H) / 2;
+const CENTER_X = CONTAINER_W / 2;
+const CENTER_Y = CONTAINER_H / 2;
+const SEAT_RX = OVAL_W / 2 + 95;
+const SEAT_RY = OVAL_H / 2 + 80;
+function getSeatPos(i, n) {
+    const theta = (2 * Math.PI * i) / n;
+    return { x: CENTER_X + SEAT_RX * Math.sin(theta), y: CENTER_Y + SEAT_RY * Math.cos(theta) };
+}
+function getChipLocations(s) {
+    const map = new Map();
+    for (const chip of s.middleChips)
+        map.set(`${chip.round}-${chip.number}`, { kind: 'middle' });
+    for (const player of s.players)
+        for (const chip of player.chips)
+            map.set(`${chip.round}-${chip.number}`, { kind: 'player', id: player.id });
+    return map;
+}
+function findChip(s, key) {
+    for (const chip of s.middleChips)
+        if (`${chip.round}-${chip.number}` === key)
+            return chip;
+    for (const player of s.players)
+        for (const chip of player.chips)
+            if (`${chip.round}-${chip.number}` === key)
+                return chip;
+}
+const noopCtx = { register: () => { }, hiding: new Set() };
+function FlyingChip({ entry, flyingElsRef, onDone }) {
+    const [arrived, setArrived] = useState(false);
+    const elRef = useRef(null);
+    const chipKey = `${entry.chip.round}-${entry.chip.number}`;
+    useLayoutEffect(() => {
+        if (elRef.current)
+            flyingElsRef.current.set(chipKey, elRef.current);
+        return () => { flyingElsRef.current.delete(chipKey); };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        const raf = requestAnimationFrame(() => setArrived(true));
+        const timer = setTimeout(onDone, 1100);
+        return () => { cancelAnimationFrame(raf); clearTimeout(timer); };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return (_jsx(ChipAnimContext.Provider, { value: noopCtx, children: _jsx("div", { ref: elRef, style: {
+                position: 'absolute',
+                left: arrived ? entry.to.x : entry.from.x,
+                top: arrived ? entry.to.y : entry.from.y,
+                transform: 'translate(-50%, -50%)',
+                transition: arrived ? 'left 1s ease, top 1s ease' : 'none',
+                pointerEvents: 'none',
+                zIndex: 200,
+            }, children: _jsx(ChipCircle, { chip: entry.chip, size: 32, blackInside: entry.blackInside }) }) }));
+}
+function getScale() { return (window.innerWidth * 0.6) / CONTAINER_W; }
+export default function Table({ state, sendAction, readOnly, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef }) {
+    const currentRound = (state.currentRound ?? 1);
+    const myIndex = state.players.findIndex(p => p.id === state.myId);
+    const rotated = myIndex >= 0
+        ? [...state.players.slice(myIndex), ...state.players.slice(0, myIndex)]
+        : state.players;
+    const myPlayer = state.players.find(p => p.id === state.myId);
+    const iHaveCurrentRoundChip = !!myPlayer?.chips.some(c => c.round === currentRound);
+    const amIImprisoned = state.prisonPlayerId === state.myId;
+    const myCardsRevealed = !!state.revealedHoleCards[state.myId];
+    const allCardsRevealed = readOnly && state.players.every(p => !!state.revealedHoleCards[p.id]);
+    const showRestartTick = allCardsRevealed;
+    const n = rotated.length;
+    const blackNumbers = [];
+    if (state.enabledAddons.includes('ones-are-black'))
+        blackNumbers.push(1);
+    if (state.enabledAddons.includes('ns-are-black'))
+        blackNumbers.push(n);
+    if (state.enabledAddons.includes('xs-are-black') && state.blackXValue !== null)
+        blackNumbers.push(state.blackXValue);
+    const onlyNeighborsSteal = state.enabledAddons.includes('only-neighbors-steal');
+    const blackAndRed = state.enabledAddons.includes('clubs-spades-diamonds-hearth');
+    // ── Guess-rank addons: per-addon target/voting state ─────────────────────────
+    const GUESS_RANK_ADDON_IDS = [
+        'guess-highest-red-chip-hand-rank',
+        'guess-2nd-highest-red-chip-hand-rank',
+        'guess-lowest-red-chip-hand-rank',
+    ];
+    function findGuessRankTarget(addonId, players) {
+        const sorted = [...players]
+            .map(p => ({ id: p.id, num: p.chips.find(c => c.round === 4)?.number ?? -1 }))
+            .filter(x => x.num >= 0).sort((a, b) => a.num - b.num);
+        if (addonId === 'guess-lowest-red-chip-hand-rank')
+            return sorted[0]?.id ?? null;
+        if (addonId === 'guess-highest-red-chip-hand-rank')
+            return sorted[sorted.length - 1]?.id ?? null;
+        if (addonId === 'guess-2nd-highest-red-chip-hand-rank')
+            return sorted[sorted.length - 2]?.id ?? null;
+        return null;
+    }
+    // Per-addon info: target, voting locked, target's chip-order canReveal, target revealed
+    const activeGuessRankAddons = GUESS_RANK_ADDON_IDS.filter(id => state.enabledAddons.includes(id));
+    const guessRankInfo = new Map();
+    for (const addonId of activeGuessRankAddons) {
+        const targetId = readOnly ? findGuessRankTarget(addonId, state.players) : null;
+        const addonVotes = state.rankGuesses[addonId] ?? {};
+        const nonTargetPlayers = targetId ? state.players.filter(p => p.id !== targetId) : [];
+        const locked = nonTargetPlayers.length > 0 && nonTargetPlayers.every(p => !!addonVotes[p.id]);
+        const targetPlayer = targetId ? state.players.find(p => p.id === targetId) : null;
+        const targetChip = targetPlayer?.chips.find(c => c.round === 4);
+        const targetCanReveal = !targetChip || state.players
+            .filter(p => p.id !== targetId)
+            .every(p => {
+            const theirChip = p.chips.find(c => c.round === 4);
+            return !theirChip || theirChip.number >= (targetChip?.number ?? 0) || !!state.revealedHoleCards[p.id];
+        });
+        const targetRevealed = !!(targetId && state.revealedHoleCards[targetId]);
+        guessRankInfo.set(addonId, { targetId, locked, targetCanReveal, targetRevealed });
+    }
+    // ── Readiness ticks: show after all hold current-round chip for 5s without movement ──
+    const [showReadinessTicks, setShowReadinessTicks] = useState(false);
+    const readinessTickTimerRef = useRef(null);
+    const showReadinessTicksRef = useRef(false);
+    const prevChipLocsForReadinessRef = useRef(new Map());
+    const prevReadinessGameIdRef = useRef('');
+    useEffect(() => {
+        if (state.gameId !== prevReadinessGameIdRef.current) {
+            prevReadinessGameIdRef.current = state.gameId;
+            if (readinessTickTimerRef.current) {
+                clearTimeout(readinessTickTimerRef.current);
+                readinessTickTimerRef.current = null;
+            }
+            setShowReadinessTicks(false);
+            showReadinessTicksRef.current = false;
+            prevChipLocsForReadinessRef.current = new Map();
+        }
+        if (readOnly || state.phase !== 'game' || state.blackjackPhase || state.players.length === 0) {
+            if (readinessTickTimerRef.current) {
+                clearTimeout(readinessTickTimerRef.current);
+                readinessTickTimerRef.current = null;
+            }
+            if (showReadinessTicksRef.current) {
+                setShowReadinessTicks(false);
+                showReadinessTicksRef.current = false;
+            }
+            return;
+        }
+        const currLocs = new Map();
+        for (const c of state.middleChips)
+            currLocs.set(`${c.round}-${c.number}`, 'middle');
+        for (const p of state.players)
+            for (const c of p.chips)
+                currLocs.set(`${c.round}-${c.number}`, p.id);
+        let chipMoved = false;
+        for (const [key, loc] of currLocs) {
+            const prev = prevChipLocsForReadinessRef.current.get(key);
+            if (prev !== undefined && prev !== loc) {
+                chipMoved = true;
+                break;
+            }
+        }
+        prevChipLocsForReadinessRef.current = currLocs;
+        // Imprisoned players are excluded from the "all hold" check — they don't get a chip
+        const allHold = state.players.every(p => (state.prisonPlayerId === p.id) || p.chips.some(c => c.round === currentRound));
+        if (!allHold || chipMoved) {
+            if (readinessTickTimerRef.current) {
+                clearTimeout(readinessTickTimerRef.current);
+                readinessTickTimerRef.current = null;
+            }
+            setShowReadinessTicks(false);
+            showReadinessTicksRef.current = false;
+            if (!allHold)
+                return;
+        }
+        if (!readinessTickTimerRef.current && !showReadinessTicksRef.current) {
+            readinessTickTimerRef.current = setTimeout(() => {
+                setShowReadinessTicks(true);
+                showReadinessTicksRef.current = true;
+                readinessTickTimerRef.current = null;
+            }, 5000);
+        }
+    }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
+    // 5s per-addon timer: hide guesses after each target reveals
+    const [hiddenGuessRankAddons, setHiddenGuessRankAddons] = useState(new Set);
+    const guessTimersRef = useRef(new Map());
+    useEffect(() => {
+        for (const [addonId, info] of guessRankInfo) {
+            if (info.targetRevealed && !guessTimersRef.current.has(addonId)) {
+                const t = setTimeout(() => setHiddenGuessRankAddons(prev => new Set([...prev, addonId])), 3000);
+                guessTimersRef.current.set(addonId, t);
+            }
+        }
+    }, [state.revealedHoleCards]); // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        setHiddenGuessRankAddons(new Set());
+        for (const t of guessTimersRef.current.values())
+            clearTimeout(t);
+        guessTimersRef.current.clear();
+    }, [state.gameId]);
+    // ── Responsive scale (60vw) ──────────────────────────────────────────────────
+    const [scale, setScale] = useState(getScale);
+    const scaleRef = useRef(scale);
+    scaleRef.current = scale;
+    useEffect(() => {
+        const onResize = () => setScale(getScale());
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
+    // ── Animation bookkeeping ────────────────────────────────────────────────────
+    const containerRef = useRef(null);
+    const chipElsRef = useRef(new Map());
+    const prevPosRef = useRef(new Map());
+    const prevLocsRef = useRef(new Map());
+    const [animations, setAnimations] = useState([]);
+    const [hidingChips, setHidingChips] = useState(() => new Set());
+    const hidingChipsRef = useRef(new Set());
+    hidingChipsRef.current = hidingChips;
+    const flyingElsRef = useRef(new Map());
+    const tableSlotElsRef = useRef(new Map());
+    // Track shown card for in-place flip animation (including flip-back when server clears it)
+    const [shownCard, setShownCard] = useState(null);
+    const shownCardTimerRef = useRef(null);
+    useEffect(() => {
+        if (state.myShownCard && state.myShownCardFrom != null && state.myShownCardIndex != null) {
+            // New card shown: start face-down then flip face-up after a brief tick
+            setShownCard({ sourceId: state.myShownCardFrom, idx: state.myShownCardIndex, card: state.myShownCard, faceUp: false });
+            if (shownCardTimerRef.current)
+                clearTimeout(shownCardTimerRef.current);
+            shownCardTimerRef.current = setTimeout(() => {
+                setShownCard(prev => prev ? { ...prev, faceUp: true } : null);
+            }, 50);
+        }
+        else if (shownCard && shownCard.faceUp) {
+            // Card cleared by server: flip back face-down, then clear after animation
+            setShownCard(prev => prev ? { ...prev, faceUp: false } : null);
+            if (shownCardTimerRef.current)
+                clearTimeout(shownCardTimerRef.current);
+            shownCardTimerRef.current = setTimeout(() => setShownCard(null), 1050);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state.myShownCard, state.myShownCardFrom, state.myShownCardIndex]);
+    // Track outgoing shown card: the card the current player is showing to someone else
+    const [sourceShownCard, setSourceShownCard] = useState(null);
+    const sourceShownCardTimerRef = useRef(null);
+    useEffect(() => {
+        const outIdx = state.myShownCardOutIndex;
+        if (outIdx != null && state.myHoleCards) {
+            // Card being shown: starts face-up, then flips face-down after a brief tick
+            setSourceShownCard({ idx: outIdx, card: state.myHoleCards[outIdx], faceUp: true });
+            if (sourceShownCardTimerRef.current)
+                clearTimeout(sourceShownCardTimerRef.current);
+            sourceShownCardTimerRef.current = setTimeout(() => {
+                setSourceShownCard(prev => prev ? { ...prev, faceUp: false } : null);
+            }, 50);
+        }
+        else if (sourceShownCard && !sourceShownCard.faceUp) {
+            // Card reveal ended: flip back face-up, then clear after animation
+            setSourceShownCard(prev => prev ? { ...prev, faceUp: true } : null);
+            if (sourceShownCardTimerRef.current)
+                clearTimeout(sourceShownCardTimerRef.current);
+            sourceShownCardTimerRef.current = setTimeout(() => setSourceShownCard(null), 1050);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [state.myShownCardOutIndex]);
+    const registerChip = useCallback((key, el) => {
+        if (el)
+            chipElsRef.current.set(key, el);
+        else
+            chipElsRef.current.delete(key);
+    }, []);
+    function relCenter(el) {
+        const c = containerRef.current;
+        if (!c)
+            return null;
+        const er = el.getBoundingClientRect(), cr = c.getBoundingClientRect();
+        const s = scaleRef.current;
+        return { x: (er.left - cr.left + er.width / 2) / s, y: (er.top - cr.top + er.height / 2) / s };
+    }
+    useLayoutEffect(() => {
+        const currLocs = getChipLocations(state);
+        const newAnims = [];
+        const newHiding = [];
+        for (const [key, currLoc] of currLocs) {
+            const prevLoc = prevLocsRef.current.get(key);
+            const moved = prevLoc !== undefined && (prevLoc.kind !== currLoc.kind ||
+                (prevLoc.kind === 'player' && currLoc.kind === 'player' && prevLoc.id !== currLoc.id));
+            if (moved) {
+                // Use table slot ref for middle destination (player chip ref for player destination)
+                const currEl = currLoc.kind === 'middle'
+                    ? tableSlotElsRef.current.get(key)
+                    : chipElsRef.current.get(key);
+                if (currEl) {
+                    const currPos = relCenter(currEl);
+                    const chip = findChip(state, key);
+                    if (currPos && chip) {
+                        // If chip is mid-animation, use flying element's current visual position as 'from'
+                        let fromPos;
+                        if (hidingChipsRef.current.has(key)) {
+                            const flyEl = flyingElsRef.current.get(key);
+                            if (flyEl) {
+                                const c = containerRef.current;
+                                if (c) {
+                                    const er = flyEl.getBoundingClientRect(), cr = c.getBoundingClientRect();
+                                    const s = scaleRef.current;
+                                    fromPos = { x: (er.left - cr.left + er.width / 2) / s, y: (er.top - cr.top + er.height / 2) / s };
+                                }
+                            }
+                        }
+                        if (!fromPos) {
+                            if (prevLoc.kind === 'middle') {
+                                // Use table slot position directly (always trackable)
+                                const slotEl = tableSlotElsRef.current.get(key);
+                                if (slotEl)
+                                    fromPos = relCenter(slotEl) ?? undefined;
+                            }
+                            else {
+                                fromPos = prevPosRef.current.get(key);
+                            }
+                        }
+                        if (fromPos) {
+                            newAnims.push({ id: `${key}-${Date.now()}`, chip, from: fromPos, to: currPos, blackInside: blackNumbers.includes(chip.number) });
+                            newHiding.push(key);
+                        }
+                    }
+                }
+            }
+        }
+        if (newAnims.length > 0) {
+            const movedKeys = new Set(newHiding);
+            // Replace any existing animations for the same chips (don't accumulate stale ones)
+            setAnimations(prev => [
+                ...prev.filter(a => !movedKeys.has(`${a.chip.round}-${a.chip.number}`)),
+                ...newAnims,
+            ]);
+            setHidingChips(prev => new Set([...prev, ...newHiding]));
+        }
+        // Save positions for next update
+        const nextPos = new Map();
+        for (const [key, el] of chipElsRef.current) {
+            const pos = relCenter(el);
+            if (pos)
+                nextPos.set(key, pos);
+        }
+        prevPosRef.current = nextPos;
+        prevLocsRef.current = currLocs;
+    }, [state]);
+    const ctxValue = { register: registerChip, hiding: hidingChips };
+    return (_jsx(ChipAnimContext.Provider, { value: ctxValue, children: _jsx("div", { style: { width: CONTAINER_W * scale, height: CONTAINER_H * scale }, children: _jsxs("div", { ref: containerRef, style: { position: 'relative', width: CONTAINER_W, height: CONTAINER_H, transform: `scale(${scale})`, transformOrigin: 'top left' }, children: [_jsx("div", { style: {
+                            position: 'absolute', left: OVAL_LEFT, top: OVAL_TOP, width: OVAL_W, height: OVAL_H,
+                            borderRadius: '50%',
+                            background: 'radial-gradient(ellipse at center, #1e6b1e 0%, #155215 100%)',
+                            boxShadow: 'inset 0 0 40px rgba(0,0,0,0.4), 0 4px 24px rgba(0,0,0,0.5)',
+                            border: '3px solid #0d3d0d',
+                        }, children: _jsxs("div", { style: { width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }, children: [!state.blackjackPhase && (_jsx("div", { style: { background: 'rgba(0,0,0,0.45)', color: '#f0c040', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }, children: readOnly ? 'GAME OVER' : `ROUND ${currentRound} / 4` })), state.blackjackPhase && (_jsx("div", { style: { background: 'rgba(0,0,0,0.45)', color: '#a0d8ff', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }, children: state.shareInfoLabel })), _jsx(CommunityCards, { cards: state.communityCards, blackAndRed: blackAndRed, onCardClick: onCommonCardClick }), (() => {
+                                    const allGameChips = currentRound === null ? [] : [
+                                        ...state.middleChips,
+                                        ...state.players.flatMap(p => p.chips).filter(c => c.round === currentRound),
+                                    ].sort((a, b) => a.round !== b.round ? a.round - b.round : a.number - b.number);
+                                    const middleSet = new Set(state.middleChips.map(c => `${c.round}-${c.number}`));
+                                    if (allGameChips.length === 0)
+                                        return null;
+                                    return (_jsx("div", { style: { display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }, children: allGameChips.map(chip => {
+                                            const key = `${chip.round}-${chip.number}`;
+                                            const inMiddle = middleSet.has(key);
+                                            return (_jsxs("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, border: '1px solid rgba(255,255,255,0.07)', borderRadius: 4, padding: 3 }, children: [_jsx("div", { ref: el => { if (el)
+                                                            tableSlotElsRef.current.set(key, el);
+                                                        else
+                                                            tableSlotElsRef.current.delete(key); }, style: { visibility: (inMiddle && !hidingChips.has(key)) ? 'visible' : 'hidden' }, children: _jsx(ChipAnimContext.Provider, { value: noopCtx, children: _jsx(ChipCircle, { chip: chip, size: 30, blackInside: blackNumbers.includes(chip.number) }) }) }), !readOnly && !amIImprisoned && (_jsx("button", { onClick: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? () => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number }) : undefined, style: { padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'pointer' : 'default' }, children: "Take" }))] }, key));
+                                        }) }));
+                                })()] }) }), rotated.map((player, i) => {
+                        const { x, y } = getSeatPos(i, n);
+                        const isMe = player.id === state.myId;
+                        // In finished phase: show own cards to self always; others only if they revealed
+                        // During game with neighbor-cards addons: show neighbor cards face up
+                        const holeCards = isMe
+                            ? state.myHoleCards
+                            : readOnly
+                                ? (state.revealedHoleCards[player.id] ?? null)
+                                : (state.neighborHoleCards[player.id] ?? null);
+                        const showFaceDown = !readOnly && !isMe && !state.neighborHoleCards[player.id];
+                        const myRound4Chip = myPlayer?.chips.find((c) => c.round === 4);
+                        const chipOrderCanReveal = !myRound4Chip || state.players
+                            .filter((p) => p.id !== state.myId)
+                            .every((p) => {
+                            const theirChip = p.chips.find((c) => c.round === 4);
+                            return !theirChip || theirChip.number >= myRound4Chip.number || !!state.revealedHoleCards[p.id];
+                        });
+                        // Block reveal if any active guess-rank addon targets me and isn't locked yet
+                        const guessRankBlock = isMe && [...guessRankInfo.values()].some(info => info.targetId === state.myId && !info.locked);
+                        const canReveal = chipOrderCanReveal && !guessRankBlock;
+                        // Show dark gray diagonal stripes on the player's own cards when they are a
+                        // guess-rank target and guessing for them is still pending (not yet locked).
+                        // Spec: "During the guessing phase if the current player is going to be guessed
+                        // later, their cards have dark gray diagonal stripes up until there's nothing to
+                        // guess on them for the rest of the game. This is only visible to the player themself."
+                        const showStripes = isMe && readOnly && [...guessRankInfo.values()].some(info => info.targetId === player.id && !info.locked);
+                        // Guess-rank UIs shown on this seat (one per unique target — dedup if multiple addons target same player)
+                        const guessRankUIs = activeGuessRankAddons
+                            .filter(addonId => {
+                            const info = guessRankInfo.get(addonId);
+                            return info.targetId === player.id && info.targetCanReveal && !info.targetRevealed && !isMe && !hiddenGuessRankAddons.has(addonId);
+                        })
+                            .slice(0, 1) // only one UI per target player
+                            .map(addonId => {
+                            const info = guessRankInfo.get(addonId);
+                            const addonVotes = state.rankGuesses[addonId] ?? {};
+                            return { addonId, myVote: addonVotes[state.myId], locked: info.locked };
+                        });
+                        // Dialogue clouds: one per unique target player this voter has guessed
+                        const dialogueClouds = (() => {
+                            const seenTargets = new Set();
+                            return activeGuessRankAddons
+                                .filter(addonId => {
+                                const info = guessRankInfo.get(addonId);
+                                if (info.targetId === player.id || hiddenGuessRankAddons.has(addonId))
+                                    return false;
+                                if (!(state.rankGuesses[addonId] ?? {})[player.id])
+                                    return false;
+                                if (seenTargets.has(info.targetId))
+                                    return false;
+                                seenTargets.add(info.targetId);
+                                return true;
+                            })
+                                .map(addonId => {
+                                const info = guessRankInfo.get(addonId);
+                                const vote = (state.rankGuesses[addonId] ?? {})[player.id];
+                                const winningRank = state.winningGuessRanks[addonId];
+                                return { text: vote, winner: info.locked && !!winningRank && vote === winningRank, locked: info.locked };
+                            });
+                        })();
+                        return (_jsx(PlayerSeat, { player: player, isMe: isMe, holeCards: holeCards, showFaceDown: showFaceDown, currentRound: currentRound, iHaveCurrentRoundChip: iHaveCurrentRoundChip || amIImprisoned, sendAction: sendAction, readOnly: readOnly, myCardsRevealed: myCardsRevealed, canReveal: canReveal, guessRankUIs: guessRankUIs, dialogueClouds: dialogueClouds, blackNumbers: blackNumbers, canStealFrom: !onlyNeighborsSteal || i === 1 || i === n - 1, blackAndRed: blackAndRed, showRestartTick: showRestartTick, hasRestartVoted: state.restartVoterIds.includes(player.id), showShareInfoTick: state.blackjackPhase, showReadinessTick: showReadinessTicks, onCardSelect: isMe ? onCardSelect : undefined, onPlayerSelect: !isMe && onPlayerSelect ? () => onPlayerSelect(player.id) : undefined, actionInProgress: actionInProgress, onSeatElRef: onSeatElRef ? el => onSeatElRef(player.id, el) : undefined, unsuitedJackIndex: state.unsuitedJacks[player.id], unsuitedXIndex: state.unsuitedXs[player.id], unsuitedXRank: state.unsuitedXRank ?? undefined, shownCardInfo: shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : (isMe && sourceShownCard ? { idx: sourceShownCard.idx, card: sourceShownCard.card, faceUp: sourceShownCard.faceUp } : null), striped: showStripes, imprisoned: !readOnly && state.prisonPlayerId === player.id, style: { position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' } }, player.id));
+                    }), state.blackjackPhase && rotated.map((player, i) => {
+                        const sum = state.blackjackSums[player.id];
+                        if (sum === undefined)
+                            return null;
+                        const { x, y } = getSeatPos(i, n);
+                        // Seat height: others ~175px (padding 8+10, name 15, gap 5, cards 78, gap 5, chips-min 54)
+                        // Me: ~195px (30px bottom padding). Name is 8px from seat top.
+                        // Cloud bottom should be just above the name top (~2px gap).
+                        const isPlayerMe = player.id === state.myId;
+                        const cloudBottom = isPlayerMe ? y - 92 : y - 82;
+                        return (_jsx("div", { style: {
+                                position: 'absolute', left: x, top: cloudBottom,
+                                transform: 'translate(-50%, -100%)',
+                                pointerEvents: 'none', zIndex: 9000,
+                            }, children: _jsx("div", { style: {
+                                    background: '#f0f4ff', color: '#1e293b',
+                                    borderRadius: 8, padding: '2px 8px',
+                                    fontSize: 11, fontWeight: 'bold',
+                                    border: '1px solid #94a3b8',
+                                    whiteSpace: 'nowrap',
+                                }, children: String(sum) }) }, player.id));
+                    }), animations.map(entry => (_jsx(FlyingChip, { entry: entry, flyingElsRef: flyingElsRef, onDone: () => {
+                            const chipKey = `${entry.chip.round}-${entry.chip.number}`;
+                            setAnimations(prev => {
+                                const next = prev.filter(a => a.id !== entry.id);
+                                // Only un-hide if no replacement animation for this chip is running
+                                if (!next.some(a => `${a.chip.round}-${a.chip.number}` === chipKey)) {
+                                    setHidingChips(prev => { const s = new Set(prev); s.delete(chipKey); return s; });
+                                }
+                                return next;
+                            });
+                        } }, entry.id)))] }) }) }));
+}

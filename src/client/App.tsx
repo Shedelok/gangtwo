@@ -7,9 +7,9 @@ import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H } from './comp
 import type { ClientGameState } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 
-const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'punch-1.mp3', 'punch-2.mp3'];
+const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
-type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN';
+type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN' | 'PRISON_TAKEN_EFFECT';
 const SOUND_DEFAULTS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'bell-1.mp3',
   CHIP_MOVE: 'fast-woosh.mp3',
@@ -17,6 +17,7 @@ const SOUND_DEFAULTS: Record<SoundKey, string> = {
   GAME_START: 'car-engine-start.mp3',
   ACTION_CARD_PLAYED: 'magic-1.mp3',
   ACTION_CARD_TAKEN: 'minutochku.mp3',
+  PRISON_TAKEN_EFFECT: 'prison-close.mp3',
 };
 const SOUND_LABELS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'Steal from you',
@@ -25,6 +26,7 @@ const SOUND_LABELS: Record<SoundKey, string> = {
   GAME_START: 'Game start',
   ACTION_CARD_PLAYED: 'Action card played',
   ACTION_CARD_TAKEN: 'Action card taken',
+  PRISON_TAKEN_EFFECT: 'Prison taken effect',
 };
 const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   STEAL_FROM_YOU: 1,
@@ -33,6 +35,7 @@ const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   GAME_START: 1,
   ACTION_CARD_PLAYED: 1,
   ACTION_CARD_TAKEN: 1,
+  PRISON_TAKEN_EFFECT: 1,
 };
 
 const preloadedAudio: Record<string, HTMLAudioElement> = {};
@@ -54,7 +57,7 @@ function playSound(file: string, masterVolume: number, multiplier: number): void
   } catch { /* audio not supported */ }
 }
 
-const ADDON_COUNT_BITS = 3; // covers 0–6 negative addons
+const ADDON_COUNT_BITS = 4; // covers 0–15 negative addons
 const POS_COUNT_BITS = 2;  // covers 0–2 positive addons
 const RFC4648 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
@@ -357,6 +360,10 @@ export default function App() {
     const gameJustStarted = state.phase === 'game' && state.gameId !== prev.gameId;
     if (gameJustStarted) {
       playSound(files.GAME_START, vol, SOUND_VOLUME_MULTIPLIER.GAME_START);
+      // Also play prison sound if the starting round is a prison round
+      if (state.prisonPlayerId) {
+        playSound(files.PRISON_TAKEN_EFFECT, vol, SOUND_VOLUME_MULTIPLIER.PRISON_TAKEN_EFFECT);
+      }
       return;
     }
 
@@ -391,6 +398,11 @@ export default function App() {
       (!prev.rerollCommonUsed && state.rerollCommonUsed);
     if (actionCardCommitted) {
       playSound(files.ACTION_CARD_PLAYED, vol, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_PLAYED);
+    }
+
+    // Prison sound: play when entering the prison round (prisonPlayerId becomes non-null)
+    if (state.prisonPlayerId && !prev.prisonPlayerId) {
+      playSound(files.PRISON_TAKEN_EFFECT, vol, SOUND_VOLUME_MULTIPLIER.PRISON_TAKEN_EFFECT);
     }
   }, [state]);
 

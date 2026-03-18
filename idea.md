@@ -4,6 +4,9 @@
 
 ### Maybe Now
 
+- Make it that incompatible addons can't be rolled together. If no config is possible, the game can't start
+- When an action card cannot be used, it should be clear. For example, reroll card on preflop or when you are prisoned.
+- New agent is too expensive
 
 ### Maybe Later
 
@@ -70,6 +73,4 @@
 25. Once the pocket cards have been dealt in Round 1, each of you chooses one
     of your pocket cards. Everyone then simultaneously passes their chosen card
     to the player on their left as a pocket card.
-26. On a random round R a random player P is "prisoned". They can't do anything until the next round starts. There's 1
-    less chip distributed in that round (or maybe not).
-27. All names are hidden (you don't know where is who) and players are random shuffled every time.
+26. All names are hidden (you don't know where is who) and players are random shuffled every time.

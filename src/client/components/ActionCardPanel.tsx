@@ -20,6 +20,8 @@ interface Props {
 
 function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
   if (state.phase !== 'game') return false;
+  // Imprisoned players cannot use any action cards
+  if (state.prisonPlayerId === state.myId) return false;
   if (addonId === 'show-1-card-to-1-player') return !state.showCardUsed && !!state.myHoleCards;
   if (addonId === 'action-unsuited-jack') return !state.unsuitedJackUsed && !!state.myHoleCards;
   if (addonId === 'action-unsuited-x') return !state.unsuitedXUsed && !!state.myHoleCards;
@@ -59,6 +61,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
 
   const lockedByOther = !!state.actionCardLock && state.actionCardLock.playerId !== state.myId;
   const iAmUsingACard = step !== 'idle';
+  const iAmImprisoned = state.prisonPlayerId === state.myId;
 
   const handleCardClick = (addonId: string) => {
     if (lockedByOther) return;
@@ -83,7 +86,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
         {actionAddons.map(addon => {
           const active = step !== 'idle' && activeAddonId === addon.id;
           const locked = (lockedByOther && state.actionCardLock?.addonId === addon.id) || returningAddonId === addon.id;
-          const dimmed = (lockedByOther && !locked) || (iAmUsingACard && !active);
+          const dimmed = iAmImprisoned || (lockedByOther && !locked) || (iAmUsingACard && !active);
           return (
             <div
               key={addon.id}

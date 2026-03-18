@@ -101,6 +101,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     : state.players;
   const myPlayer = state.players.find(p => p.id === state.myId);
   const iHaveCurrentRoundChip = !!myPlayer?.chips.some(c => c.round === currentRound);
+  const amIImprisoned = state.prisonPlayerId === state.myId;
   const myCardsRevealed = !!state.revealedHoleCards[state.myId];
   const allCardsRevealed = readOnly && state.players.every(p => !!state.revealedHoleCards[p.id]);
   const showRestartTick = allCardsRevealed;
@@ -182,7 +183,10 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     }
     prevChipLocsForReadinessRef.current = currLocs;
 
-    const allHold = state.players.every(p => p.chips.some(c => c.round === currentRound));
+    // Imprisoned players are excluded from the "all hold" check — they don't get a chip
+    const allHold = state.players.every(p =>
+      (state.prisonPlayerId === p.id) || p.chips.some(c => c.round === currentRound)
+    );
 
     if (!allHold || chipMoved) {
       if (readinessTickTimerRef.current) { clearTimeout(readinessTickTimerRef.current); readinessTickTimerRef.current = null; }
@@ -419,7 +423,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                             <ChipCircle chip={chip} size={30} blackInside={blackNumbers.includes(chip.number)} />
                           </ChipAnimContext.Provider>
                         </div>
-                        {!readOnly && (
+                        {!readOnly && !amIImprisoned && (
                           <button
                             onClick={inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? () => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number }) : undefined}
                             style={{ padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'pointer' : 'default' }}>
@@ -501,7 +505,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
           return (
             <PlayerSeat key={player.id} player={player} isMe={isMe}
               holeCards={holeCards} showFaceDown={showFaceDown}
-              currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip}
+              currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip || amIImprisoned}
               sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
               canReveal={canReveal}
               guessRankUIs={guessRankUIs}
@@ -522,6 +526,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             unsuitedXRank={state.unsuitedXRank ?? undefined}
             shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : (isMe && sourceShownCard ? { idx: sourceShownCard.idx, card: sourceShownCard.card, faceUp: sourceShownCard.faceUp } : null)}
             striped={showStripes}
+            imprisoned={!readOnly && state.prisonPlayerId === player.id}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );
