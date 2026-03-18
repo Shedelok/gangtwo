@@ -58,3 +58,7 @@ together).
 Every time a player sees a card flip animation (regardless of where it is: on the table, in their hand, in other
 player's hand, etc.), they hear "CARD_FLIP" sound which defaults to
 spec/base/resources/sounds/card-flip.mp3.
+
+# Caching
+
+For all HTML and audio files, the application asks browsers to cache them for exactly 5 hours.

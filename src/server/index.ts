@@ -37,8 +37,19 @@ const httpServer = createServer(app);
 
 // Serve static files in production
 const distPath = path.resolve(process.cwd(), 'dist/client');
-app.use(express.static(distPath));
+
+// Cache HTML and audio files for 5 hours (18000 seconds)
+const CACHE_MAX_AGE_SECONDS = 5 * 60 * 60; // 5 hours
+app.use(express.static(distPath, {
+  setHeaders: (res, filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    if (ext === '.html' || ext === '.mp3' || ext === '.wav' || ext === '.ogg' || ext === '.m4a') {
+      res.setHeader('Cache-Control', `public, max-age=${CACHE_MAX_AGE_SECONDS}`);
+    }
+  },
+}));
 app.get('*', (_req, res) => {
+  res.setHeader('Cache-Control', `public, max-age=${CACHE_MAX_AGE_SECONDS}`);
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
