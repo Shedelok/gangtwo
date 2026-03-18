@@ -15,8 +15,6 @@
 - spec/addons/logic.md should not have UI spec, it all should be moved to ui/. Probably whole spec/logic should be
   restructured and split in a different way rather than ui vs logic
 - Top of the table area is hidden under the top panel
-- Add system instructions for claude saying this is spec-driven development application
-- Maybe create 2 different claude agents (one for working with spec, another for working with code based on spec)
 
 ## Addons
 
