@@ -6,6 +6,126 @@ export interface AddonDef {
   hasAction?: boolean;
 }
 
+/**
+ * A node in the addon grouping tree. Leaf nodes have `addonId`, branch nodes have `children`.
+ * The tree structure determines how random addon selection works: at each level a uniform
+ * random child is chosen until a leaf is reached.
+ */
+export type AddonGroupNode =
+  | { addonId: string }
+  | { children: AddonGroupNode[] };
+
+/** Negative addons grouping tree as defined in the spec's "Addon Groupings" section. */
+export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
+  { children: [
+    { addonId: 'guess-highest-red-chip-hand-rank' },
+    { addonId: 'guess-2nd-highest-red-chip-hand-rank' },
+    { addonId: 'guess-lowest-red-chip-hand-rank' },
+  ]},
+  { addonId: 'only-neighbors-steal' },
+  { addonId: 'clubs-spades-diamonds-hearth' },
+  { children: [
+    { addonId: 'additional-card-flop' },
+    { addonId: 'additional-card-turn' },
+    { addonId: 'additional-card-river' },
+  ]},
+  { children: [
+    { addonId: 'ones-are-black' },
+    { addonId: 'ns-are-black' },
+    { addonId: 'xs-are-black' },
+  ]},
+  { children: [
+    { addonId: 'no-white-chips' },
+    { addonId: 'no-yellow-chips' },
+    { addonId: 'no-orange-chips' },
+  ]},
+  { addonId: 'no-old-chips' },
+];
+
+/** Positive addons grouping tree as defined in the spec's "Addon Groupings" section. */
+export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
+  { addonId: 'see-1-neighbor-cards' },
+  { children: [
+    { addonId: 'share-blackjack-sum' },
+    { addonId: 'share-number-of-faces' },
+  ]},
+  { addonId: 'show-1-card-to-1-player' },
+  { children: [
+    { addonId: 'action-unsuited-jack' },
+    { addonId: 'action-unsuited-x' },
+  ]},
+  { addonId: 'action-reroll-common' },
+];
+
+/** Collect all leaf addon IDs from a tree node. */
+function collectLeafIds(node: AddonGroupNode): string[] {
+  if ('addonId' in node) return [node.addonId];
+  return node.children.flatMap(collectLeafIds);
+}
+
+/**
+ * Prune a tree node, removing any leaves whose addonId is not in the allowed set.
+ * Returns null if the entire subtree is pruned.
+ */
+function pruneNode(node: AddonGroupNode, allowed: Set<string>): AddonGroupNode | null {
+  if ('addonId' in node) {
+    return allowed.has(node.addonId) ? node : null;
+  }
+  const prunedChildren = node.children
+    .map(c => pruneNode(c, allowed))
+    .filter((c): c is AddonGroupNode => c !== null);
+  if (prunedChildren.length === 0) return null;
+  return { children: prunedChildren };
+}
+
+/**
+ * Select a random addon by descending the tree, choosing a uniformly random child at each
+ * branch level until a leaf is reached. Returns the leaf's addonId, or null if the tree is empty.
+ */
+function selectFromTree(roots: AddonGroupNode[]): string | null {
+  if (roots.length === 0) return null;
+  let node: AddonGroupNode = { children: roots };
+  while ('children' in node) {
+    if (node.children.length === 0) return null;
+    node = node.children[Math.floor(Math.random() * node.children.length)];
+  }
+  return node.addonId;
+}
+
+/**
+ * Pick `count` random addons from the given grouping tree, respecting the pool of allowed addon IDs.
+ * Uses the tree-descent algorithm defined in the spec: each selection walks from the root,
+ * uniformly choosing a random child at each level until a leaf addon is reached.
+ * Already-selected addons are pruned before each subsequent pick.
+ */
+export function pickAddonsFromTree(
+  tree: AddonGroupNode[],
+  pool: Set<string>,
+  count: number,
+): string[] {
+  const selected: string[] = [];
+  let allowed = new Set(pool);
+  for (let i = 0; i < count; i++) {
+    const pruned = tree
+      .map(n => pruneNode(n, allowed))
+      .filter((n): n is AddonGroupNode => n !== null);
+    const id = selectFromTree(pruned);
+    if (id === null) break; // no more addons available
+    selected.push(id);
+    allowed = new Set(allowed);
+    allowed.delete(id);
+  }
+  return selected;
+}
+
+/**
+ * Count how many distinct leaf addons are reachable in the tree given an allowed pool.
+ */
+export function countAvailableInTree(tree: AddonGroupNode[], pool: Set<string>): number {
+  const allLeaves = tree.flatMap(n => collectLeafIds(n));
+  return allLeaves.filter(id => pool.has(id)).length;
+}
+
 export const ADDONS: AddonDef[] = [
   {
     id: 'guess-highest-red-chip-hand-rank',

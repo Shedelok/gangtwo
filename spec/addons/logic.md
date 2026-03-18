@@ -4,12 +4,17 @@ This file describes the logic augments that addons bring to the base version of 
 
 # Lobby
 
-If any addons are defined, there's a mechanism in the lobby for selecting which addons to play the game with.
-Players specify the addons collectively. Addons can be of two types: negative and positive. For each type players
-choose number of addons to be played with and a set of addons to choose those from. Once the game starts (or restarts)
-the specified number of addons are randomly chosen for each of the types.
+If any addons are present in the application, there's a mechanism in the lobby for selecting which addons to play the
+game with. Players specify the addons collectively. Addons can be of two types: negative and positive. For each type
+players choose number of addons to be played with and a set of addons to choose those from.
 
-# Negative Addons
+Once the game starts (or restarts) the specified number of addons are randomly chosen for each of the types using the
+groupings. Addon groups are arranged as a tree. Every time a new random addon needs to be chosen, a descent from the
+root tree is performed every time uniformly choosing a random child node, until a leaf (a specific addon) is determined.
+
+# Addon Descriptions
+
+This section describes all the details of each addon.
 
 ## Guess Rank
 
@@ -85,9 +90,7 @@ Same as "Additional Card Flop", but for 3rd round instead of the 2nd one.
 
 Same as "Additional Card Flop", but for 4th round instead of the 2nd one.
 
-## Black Chip
-
-### Addon: Black 1s
+## Addon: Black 1s
 
 Short description: "Black 1s"
 
@@ -97,12 +100,12 @@ taken from the middle of the table for the first time.
 Functionality: All chips of value 1 have black circle inside them (the border is still of their color, but the middle is
 black). There's no steal or drop option for a black chip.
 
-### Addon: Black Ns
+## Addon: Black Ns
 
 Same as "Black 1s", but the highest value (equal to the number of players) chips become black instead of the chips
 with the value 1.
 
-### Addon: Black Xs
+## Addon: Black Xs
 
 Same as "Black 1s", but instead of chips with value 1, a random number X (from 1 to N) is determined at the beginning of
 the game and chips with number X become black. X stays the same through all rounds. If this addon affects a chip that
@@ -142,8 +145,6 @@ and player cannot see them.
 Functionality: When a new round starts and chips for this new round are placed on the table, all chips from the previous
 round are removed as if they were never in the game. Once the game is over and all players have revealed their cards,
 the chips are shown for the players to better analyze the game.
-
-# Positive Addons
 
 ## Addon: See 1 Neighbor's Cards
 
@@ -252,3 +253,45 @@ The action card for this addon has no text, has a simple "refresh" sign image in
 When this action is commited, the chosen common card flips face down, then it flips again face up, but now it's a new
 card from the deck. Both flips happen with the flipping card animation.
 
+# Addon Groupings
+
+This section describes which addons are actually present in the game and how they are grouped. Some addons are grouped
+together. Groups can have nested groups. Only addons listed in this section are present in the game, others are not
+visible to the players in any way.
+
+The tree structure of the groups is described as Markdown enumerated list. Nested elements mean children of a node,
+addon names mean leaf nodes with that addon.
+
+## Negative Addons
+
+1.
+    1. Guess Rank Highest
+    2. Guess Rank 2nd Highest
+    3. Guess Rank Lowest
+2. Only Neighbors Steal
+3. Black & Red
+4.
+    1. Additional Card Flop
+    2. Additional Card Turn
+    3. Additional Card River
+5.
+    1. Black 1s
+    2. Black Ns
+    3. Black Xs
+6.
+    1. No White Chips
+    2. No Yellow Chips
+    3. No Orange Chips
+7. No Old Chips
+
+## Positive Addons
+
+1. See 1 Neighbor's Cards
+2.
+    1. Share Blackjack Sum
+    2. Share Number of Faces
+3. [A] Show 1 Card to 1 Player
+4.
+    1. [A] Unsuited Jack
+    2. [A] Unsuited X
+5. [A] Reroll Common

@@ -6,17 +6,8 @@ import {
   isRoundComplete,
   drawCards,
 } from './gameLogic';
-import { ADDONS } from '../shared/addons';
+import { ADDONS, NEGATIVE_ADDON_TREE, POSITIVE_ADDON_TREE, pickAddonsFromTree, countAvailableInTree } from '../shared/addons';
 import { randomUUID } from 'crypto';
-
-function pickRandom<T>(arr: T[], n: number): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a.slice(0, n);
-}
 
 interface ServerGameState {
   phase: GamePhase;
@@ -259,21 +250,17 @@ export function startGame(shufflePlayers = true): string | null {
     }
   }
 
-  const negativePool = ADDONS
-    .filter((a) => a.type === 'negative' && state.addonPool.has(a.id))
-    .map((a) => a.id);
-  const positivePool = ADDONS
-    .filter((a) => a.type === 'positive' && state.addonPool.has(a.id))
-    .map((a) => a.id);
+  const negativeAvailable = countAvailableInTree(NEGATIVE_ADDON_TREE, state.addonPool);
+  const positiveAvailable = countAvailableInTree(POSITIVE_ADDON_TREE, state.addonPool);
 
-  if (state.negativeAddonCount > negativePool.length)
+  if (state.negativeAddonCount > negativeAvailable)
     return 'Not enough negative addons in pool';
-  if (state.positiveAddonCount > positivePool.length)
+  if (state.positiveAddonCount > positiveAvailable)
     return 'Not enough positive addons in pool';
 
   state.enabledAddons = new Set([
-    ...pickRandom(negativePool, state.negativeAddonCount),
-    ...pickRandom(positivePool, state.positiveAddonCount),
+    ...pickAddonsFromTree(NEGATIVE_ADDON_TREE, state.addonPool, state.negativeAddonCount),
+    ...pickAddonsFromTree(POSITIVE_ADDON_TREE, state.addonPool, state.positiveAddonCount),
   ]);
   if (state.enabledAddons.has('xs-are-black')) {
     const n = state.players.length;
@@ -548,10 +535,10 @@ export function toggleStartGameVote(socketId: string): string | null {
     state.startGameVoters.delete(playerId);
   } else {
     if (state.players.length < 2) return 'Need at least 2 players';
-    const negativePool = ADDONS.filter((a) => a.type === 'negative' && state.addonPool.has(a.id));
-    const positivePool = ADDONS.filter((a) => a.type === 'positive' && state.addonPool.has(a.id));
-    if (state.negativeAddonCount > negativePool.length) return 'Not enough negative addons in pool';
-    if (state.positiveAddonCount > positivePool.length) return 'Not enough positive addons in pool';
+    const negAvail = countAvailableInTree(NEGATIVE_ADDON_TREE, state.addonPool);
+    const posAvail = countAvailableInTree(POSITIVE_ADDON_TREE, state.addonPool);
+    if (state.negativeAddonCount > negAvail) return 'Not enough negative addons in pool';
+    if (state.positiveAddonCount > posAvail) return 'Not enough positive addons in pool';
     state.startGameVoters.add(playerId);
     if (state.startGameVoters.size === state.players.length) {
       return startGame();

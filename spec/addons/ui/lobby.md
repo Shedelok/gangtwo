@@ -6,9 +6,9 @@ This file describes the UI augments that addons bring to the base version of the
 
 On the left, all players see full list of available addons as a side-panel under the sound control elements.
 
-Each of the 2 lists has a header and controls to specify the number of addons of the corresponding type to be used.
-Once the game starts, the specified number of negative and specified number of positive addons are randomly selected and
-are used in the game.
+Addons of each type are displayed as a list. Each of the 2 lists has a header and controls to specify the number of
+addons of the corresponding type to be used. Once the game starts, the specified number of negative and specified number
+of positive addons are randomly selected and are used in the game.
 
 Players can uncheck the checkbox next to each addon to remove them from the pool which is used when making the
 random selection. The hover description of each asset doesn't cover the checkboxes, so they always stay visible

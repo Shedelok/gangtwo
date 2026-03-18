@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import type { ClientGameState, ClientAction } from '@shared/types';
-import { ADDONS } from '@shared/addons';
-
-const negativeAddons = ADDONS.filter((a) => a.type === 'negative');
-const positiveAddons = ADDONS.filter((a) => a.type === 'positive');
+import { ADDONS, NEGATIVE_ADDON_TREE, POSITIVE_ADDON_TREE, countAvailableInTree } from '@shared/addons';
 
 const s: Record<string, React.CSSProperties> = {
   container: {
@@ -113,8 +110,9 @@ export default function Lobby({ state, sendAction }: Props) {
 
   const hasJoined = state.myId !== '';
 
-  const negativePoolCount = negativeAddons.filter((a) => state.addonPool.includes(a.id)).length;
-  const positivePoolCount = positiveAddons.filter((a) => state.addonPool.includes(a.id)).length;
+  const addonPoolSet = new Set(state.addonPool);
+  const negativePoolCount = countAvailableInTree(NEGATIVE_ADDON_TREE, addonPoolSet);
+  const positivePoolCount = countAvailableInTree(POSITIVE_ADDON_TREE, addonPoolSet);
 
   const canStart =
     state.players.length >= 2 &&
