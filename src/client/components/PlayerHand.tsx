@@ -11,7 +11,7 @@ const SUIT_SYMBOLS: Record<string, string> = {
 
 const RED_SUITS = new Set(['hearts', 'diamonds']);
 
-function PlayingCard({ card, small, blackAndRed }: { card: Card; small: boolean; blackAndRed: boolean }) {
+function PlayingCard({ card, small, blackAndRed, shortDeck }: { card: Card; small: boolean; blackAndRed: boolean; shortDeck: boolean }) {
   const isRed = RED_SUITS.has(card.suit);
   const suitBg = isRed ? '#c0392b' : '#1a1a2e';
   const background = blackAndRed ? suitBg : 'white';
@@ -19,6 +19,33 @@ function PlayingCard({ card, small, blackAndRed }: { card: Card; small: boolean;
   const symbol = SUIT_SYMBOLS[card.suit];
   const w = small ? 52 : 80;
   const h = small ? 78 : 120;
+
+  if (shortDeck) {
+    // Short deck style: value and suit stacked vertically at the middle of the card.
+    // Both value and suit take 50% of the height. Font chosen so text takes ~50% of the card width.
+    return (
+      <div style={{
+        width: w, height: h,
+        background,
+        borderRadius: small ? 5 : 8,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        userSelect: 'none',
+        flexShrink: 0,
+      }}>
+        <div style={{ height: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+          <span style={{ fontSize: small ? 24 : 36, fontWeight: 'bold', lineHeight: 1 }}>{card.rank}</span>
+        </div>
+        <div style={{ height: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+          <span style={{ fontSize: small ? 24 : 36, lineHeight: 1 }}>{symbol}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       width: w, height: h,
@@ -99,6 +126,7 @@ interface Props {
   faceDown?: boolean;
   small?: boolean;
   blackAndRed?: boolean;
+  shortDeck?: boolean;
   onCardClick?: (idx: 0 | 1) => void;
   unsuitedJackIndex?: number;
   unsuitedXIndex?: number;
@@ -109,7 +137,7 @@ interface Props {
   striped?: boolean;
 }
 
-export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false }: Props) {
+export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, shortDeck = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false }: Props) {
   const gap = small ? 6 : 12;
   // If neither card is special and we have no card data, show placeholder
   if (!cards && unsuitedJackIndex === undefined && unsuitedXIndex === undefined && !faceDown && !shownCardInfo) {
@@ -169,7 +197,7 @@ export default function PlayerHand({ cards, faceDown = false, small = false, bla
                 ? <UnsuitedCard small={small} rank={unsuitedXRank ?? 'X'} />
               : (faceDown || !cards)
                 ? <CardBack small={small} />
-                : <PlayingCard card={cards[idx]} small={small} blackAndRed={blackAndRed} />
+                : <PlayingCard card={cards[idx]} small={small} blackAndRed={blackAndRed} shortDeck={shortDeck} />
             }
             {striped && (
               <div style={{

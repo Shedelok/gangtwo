@@ -112,6 +112,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
   if (state.enabledAddons.includes('xs-are-black') && state.blackXValue !== null) blackNumbers.push(state.blackXValue);
   const onlyNeighborsSteal = state.enabledAddons.includes('only-neighbors-steal');
   const blackAndRed = state.enabledAddons.includes('clubs-spades-diamonds-hearth');
+  const shortDeck = state.enabledAddons.includes('short-deck');
 
   // ── Guess addons: per-addon target/voting state ─────────────────────────
   const GUESS_ADDON_IDS = [
@@ -447,7 +448,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             )}
 
             {/* Community cards */}
-            <CommunityCards cards={state.communityCards} blackAndRed={blackAndRed} onCardClick={onCommonCardClick} />
+            <CommunityCards cards={state.communityCards} blackAndRed={blackAndRed} shortDeck={shortDeck} onCardClick={onCommonCardClick} />
 
             {/* Middle chips – fixed dedicated slots for every chip in the game */}
             {(() => {
@@ -569,6 +570,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               blackNumbers={blackNumbers}
               canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
               blackAndRed={blackAndRed}
+              shortDeck={shortDeck}
               showRestartTick={showRestartTick}
               hasRestartVoted={state.restartVoterIds.includes(player.id)}
               showShareInfoTick={state.blackjackPhase}

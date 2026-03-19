@@ -4,7 +4,6 @@
 
 ### Maybe Now
 
-- Make it that incompatible addons can't be rolled together. If no config is possible, the game can't start
 - When an action card cannot be used, it should be clear. For example, reroll card on preflop or when you are prisoned.
 - New agent is too expensive
 - Make sure multiple guesses have the same order in buttons and clouds
@@ -18,6 +17,7 @@
 - Get rid of spec duplication when describing different animations (chip move, card reveal, action card move)
 - spec/addons/logic.md should not have UI spec, it all should be moved to ui/. Probably whole spec/logic should be
   restructured and split in a different way rather than ui vs logic
+- Make it that incompatible addons can't be rolled together. If no config is possible, the game can't start
 
 ## Addons
 
@@ -39,30 +39,29 @@
     are used for the rest of the game.
 11. You get 3 cards on preflop, but on flop you have to discard one of them.
 12. One player once can swap one of their cards with one of the common cards.
-13. Cards of rank >10 are removed from the deck
-14. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
+13. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
     one).
-15. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
-16. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
-17. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
-18. Kickers (non-scoring cards) are reversed (go in reversed order).
-19. If at least one of the community cards in Round 2 is a J, Q, or K, the following
+14. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
+15. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
+16. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
+17. Kickers (non-scoring cards) are reversed (go in reversed order).
+18. If at least one of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the white 1-star chip (from Round 1) must put their
     pocket cards face down in the discard pile and draw new pocket cards from
     the deck.
-20. If none of the community cards in Round 2 is a J, Q, or K, the following
+19. If none of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the highest-value white chip (from Round 1) must
     put their pocket cards face down in the discard pile and draw new pocket
     cards from the deck.
-21. Decide which of you will share what hand ranking their current hand has
+20. Decide which of you will share what hand ranking their current hand has
     (pocket cards plus current community cards) with the rest of the players. They
     cannot share further details.
-22. Decide which of you will share with everyone how many cards of a specific
+21. Decide which of you will share with everyone how many cards of a specific
     value they have in their hand
-23. Decide which of you will take one card from the deck and add it to their hand.
+22. Decide which of you will take one card from the deck and add it to their hand.
     Afterward, this player must place one of their pocket cards face down on the
     discard pile. This can be the card that they have just drawn from the deck.
-24. Once the pocket cards have been dealt in Round 1, each of you chooses one
+23. Once the pocket cards have been dealt in Round 1, each of you chooses one
     of your pocket cards. Everyone then simultaneously passes their chosen card
     to the player on their left as a pocket card.
-25. All names are hidden (you don't know where is who) and players are random shuffled every time.
+24. All names are hidden (you don't know where is who) and players are random shuffled every time.

@@ -3,10 +3,13 @@ import type { Card, Suit, Rank, RoundNumber, Chip, PlayerPublicState } from '../
 const SUITS: Suit[] = ['spades', 'hearts', 'diamonds', 'clubs'];
 const RANKS: Rank[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
-export function createShuffledDeck(): Card[] {
+const SHORT_DECK_RANKS: Rank[] = ['10', 'J', 'Q', 'K', 'A'];
+
+export function createShuffledDeck(shortDeck: boolean = false): Card[] {
   const deck: Card[] = [];
+  const ranks = shortDeck ? SHORT_DECK_RANKS : RANKS;
   for (const suit of SUITS) {
-    for (const rank of RANKS) {
+    for (const rank of ranks) {
       deck.push({ suit, rank });
     }
   }

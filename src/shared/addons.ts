@@ -25,6 +25,7 @@ export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
   ]},
   { addonId: 'only-neighbors-steal' },
   { addonId: 'clubs-spades-diamonds-hearth' },
+  { addonId: 'short-deck' },
   { children: [
     { addonId: 'additional-card-flop' },
     { addonId: 'additional-card-turn' },
@@ -163,6 +164,12 @@ export const ADDONS: AddonDef[] = [
     id: 'clubs-spades-diamonds-hearth',
     short: "Black & Red",
     long: "Instead of 4 logical suits, there are only 2: black (represented by clubs and spades) and red (represented by diamonds and hearths).",
+    type: 'negative',
+  },
+  {
+    id: 'short-deck',
+    short: "Short Deck",
+    long: "The game is played only with cards of value 10 through Ace. All twos, threes, ..., nines are removed.",
     type: 'negative',
   },
   {

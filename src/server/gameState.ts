@@ -320,7 +320,8 @@ export function startGame(shufflePlayers = true): string | null {
     state.blackXValue = null;
   }
 
-  const deck = createShuffledDeck();
+  const isShortDeck = state.enabledAddons.has('short-deck');
+  const deck = createShuffledDeck(isShortDeck);
   const playerIds = state.players.map((p) => p.id);
   const { assignments, remainingDeck } = dealHoleCards(deck, playerIds);
 
@@ -354,7 +355,9 @@ export function startGame(shufflePlayers = true): string | null {
   }
   state.blackjackPhase = blackjackActive;
   state.middleChips = blackjackActive ? [] : createChipsForRound(startRound as RoundNumber, state.players.length);
-  const ALL_RANKS: string[] = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+  const ALL_RANKS: string[] = isShortDeck
+    ? ['10','J','Q','K','A']
+    : ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
   state.unsuitedXRank = state.enabledAddons.has('action-unsuited-x')
     ? ALL_RANKS[Math.floor(Math.random() * ALL_RANKS.length)]
     : null;

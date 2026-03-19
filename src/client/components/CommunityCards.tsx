@@ -11,7 +11,7 @@ const SUIT_SYMBOLS: Record<string, string> = {
 
 const RED_SUITS = new Set(['hearts', 'diamonds']);
 
-function CommunityCard({ card, animate, blackAndRed, rerollFrom }: { card: Card; animate: boolean; blackAndRed: boolean; rerollFrom?: Card }) {
+function CommunityCard({ card, animate, blackAndRed, shortDeck, rerollFrom }: { card: Card; animate: boolean; blackAndRed: boolean; shortDeck: boolean; rerollFrom?: Card }) {
   const [faceUp, setFaceUp] = useState(!animate && rerollFrom == null);
   const [displayCard, setDisplayCard] = useState<Card>(rerollFrom ?? card);
 
@@ -50,13 +50,26 @@ function CommunityCard({ card, animate, blackAndRed, rerollFrom }: { card: Card;
       <div className="cc-flipper" style={{ transform: faceUp ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
         <div className="cc-face cc-back" />
         <div className="cc-face cc-front" style={blackAndRed ? { background: suitBg } : undefined}>
-          <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color }}>
-            <span style={{ fontSize: 11, fontWeight: 'bold' }}>{c.rank}</span>
-            <span style={{ fontSize: 9 }}>{symbol}</span>
-          </div>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color }}>
-            {symbol}
-          </div>
+          {shortDeck ? (
+            <>
+              <div style={{ height: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+                <span style={{ fontSize: 20, fontWeight: 'bold', lineHeight: 1 }}>{c.rank}</span>
+              </div>
+              <div style={{ height: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+                <span style={{ fontSize: 20, lineHeight: 1 }}>{symbol}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color }}>
+                <span style={{ fontSize: 11, fontWeight: 'bold' }}>{c.rank}</span>
+                <span style={{ fontSize: 9 }}>{symbol}</span>
+              </div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, color }}>
+                {symbol}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -66,10 +79,11 @@ function CommunityCard({ card, animate, blackAndRed, rerollFrom }: { card: Card;
 interface Props {
   cards: Card[];
   blackAndRed?: boolean;
+  shortDeck?: boolean;
   onCardClick?: (idx: number) => void;
 }
 
-export default function CommunityCards({ cards, blackAndRed = false, onCardClick }: Props) {
+export default function CommunityCards({ cards, blackAndRed = false, shortDeck = false, onCardClick }: Props) {
   // animateFromIndex: cards at index >= this value were newly added and should animate.
   // Initialized to cards.length so cards present on first render never animate.
   const [animateFromIndex, setAnimateFromIndex] = useState<number>(() => cards.length);
@@ -124,7 +138,7 @@ export default function CommunityCards({ cards, blackAndRed = false, onCardClick
             boxShadow: onCardClick ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
           }}
         >
-          <CommunityCard card={card} animate={i >= animateFromIndex} blackAndRed={blackAndRed} rerollFrom={rerollingCards.get(i)} />
+          <CommunityCard card={card} animate={i >= animateFromIndex} blackAndRed={blackAndRed} shortDeck={shortDeck} rerollFrom={rerollingCards.get(i)} />
         </div>
       ))}
     </div>

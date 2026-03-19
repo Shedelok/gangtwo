@@ -115,6 +115,18 @@ represented by diamonds and hearths).
 Functionality: All cards revert their colors, meaning the following: cards have the background of their suit color
 (red or black) and card's rank and suit symbols become white.
 
+## Addon: Short Deck
+
+Short description: "Short Deck"
+
+Long description: The game is played only with cards of value 10 through Ace. All twos, threes, ..., nines are removed.
+
+Functionality: The game is played only with cards of values 10, Jack, Queen, King, Ace. Other cards are removed. The
+cards are removed at the very beginning, so neither pocket cards nor common cards can be 2, 3, ..., 9. When this addon
+is active, the cards are styled differently: each card has it's value and suit stacked vertically at the middle of the
+card. Both value and rank should take 50% of the height of the card. Both value and suit text should take about 50% of
+the width of the card (the font should be chosen accordingly).
+
 ## Addon: Additional Card Flop
 
 Short description: "Additional Card Flop"
@@ -334,20 +346,21 @@ addon names mean leaf nodes with that addon.
     4. Guess Card Highest
 2. Only Neighbors Steal
 3. Black & Red
-4.
+4. Short Deck
+5.
     1. Additional Card Flop
     2. Additional Card Turn
     3. Additional Card River
-5.
+6.
     1. Black 1s
     2. Black Ns
     3. Black Xs
-6.
+7.
     1. No White Chips
     2. No Yellow Chips
     3. No Orange Chips
-7. No Old Chips
-8. Prison
+8. No Old Chips
+9. Prison
 
 ## Positive Addons
 
