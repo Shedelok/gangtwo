@@ -42,7 +42,7 @@ function findChip(s: ClientGameState, key: string): Chip | undefined {
 }
 
 // ── Flying chip overlay (animates from old position to new) ───────────────────
-interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to: { x: number; y: number }; blackInside: boolean; }
+interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to: { x: number; y: number }; blackInside: boolean; guessTarget: boolean; }
 
 const noopCtx: ChipAnimCtxValue = { register: () => {}, hiding: new Set() };
 
@@ -73,7 +73,7 @@ function FlyingChip({ entry, flyingElsRef, onDone }: { entry: AnimEntry; flyingE
         pointerEvents: 'none',
         zIndex: 200,
       }}>
-        <ChipCircle chip={entry.chip} size={32} blackInside={entry.blackInside} />
+        <ChipCircle chip={entry.chip} size={32} blackInside={entry.blackInside} guessTarget={entry.guessTarget} />
       </div>
     </ChipAnimContext.Provider>
   );
@@ -120,6 +120,26 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     'guess-lowest-red-chip-hand-rank',
     'guess-highest-red-chip-card-value',
   ] as const;
+
+  // Compute which red chip numbers are targeted by guess addons (for question mark watermark).
+  // Each guess addon targets a specific red chip value based on the number of players:
+  //   highest → N, 2nd highest → N-1, lowest → 1
+  const guessTargetedRedChipNumbers: Set<number> = (() => {
+    const nums = new Set<number>();
+    const playerCount = state.players.length;
+    if (playerCount === 0) return nums;
+    for (const addonId of GUESS_ADDON_IDS) {
+      if (!state.enabledAddons.includes(addonId)) continue;
+      if (addonId === 'guess-highest-red-chip-hand-rank' || addonId === 'guess-highest-red-chip-card-value') {
+        nums.add(playerCount);
+      } else if (addonId === 'guess-2nd-highest-red-chip-hand-rank') {
+        if (playerCount >= 2) nums.add(playerCount - 1);
+      } else if (addonId === 'guess-lowest-red-chip-hand-rank') {
+        nums.add(1);
+      }
+    }
+    return nums;
+  })();
 
   function guessAddonFeature(addonId: string): 'hand-rank' | 'card-value' {
     if (addonId === 'guess-highest-red-chip-card-value') return 'card-value';
@@ -367,7 +387,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               }
             }
             if (fromPos) {
-              newAnims.push({ id: `${key}-${Date.now()}`, chip, from: fromPos, to: currPos, blackInside: blackNumbers.includes(chip.number) });
+              newAnims.push({ id: `${key}-${Date.now()}`, chip, from: fromPos, to: currPos, blackInside: blackNumbers.includes(chip.number), guessTarget: chip.round === 4 && guessTargetedRedChipNumbers.has(chip.number) });
               newHiding.push(key);
             }
           }
@@ -448,7 +468,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                           ref={el => { if (el) tableSlotElsRef.current.set(key, el); else tableSlotElsRef.current.delete(key); }}
                           style={{ visibility: (inMiddle && !hidingChips.has(key)) ? 'visible' : 'hidden' }}>
                           <ChipAnimContext.Provider value={noopCtx}>
-                            <ChipCircle chip={chip} size={30} blackInside={blackNumbers.includes(chip.number)} />
+                            <ChipCircle chip={chip} size={30} blackInside={blackNumbers.includes(chip.number)} guessTarget={chip.round === 4 && guessTargetedRedChipNumbers.has(chip.number)} />
                           </ChipAnimContext.Provider>
                         </div>
                         {!readOnly && !amIImprisoned && (
@@ -563,6 +583,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : (isMe && sourceShownCard ? { idx: sourceShownCard.idx, card: sourceShownCard.card, faceUp: sourceShownCard.faceUp } : null)}
             striped={showStripes}
             imprisoned={!readOnly && state.prisonPlayerId === player.id}
+            guessTargetedRedChipNumbers={guessTargetedRedChipNumbers}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );

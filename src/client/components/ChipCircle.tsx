@@ -66,9 +66,10 @@ interface Props {
   dim?: boolean;
   size?: number;
   blackInside?: boolean;
+  guessTarget?: boolean;
 }
 
-export default function ChipCircle({ chip, dim = false, size = 32, blackInside = false }: Props) {
+export default function ChipCircle({ chip, dim = false, size = 32, blackInside = false, guessTarget = false }: Props) {
   const { register, hiding } = useContext(ChipAnimContext);
   const key = `${chip.round}-${chip.number}`;
 
@@ -92,6 +93,35 @@ export default function ChipCircle({ chip, dim = false, size = 32, blackInside =
       flexShrink: 0,
       opacity: hiding.has(key) ? 0 : 1,
     }}>
+      {/* Question mark watermark for red chips targeted by guess addons — rendered behind stars */}
+      {guessTarget && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: size - 4, // subtract border (2px each side)
+          height: size - 4,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+          overflow: 'hidden',
+        }}>
+          <span style={{
+            color: 'white',
+            opacity: 0.20,
+            fontSize: size * 0.9 * 0.85, // 90% of chip bg height, scaled down slightly to account for font metrics
+            lineHeight: 1,
+            fontWeight: 'bold',
+            userSelect: 'none',
+            // Shift up slightly to compensate for the question mark's dot making the visual center
+            // lower than the geometric center of the bounding box. The dot + curve together form the
+            // glyph; the visual center (geometric center of all pixels) sits a bit above the
+            // typographic center. A small upward nudge (~5% of font size) corrects this.
+            marginTop: `-${size * 0.9 * 0.85 * 0.06}px`,
+          }}>?</span>
+        </div>
+      )}
       <Stars count={chip.number} size={size} fill={starFill} />
     </div>
   );

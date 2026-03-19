@@ -84,6 +84,18 @@ During the guessing phase if the current player is going to be guessed later, th
 wide diagonal (top-right to bottom-left) 20% transparent stripes up until there's nothing to guess on them for the rest
 of the game. This is only visible to the player themself.
 
+Red chips that are targeted by one or more guess addons (chips owning which will result in the owner being
+guessed) have a white question mark on the background, behind the stars. The question mark is 80% transparent,
+acting as a watermark. The size of the question mark should be that it takes 90% of the height of the chip background.
+The question mark's visual center must align exactly with the center of the chip circle, both
+horizontally and vertically. Font spacing and character metrics must not cause any offset, the centering is based on
+the visual appearance of the character. The fact that question mark is higher than a normal character should not impact
+its vertical position, the vertical center of the question mark still should be exactly at the chip's center. The visual
+center of the question mark is defined as the geometrical center of all its pixels (including both dot and top part of
+the sign). This
+question mark is visible on a red chip all the time: when it's on the table, when it's moving, when it's in a player's
+hand, etc.
+
 ## Addon: Only Neighbors Steal
 
 Short description: "Only Neighbors Steal"

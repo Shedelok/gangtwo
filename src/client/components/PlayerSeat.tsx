@@ -53,6 +53,7 @@ interface Props {
   shownCardInfo?: { idx: 0 | 1; card: Card; faceUp: boolean } | null;
   striped?: boolean;
   imprisoned?: boolean;
+  guessTargetedRedChipNumbers?: Set<number>;
   style?: React.CSSProperties;
 }
 
@@ -61,7 +62,7 @@ export default function PlayerSeat({
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
   blackAndRed = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
-  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, style,
+  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
@@ -151,7 +152,7 @@ export default function PlayerSeat({
             const isBlack = blackNumbers.includes(chip.number);
             return (
               <div key={`${chip.round}-${chip.number}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <ChipCircle chip={chip} blackInside={isBlack} />
+                <ChipCircle chip={chip} blackInside={isBlack} guessTarget={chip.round === 4 && !!guessTargetedRedChipNumbers?.has(chip.number)} />
                 {!readOnly && isCurrent && isMe && !isBlack && !actionInProgress && (
                   <button style={{ ...btn, background: '#7f1c1c', color: '#fca5a5' }}
                     onClick={() => sendAction({ type: 'DISCARD_CHIP', chipNumber: chip.number })}>

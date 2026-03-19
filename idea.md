@@ -7,6 +7,7 @@
 - Make it that incompatible addons can't be rolled together. If no config is possible, the game can't start
 - When an action card cannot be used, it should be clear. For example, reroll card on preflop or when you are prisoned.
 - New agent is too expensive
+- Make sure multiple guesses have the same order in buttons and clouds
 
 ### Maybe Later
 
