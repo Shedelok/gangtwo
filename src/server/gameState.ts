@@ -85,26 +85,38 @@ const state: ServerGameState = {
   gameId: '',
 };
 
-const GUESS_RANK_ADDON_IDS = [
+const GUESS_ADDON_IDS = [
   'guess-highest-red-chip-hand-rank',
   'guess-2nd-highest-red-chip-hand-rank',
   'guess-lowest-red-chip-hand-rank',
+  'guess-highest-red-chip-card-value',
 ] as const;
 
-function findGuessRankTargetId(addonId: string, players: PlayerPublicState[]): string | null {
+/** Returns the "feature" that a guess addon is guessing: 'hand-rank' or 'card-value'. */
+function guessAddonFeature(addonId: string): 'hand-rank' | 'card-value' {
+  if (addonId === 'guess-highest-red-chip-card-value') return 'card-value';
+  return 'hand-rank';
+}
+
+function findGuessTargetId(addonId: string, players: PlayerPublicState[]): string | null {
   const sorted = [...players]
     .map(p => ({ id: p.id, num: p.chips.find(c => c.round === 4)?.number ?? -1 }))
     .filter(x => x.num >= 0)
     .sort((a, b) => a.num - b.num);
   if (addonId === 'guess-lowest-red-chip-hand-rank') return sorted[0]?.id ?? null;
-  if (addonId === 'guess-highest-red-chip-hand-rank') return sorted[sorted.length - 1]?.id ?? null;
+  if (addonId === 'guess-highest-red-chip-hand-rank' || addonId === 'guess-highest-red-chip-card-value') return sorted[sorted.length - 1]?.id ?? null;
   if (addonId === 'guess-2nd-highest-red-chip-hand-rank') return sorted[sorted.length - 2]?.id ?? null;
   return null;
 }
 
-const VALID_RANKS = new Set([
+const VALID_HAND_RANKS = new Set([
   'Royal Flush', 'Straight Flush', 'Four of a Kind', 'Full House',
   'Flush', 'Straight', 'Three of a Kind', 'Two Pair', 'One Pair', 'High Card',
+]);
+
+const VALID_CARD_VALUES = new Set([
+  '(A) Ace', '(K) King', '(Q) Queen', '(J) Jack', '(10) Ten', '(9) Nine',
+  '(8) Eight', '(7) Seven', '(6) Six', '(5) Five', '(4) Four', '(3) Three', '(2) Two',
 ]);
 
 function getPlayerBySocket(socketId: string): PlayerPublicState | undefined {
@@ -537,14 +549,14 @@ export function revealCards(socketId: string): string | null {
     }
   }
 
-  for (const addonId of GUESS_RANK_ADDON_IDS) {
+  for (const addonId of GUESS_ADDON_IDS) {
     if (!state.enabledAddons.has(addonId)) continue;
-    const targetId = findGuessRankTargetId(addonId, state.players);
+    const targetId = findGuessTargetId(addonId, state.players);
     if (playerId !== targetId) continue;
     const addonVotes = state.rankGuesses.get(addonId) ?? new Map<string, string>();
     const nonTargetPlayers = state.players.filter((p) => p.id !== targetId);
     if (nonTargetPlayers.length > 0 && !nonTargetPlayers.every((p) => addonVotes.has(p.id))) {
-      return 'Wait for all players to guess your hand rank first';
+      return 'Wait for all players to submit their guesses first';
     }
   }
 
@@ -554,24 +566,55 @@ export function revealCards(socketId: string): string | null {
 
 export function submitRankGuess(socketId: string, addonId: string, rank: string): string | null {
   if (state.phase !== 'finished') return 'Not in finished phase';
-  if (!(GUESS_RANK_ADDON_IDS as readonly string[]).includes(addonId)) return 'Invalid addon';
+  if (!(GUESS_ADDON_IDS as readonly string[]).includes(addonId)) return 'Invalid addon';
   if (!state.enabledAddons.has(addonId)) return 'Addon not active';
-  if (!VALID_RANKS.has(rank)) return 'Invalid rank';
+  const feature = guessAddonFeature(addonId);
+  if (feature === 'hand-rank' && !VALID_HAND_RANKS.has(rank)) return 'Invalid rank';
+  if (feature === 'card-value' && !VALID_CARD_VALUES.has(rank)) return 'Invalid card value';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
-  const targetId = findGuessRankTargetId(addonId, state.players);
+  const targetId = findGuessTargetId(addonId, state.players);
   if (playerId === targetId) return 'Target player cannot vote for themselves';
-  const addonVotes = state.rankGuesses.get(addonId) ?? new Map<string, string>();
   const nonTargetPlayers = state.players.filter((p) => p.id !== targetId);
-  if (nonTargetPlayers.every((p) => addonVotes.has(p.id))) return 'Voting is locked';
-  // Apply vote to this addon and all other enabled guess-rank addons targeting the same player
-  for (const aid of GUESS_RANK_ADDON_IDS) {
+  // Spec: "All guesses are fixed together when all votes are submitted" — check if ALL
+  // guess addons targeting the same player (across all features) are fully voted.
+  // If so, voting is locked and no changes are allowed.
+  const allAddonsForTarget = GUESS_ADDON_IDS.filter(
+    (aid) => state.enabledAddons.has(aid) && findGuessTargetId(aid, state.players) === targetId
+  );
+  // Dedup by feature: only one addon per feature matters for lock check
+  const seenFeatures = new Set<string>();
+  const dedupedAddonsForTarget = allAddonsForTarget.filter((aid) => {
+    const f = guessAddonFeature(aid);
+    if (seenFeatures.has(f)) return false;
+    seenFeatures.add(f);
+    return true;
+  });
+  const allFeaturesVoted = dedupedAddonsForTarget.every((aid) => {
+    const votes = state.rankGuesses.get(aid) ?? new Map<string, string>();
+    return nonTargetPlayers.every((p) => votes.has(p.id));
+  });
+  if (allFeaturesVoted) return 'Voting is locked';
+  // Apply vote to this addon and all other enabled guess addons targeting the same player
+  // with the same feature (spec: "same feature" dedup only)
+  for (const aid of GUESS_ADDON_IDS) {
     if (!state.enabledAddons.has(aid)) continue;
-    if (findGuessRankTargetId(aid, state.players) !== targetId) continue;
+    if (findGuessTargetId(aid, state.players) !== targetId) continue;
+    if (guessAddonFeature(aid) !== feature) continue;
     const votes = state.rankGuesses.get(aid) ?? new Map<string, string>();
     votes.set(playerId, rank);
     state.rankGuesses.set(aid, votes);
-    if (!state.winningGuessRanks.has(aid) && nonTargetPlayers.every((p) => votes.has(p.id))) {
+  }
+  // After applying the vote, check if ALL features for this target are now fully voted.
+  // If so, determine the winning guess for each addon.
+  const allFeaturesNowVoted = dedupedAddonsForTarget.every((aid) => {
+    const votes = state.rankGuesses.get(aid) ?? new Map<string, string>();
+    return nonTargetPlayers.every((p) => votes.has(p.id));
+  });
+  if (allFeaturesNowVoted) {
+    for (const aid of allAddonsForTarget) {
+      if (state.winningGuessRanks.has(aid)) continue;
+      const votes = state.rankGuesses.get(aid) ?? new Map<string, string>();
       const counts = new Map<string, number>();
       for (const r of votes.values()) counts.set(r, (counts.get(r) ?? 0) + 1);
       const maxCount = Math.max(...counts.values());

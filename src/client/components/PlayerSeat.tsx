@@ -8,6 +8,11 @@ const HAND_RANKS = [
   'Flush', 'Straight', 'Three of a Kind', 'Two Pair', 'One Pair', 'High Card',
 ];
 
+const CARD_VALUES = [
+  '(A) Ace', '(K) King', '(Q) Queen', '(J) Jack', '(10) Ten', '(9) Nine',
+  '(8) Eight', '(7) Seven', '(6) Six', '(5) Five', '(4) Four', '(3) Three', '(2) Two',
+];
+
 const btn: React.CSSProperties = {
   padding: '2px 7px',
   borderRadius: 10,
@@ -35,8 +40,8 @@ interface Props {
   hasRestartVoted?: boolean;
   showShareInfoTick?: boolean;
   showReadinessTick?: boolean;
-  // Guess-rank addon props
-  guessRankUIs?: Array<{ addonId: string; myVote?: string; locked: boolean }>; // one per addon targeting this seat
+  // Guess addon props
+  guessRankUIs?: Array<{ addonId: string; myVote?: string; locked: boolean; feature?: 'hand-rank' | 'card-value' }>; // one per feature targeting this seat
   dialogueClouds?: Array<{ text: string; winner: boolean; locked: boolean }>; // one cloud per vote
   onCardSelect?: (idx: 0 | 1) => void; // in-place card selection for action cards
   onPlayerSelect?: () => void; // in-place player selection for action cards
@@ -164,41 +169,45 @@ export default function PlayerSeat({
         })}
       </div>
 
-      {/* Guess Rank UI — one per addon targeting this seat (shown for non-target viewers) */}
-      {guessRankUIs.map(ui => (
-        <div key={ui.addonId} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {activePickerAddon === ui.addonId && (
-            <div style={{
-              position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
-              background: '#1e293b', border: '1px solid #475569', borderRadius: 8,
-              padding: 4, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 1,
-              marginBottom: 2,
-            }}
-              onClick={(e) => e.stopPropagation()}>
-              {HAND_RANKS.map(r => (
-                <button key={r} style={{
-                  ...btn, background: r === ui.myVote ? '#3b5bdb' : '#334155',
-                  color: '#e2e8f0', textAlign: 'left', whiteSpace: 'nowrap',
-                }}
-                  onClick={() => { sendAction({ type: 'SUBMIT_RANK_GUESS', addonId: ui.addonId, rank: r }); setActivePickerAddon(null); }}>
-                  {r}
-                </button>
-              ))}
-            </div>
-          )}
-          {ui.myVote ? (
-            <button style={{ ...btn, background: '#1e3a5f', color: '#93c5fd', cursor: ui.locked ? 'default' : 'pointer' }}
-              onClick={(e) => { if (!ui.locked) { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); } }}>
-              {ui.myVote}{!ui.locked && <span style={{ marginLeft: 4 }}>🖉</span>}
-            </button>
-          ) : (
-            <button style={{ ...btn, background: '#7c3aed', color: '#ede9fe' }}
-              onClick={(e) => { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); }}>
-              Guess Rank
-            </button>
-          )}
-        </div>
-      ))}
+      {/* Guess UI — one per feature targeting this seat (shown for non-target viewers) */}
+      {guessRankUIs.map(ui => {
+        const options = ui.feature === 'card-value' ? CARD_VALUES : HAND_RANKS;
+        const buttonLabel = ui.feature === 'card-value' ? 'Guess Card' : 'Guess Hand';
+        return (
+          <div key={ui.addonId} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {activePickerAddon === ui.addonId && (
+              <div style={{
+                position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+                background: '#1e293b', border: '1px solid #475569', borderRadius: 8,
+                padding: 4, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 1,
+                marginBottom: 2,
+              }}
+                onClick={(e) => e.stopPropagation()}>
+                {options.map(r => (
+                  <button key={r} style={{
+                    ...btn, background: r === ui.myVote ? '#3b5bdb' : '#334155',
+                    color: '#e2e8f0', textAlign: 'left', whiteSpace: 'nowrap',
+                  }}
+                    onClick={() => { sendAction({ type: 'SUBMIT_RANK_GUESS', addonId: ui.addonId, rank: r }); setActivePickerAddon(null); }}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+            )}
+            {ui.myVote ? (
+              <button style={{ ...btn, background: '#1e3a5f', color: '#93c5fd', cursor: ui.locked ? 'default' : 'pointer' }}
+                onClick={(e) => { if (!ui.locked) { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); } }}>
+                {ui.myVote}{!ui.locked && <span style={{ marginLeft: 4 }}>{'\u{1F589}'}</span>}
+              </button>
+            ) : (
+              <button style={{ ...btn, background: '#7c3aed', color: '#ede9fe' }}
+                onClick={(e) => { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); }}>
+                {buttonLabel}
+              </button>
+            )}
+          </div>
+        );
+      })}
 
       {/* Reveal cards button — shown to self in finished phase until revealed */}
       {readOnly && isMe && !myCardsRevealed && (

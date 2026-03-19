@@ -21,6 +21,7 @@ export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
     { addonId: 'guess-highest-red-chip-hand-rank' },
     { addonId: 'guess-2nd-highest-red-chip-hand-rank' },
     { addonId: 'guess-lowest-red-chip-hand-rank' },
+    { addonId: 'guess-highest-red-chip-card-value' },
   ]},
   { addonId: 'only-neighbors-steal' },
   { addonId: 'clubs-spades-diamonds-hearth' },
@@ -130,20 +131,26 @@ export function countAvailableInTree(tree: AddonGroupNode[], pool: Set<string>):
 export const ADDONS: AddonDef[] = [
   {
     id: 'guess-highest-red-chip-hand-rank',
-    short: "Guess Rank Highest",
-    long: "Before the player with the highest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
+    short: "Guess Hand Highest",
+    long: "Before the player with the highest value red chip reveals their cards, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
     type: 'negative',
   },
   {
     id: 'guess-2nd-highest-red-chip-hand-rank',
-    short: "Guess Rank 2nd Highest",
-    long: "Before the player with the 2nd-highest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
+    short: "Guess Hand 2nd Highest",
+    long: "Before the player with the 2nd-highest value red chip reveals their cards, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
     type: 'negative',
   },
   {
     id: 'guess-lowest-red-chip-hand-rank',
-    short: "Guess Rank Lowest",
-    long: "Before the player with the lowest value red chip reveals their hand, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
+    short: "Guess Hand Lowest",
+    long: "Before the player with the lowest value red chip reveals their cards, other players must collectively agree on what hand rank that player has (pair/two pairs/straight/etc.).",
+    type: 'negative',
+  },
+  {
+    id: 'guess-highest-red-chip-card-value',
+    short: "Guess Card Highest",
+    long: "Before the player with the highest value red chip reveals their cards, other players must collectively agree on a card value that player has (ace/queen/seven/etc.).",
     type: 'negative',
   },
   {

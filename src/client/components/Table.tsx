@@ -113,32 +113,60 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
   const onlyNeighborsSteal = state.enabledAddons.includes('only-neighbors-steal');
   const blackAndRed = state.enabledAddons.includes('clubs-spades-diamonds-hearth');
 
-  // ── Guess-rank addons: per-addon target/voting state ─────────────────────────
-  const GUESS_RANK_ADDON_IDS = [
+  // ── Guess addons: per-addon target/voting state ─────────────────────────
+  const GUESS_ADDON_IDS = [
     'guess-highest-red-chip-hand-rank',
     'guess-2nd-highest-red-chip-hand-rank',
     'guess-lowest-red-chip-hand-rank',
+    'guess-highest-red-chip-card-value',
   ] as const;
 
-  function findGuessRankTarget(addonId: string, players: typeof state.players): string | null {
+  function guessAddonFeature(addonId: string): 'hand-rank' | 'card-value' {
+    if (addonId === 'guess-highest-red-chip-card-value') return 'card-value';
+    return 'hand-rank';
+  }
+
+  function findGuessTarget(addonId: string, players: typeof state.players): string | null {
     const sorted = [...players]
       .map(p => ({ id: p.id, num: p.chips.find(c => c.round === 4)?.number ?? -1 }))
       .filter(x => x.num >= 0).sort((a, b) => a.num - b.num);
     if (addonId === 'guess-lowest-red-chip-hand-rank') return sorted[0]?.id ?? null;
-    if (addonId === 'guess-highest-red-chip-hand-rank') return sorted[sorted.length - 1]?.id ?? null;
+    if (addonId === 'guess-highest-red-chip-hand-rank' || addonId === 'guess-highest-red-chip-card-value') return sorted[sorted.length - 1]?.id ?? null;
     if (addonId === 'guess-2nd-highest-red-chip-hand-rank') return sorted[sorted.length - 2]?.id ?? null;
     return null;
   }
 
-  // Per-addon info: target, voting locked, target's chip-order canReveal, target revealed
-  const activeGuessRankAddons = GUESS_RANK_ADDON_IDS.filter(id => state.enabledAddons.includes(id));
-  type AddonInfo = { targetId: string | null; locked: boolean; targetCanReveal: boolean; targetRevealed: boolean };
-  const guessRankInfo = new Map<string, AddonInfo>();
-  for (const addonId of activeGuessRankAddons) {
-    const targetId = readOnly ? findGuessRankTarget(addonId, state.players) : null;
-    const addonVotes = state.rankGuesses[addonId] ?? {};
-    const nonTargetPlayers = targetId ? state.players.filter(p => p.id !== targetId) : [];
-    const locked = nonTargetPlayers.length > 0 && nonTargetPlayers.every(p => !!addonVotes[p.id]);
+  // Per-addon info: target, voting locked, target's chip-order canReveal, target revealed, feature
+  const activeGuessAddons = GUESS_ADDON_IDS.filter(id => state.enabledAddons.includes(id));
+  type AddonInfo = { targetId: string | null; locked: boolean; targetCanReveal: boolean; targetRevealed: boolean; feature: 'hand-rank' | 'card-value' };
+  const guessInfo = new Map<string, AddonInfo>();
+  // Spec: "All guesses are fixed together when all votes are submitted" — locked is true
+  // only when ALL features for the same target have all votes in (not per-feature).
+  // Pre-compute per-target whether all features are fully voted.
+  const targetAllFeaturesVoted = new Map<string, boolean>();
+  for (const addonId of activeGuessAddons) {
+    const targetId = readOnly ? findGuessTarget(addonId, state.players) : null;
+    if (!targetId || targetAllFeaturesVoted.has(targetId)) continue;
+    const seenFeatures = new Set<string>();
+    const allVoted = activeGuessAddons
+      .filter(aid => {
+        const tid = findGuessTarget(aid, state.players);
+        if (tid !== targetId) return false;
+        const f = guessAddonFeature(aid);
+        if (seenFeatures.has(f)) return false;
+        seenFeatures.add(f);
+        return true;
+      })
+      .every(aid => {
+        const votes = state.rankGuesses[aid] ?? {};
+        const nonTargetPlayers = state.players.filter(p => p.id !== targetId);
+        return nonTargetPlayers.length > 0 && nonTargetPlayers.every(p => !!votes[p.id]);
+      });
+    targetAllFeaturesVoted.set(targetId, allVoted);
+  }
+  for (const addonId of activeGuessAddons) {
+    const targetId = readOnly ? findGuessTarget(addonId, state.players) : null;
+    const locked = targetId ? (targetAllFeaturesVoted.get(targetId) ?? false) : false;
     const targetPlayer = targetId ? state.players.find(p => p.id === targetId) : null;
     const targetChip = targetPlayer?.chips.find(c => c.round === 4);
     const targetCanReveal = !targetChip || state.players
@@ -148,7 +176,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
         return !theirChip || theirChip.number >= (targetChip?.number ?? 0) || !!state.revealedHoleCards[p.id];
       });
     const targetRevealed = !!(targetId && state.revealedHoleCards[targetId]);
-    guessRankInfo.set(addonId, { targetId, locked, targetCanReveal, targetRevealed });
+    guessInfo.set(addonId, { targetId, locked, targetCanReveal, targetRevealed, feature: guessAddonFeature(addonId) });
   }
 
   // ── Readiness ticks: show after all hold current-round chip for 5s without movement ──
@@ -203,18 +231,18 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 5s per-addon timer: hide guesses after each target reveals
-  const [hiddenGuessRankAddons, setHiddenGuessRankAddons] = useState<Set<string>>(new Set);
+  const [hiddenGuessAddons, setHiddenGuessAddons] = useState<Set<string>>(new Set);
   const guessTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   useEffect(() => {
-    for (const [addonId, info] of guessRankInfo) {
+    for (const [addonId, info] of guessInfo) {
       if (info.targetRevealed && !guessTimersRef.current.has(addonId)) {
-        const t = setTimeout(() => setHiddenGuessRankAddons(prev => new Set([...prev, addonId])), 3000);
+        const t = setTimeout(() => setHiddenGuessAddons(prev => new Set([...prev, addonId])), 5000);
         guessTimersRef.current.set(addonId, t);
       }
     }
   }, [state.revealedHoleCards]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    setHiddenGuessRankAddons(new Set());
+    setHiddenGuessAddons(new Set());
     for (const t of guessTimersRef.current.values()) clearTimeout(t);
     guessTimersRef.current.clear();
   }, [state.gameId]);
@@ -458,45 +486,53 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               const theirChip = p.chips.find((c) => c.round === 4);
               return !theirChip || theirChip.number >= myRound4Chip.number || !!state.revealedHoleCards[p.id];
             });
-          // Block reveal if any active guess-rank addon targets me and isn't locked yet
-          const guessRankBlock = isMe && [...guessRankInfo.values()].some(
+          // Block reveal if any active guess addon targets me and isn't locked yet
+          const guessBlock = isMe && [...guessInfo.values()].some(
             info => info.targetId === state.myId && !info.locked
           );
-          const canReveal = chipOrderCanReveal && !guessRankBlock;
+          const canReveal = chipOrderCanReveal && !guessBlock;
           // Show dark gray diagonal stripes on the player's own cards when they are a
-          // guess-rank target and guessing for them is still pending (not yet locked).
+          // guess target and guessing for them is still pending (not yet locked).
           // Spec: "During the guessing phase if the current player is going to be guessed
           // later, their cards have dark gray diagonal stripes up until there's nothing to
           // guess on them for the rest of the game. This is only visible to the player themself."
-          const showStripes = isMe && readOnly && [...guessRankInfo.values()].some(
+          const showStripes = isMe && readOnly && [...guessInfo.values()].some(
             info => info.targetId === player.id && !info.locked
           );
-          // Guess-rank UIs shown on this seat (one per unique target — dedup if multiple addons target same player)
-          const guessRankUIs = activeGuessRankAddons
-            .filter(addonId => {
-              const info = guessRankInfo.get(addonId)!;
-              return info.targetId === player.id && info.targetCanReveal && !info.targetRevealed && !isMe && !hiddenGuessRankAddons.has(addonId);
-            })
-            .slice(0, 1) // only one UI per target player
-            .map(addonId => {
-              const info = guessRankInfo.get(addonId)!;
-              const addonVotes = state.rankGuesses[addonId] ?? {};
-              return { addonId, myVote: addonVotes[state.myId] as string | undefined, locked: info.locked };
-            });
-          // Dialogue clouds: one per unique target player this voter has guessed
-          const dialogueClouds = (() => {
-            const seenTargets = new Set<string | null>();
-            return activeGuessRankAddons
+          // Guess UIs shown on this seat — one per unique feature per target player.
+          // Spec: same-feature addons on same player are deduped; different features get separate UIs.
+          const guessRankUIs = (() => {
+            const seenFeatures = new Set<string>();
+            return activeGuessAddons
               .filter(addonId => {
-                const info = guessRankInfo.get(addonId)!;
-                if (info.targetId === player.id || hiddenGuessRankAddons.has(addonId)) return false;
-                if (!(state.rankGuesses[addonId] ?? {})[player.id]) return false;
-                if (seenTargets.has(info.targetId)) return false;
-                seenTargets.add(info.targetId);
+                const info = guessInfo.get(addonId)!;
+                if (info.targetId !== player.id || !info.targetCanReveal || info.targetRevealed || isMe || hiddenGuessAddons.has(addonId)) return false;
+                if (seenFeatures.has(info.feature)) return false;
+                seenFeatures.add(info.feature);
                 return true;
               })
               .map(addonId => {
-                const info = guessRankInfo.get(addonId)!;
+                const info = guessInfo.get(addonId)!;
+                const addonVotes = state.rankGuesses[addonId] ?? {};
+                return { addonId, myVote: addonVotes[state.myId] as string | undefined, locked: info.locked, feature: info.feature };
+              });
+          })();
+          // Dialogue clouds: one per unique (target, feature) pair this voter has guessed.
+          // When multiple addons target the same player with the same feature, only one cloud is shown.
+          const dialogueClouds = (() => {
+            const seenKeys = new Set<string>();
+            return activeGuessAddons
+              .filter(addonId => {
+                const info = guessInfo.get(addonId)!;
+                if (info.targetId === player.id || hiddenGuessAddons.has(addonId)) return false;
+                if (!(state.rankGuesses[addonId] ?? {})[player.id]) return false;
+                const key = `${info.targetId}:${info.feature}`;
+                if (seenKeys.has(key)) return false;
+                seenKeys.add(key);
+                return true;
+              })
+              .map(addonId => {
+                const info = guessInfo.get(addonId)!;
                 const vote = (state.rankGuesses[addonId] ?? {})[player.id];
                 const winningRank = state.winningGuessRanks[addonId];
                 return { text: vote, winner: info.locked && !!winningRank && vote === winningRank, locked: info.locked };

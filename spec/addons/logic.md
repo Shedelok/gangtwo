@@ -16,44 +16,68 @@ root tree is performed every time uniformly choosing a random child node, until 
 
 This section describes all the details of each addon.
 
-## Guess Rank
+## Guess
 
-### Addon: Guess Rank Highest
+### Addon: Guess Hand Highest
 
-Short description: "Guess Rank Highest"
+Short description: "Guess Hand Highest"
 
-Long description: Before the player with the highest value red chip reveals their hand, other players must collectively
+Long description: Before the player with the highest value red chip reveals their cards, other players must collectively
 agree on what hand rank that player has (pair/two pairs/straight/etc.).
 
-Functionality: Here, let's call the player with the highest value red chip HRC. Once it's HRC's turn to reveal the
-cards, they can't do so until all other players submit votes for their hand rank. Each other player has to submit a
-vote, the voting is over once all votes are submitted. Once it's HRC's turn to reveal their cards, every other player
-sees a button "Guess Rank" under HRC's chips. If a player presses that button, a list of all ranks pops up. The ranks
-are, top-to-down: Royal Flush, Straight Flush, Four of a Kind, Full House, Flush, Straight, Three of a Kind, Two Pair,
-One Pair, High Card. If the player clicks anywhere on the entire screen outside the list of options, the
-list is closed and the player sees "Guess Rank" button again, this should work for in any area of the screen. Clicking
-the "Guess Rank" button itself when the list is visible, also closes it. If the player presses one of these options, the
-list disappears and the chosen rank is displayed where the "Guess Rank" button was with. The
-player can click the chosen rank to change their vote, while it's possible a pencil icon (U+1F589) is displayed
-to the right from the current guess button text. Once the player made a guess everyone else sees their guess above
-them in a style of a text a dialogue cloud. Once everyone has
-made a guess, the guesses are fixed and HRC can reveal their cards as normal. When guesses are fixed, the most popular
-guess is determined. If there are multiple guesses with maximum number of votes, a pure random chooses one of them.
-Guesses of the players who voted for that chosen option get yellow background, other guesses get more subtle more gray
-background and text. 3 seconds after HRC reveals their cards, all the guesses disappear.
+Functionality: The functionality is as described in General Details below. The player that needs to be guessed is
+the player with the highest value red chip. The feature needed to be guessed is their hand rank. The guess button says
+"Guess Hand". The guess options are, top-to-down: Royal Flush, Straight Flush, Four of a Kind, Full House, Flush,
+Straight, Three of a Kind, Two Pair, One Pair, High Card.
 
-### Addon: Guess Rank 2nd Highest
+### Addon: Guess Hand 2nd Highest
 
-Same as "Guess Rank Highest" (including the functionality), but for 2nd-highest red chip instead of the highest one.
+Same as "Guess Hand Highest" (including the functionality), but for 2nd-highest red chip instead of the highest one.
 
-### Addon: Guess Rank Lowest
+### Addon: Guess Hand Lowest
 
-Same as "Guess Rank Highest" (including the functionality), but for the lowest red chip instead of the highest one.
+Same as "Guess Hand Highest" (including the functionality), but for the lowest red chip instead of the highest one.
+
+### Addon: Guess Card Highest
+
+Short description: "Guess Card Highest"
+
+Long description: Before the player with the highest value red chip reveals their cards, other players must collectively
+agree on a card value that player has (ace/queen/seven/etc.).
+
+Functionality: The functionality is as described in General Details below. The player that needs to be guessed is
+the player with the highest value red chip. The feature needed to be guessed is a card value they have. The guess button
+says "Guess Card". The guess options are, top-to-down: (A) Ace, (K) King, (Q) Queen, (J) Jack, (10) Ten, (9) Nine,
+(8) Eight, (7) Seven, (6) Six, (5) Five, (4) Four, (3) Three, (2) Two.
 
 ### General Details
 
-When the same player is under multiple "guess rank" addons, it is logically and visually equal to them being under just
-one. There's no point in having players to guess the same thing twice.
+Each of the "guess" addons targets a single player and a single hidden feature of that player's cards. Let's call that
+player P and feature F. P and F should be specified in each addon's details.
+Once it's P's turn to reveal their cards, they can't do so until all other players submit votes for their F. Each other
+player has to submit a
+vote, the voting is over once all votes are submitted. Once it's P's turn to reveal their cards, every other player
+sees a guess button under P's chips. If a player presses that button, a list of all vote options pops up. If the player
+clicks anywhere on the entire screen outside the list of options, the
+list is closed and the player sees the guess button again, this should work for in any area of the screen. Clicking
+the guess button itself when the list is visible, also closes it. If the player presses one of the vote options, the
+list disappears and the chosen option is displayed where the guess button was. The
+player can click the chosen option to change their vote, while it's possible a pencil icon (U+1F589) is displayed
+to the right from the current guess button text. Once the player made a guess everyone else sees their guess above
+them in a style of a text a dialogue cloud. Once everyone has
+made a guess, the guesses are fixed and P can reveal their cards as normal. When guesses are fixed, the most popular
+guess is determined. If there are multiple guesses with maximum number of votes, a pure random chooses one of them.
+Guesses of the players who voted for that chosen option get yellow background, other guesses get more subtle more gray
+background and text. 5 seconds after P reveals their cards, all the guesses disappear.
+
+When the same player is under multiple "guess" addons that require guessing the same feature, it is logically and
+visually equal to them being under just one. There's no point in having players to guess the same thing twice.
+
+When the same player is under multiple "guess" addons that require guessing different features, all the guesses happen
+simultaneously: there are multiple guess buttons and there are multiple dialogue clouds. The player can only reveal
+their cards once all guesses on all features are fixed. All guesses are fixed together when all votes are submitted, so
+for example, if everyone guessed card value, but not everyone has guessed hand rank yet, the card value guesses can be
+changed.
 
 During the guessing phase if the current player is going to be guessed later, their cards have dark gray (#3b3b3b)
 wide diagonal (top-right to bottom-left) 20% transparent stripes up until there's nothing to guess on them for the rest
@@ -291,9 +315,10 @@ addon names mean leaf nodes with that addon.
 ## Negative Addons
 
 1.
-    1. Guess Rank Highest
-    2. Guess Rank 2nd Highest
-    3. Guess Rank Lowest
+    1. Guess Hand Highest
+    2. Guess Hand 2nd Highest
+    3. Guess Hand Lowest
+    4. Guess Card Highest
 2. Only Neighbors Steal
 3. Black & Red
 4.
