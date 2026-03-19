@@ -180,7 +180,7 @@ export default function PlayerSeat({
                 position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
                 background: '#1e293b', border: '1px solid #475569', borderRadius: 8,
                 padding: 4, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 1,
-                marginBottom: 2,
+                marginBottom: 2, maxHeight: 8 * 20, overflowY: 'auto',
               }}
                 onClick={(e) => e.stopPropagation()}>
                 {options.map(r => (

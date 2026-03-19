@@ -57,7 +57,8 @@ player P and feature F. P and F should be specified in each addon's details.
 Once it's P's turn to reveal their cards, they can't do so until all other players submit votes for their F. Each other
 player has to submit a
 vote, the voting is over once all votes are submitted. Once it's P's turn to reveal their cards, every other player
-sees a guess button under P's chips. If a player presses that button, a list of all vote options pops up. If the player
+sees a guess button under P's chips. If a player presses that button, a list of all vote options pops up. The list
+displays maximum 8 elements and is scrollable to navigate to more. If the player
 clicks anywhere on the entire screen outside the list of options, the
 list is closed and the player sees the guess button again, this should work for in any area of the screen. Clicking
 the guess button itself when the list is visible, also closes it. If the player presses one of the vote options, the
