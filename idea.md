@@ -17,7 +17,6 @@
 - Get rid of spec duplication when describing different animations (chip move, card reveal, action card move)
 - spec/addons/logic.md should not have UI spec, it all should be moved to ui/. Probably whole spec/logic should be
   restructured and split in a different way rather than ui vs logic
-- Top of the table area is hidden under the top panel
 
 ## Addons
 

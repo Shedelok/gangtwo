@@ -16,6 +16,10 @@ current player clockwise sees the current player next to them, but counter-clock
 
 For each player there is their name, cards and chips that are displayed where the player seats.
 
+Any element related to the table or to one of the players is always displayed on top of any general side/top/bottom
+panel and must always be fully visible, nothing should clip or hide it. This includes temporal elements like dialogue
+clouds.
+
 # Table
 
 The table should be horizontally centered on the screen regardless of whether there are or are not any side panels on

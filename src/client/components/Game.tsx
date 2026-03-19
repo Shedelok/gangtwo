@@ -15,7 +15,7 @@ interface Props {
 
 export default function Game({ state, sendAction, readOnly = false, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef }: Props) {
   return (
-    <div style={{ overflowX: 'auto', padding: '8px 0' }}>
+    <div style={{ overflow: 'visible', padding: '8px 0', position: 'relative', zIndex: 500 }}>
       <Table state={state} sendAction={sendAction} readOnly={readOnly} onCardSelect={onCardSelect} onPlayerSelect={onPlayerSelect} onCommonCardClick={onCommonCardClick} actionInProgress={actionInProgress} onSeatElRef={onSeatElRef} />
     </div>
   );
