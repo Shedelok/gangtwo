@@ -26,9 +26,13 @@ done by pressing the same card again. During this time there's a big red cross d
 removed and the card's color becomes more red hinting the player the cancellation logic. While using the card, player
 cannot do any other action that is not required by this card, so that they are
 forced to either play the card or return it to the table. While one player is using a card, no other player can start
-using any action cards (neither this nor other). All those cards change their color to a less bright one. The player
-using the card can't use any other card until they finish using this one (or cancel). All other cards change their color
-to a less bright one.
+using any action cards (neither this nor other). The player using the card can't use any other card until they finish
+using this one (or cancel).
+
+When an action card is not available for use for any reason (meaning that clicking it wouldn't start the workflow of
+using it), the card is dimmed (has less bright color). This includes, but is not necessarily limited to the following
+cases: a player is using an action card, so all other cards are unavailable; somebody else is using an action card, so
+all cards are unavailable for the current player; the current player is in prison (because of the Prison addon).
 
 There must be no race condition possible: if one player starts using a card, all other players immediately see it as
 unavailable and cannot start using any action card themselves. If two players attempt to pick up a card at the same

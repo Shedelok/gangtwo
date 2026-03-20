@@ -5,8 +5,7 @@
 ### Maybe Now
 
 - When an action card cannot be used, it should be clear. For example, reroll card on preflop or when you are prisoned.
-- New agent is too expensive
-- Make sure multiple guesses have the same order in buttons and clouds
+- Showing unsuited card shows old one replaced with it
 
 ### Maybe Later
 
@@ -18,6 +17,8 @@
 - spec/addons/logic.md should not have UI spec, it all should be moved to ui/. Probably whole spec/logic should be
   restructured and split in a different way rather than ui vs logic
 - Make it that incompatible addons can't be rolled together. If no config is possible, the game can't start
+- Make sure multiple guesses have the same order in buttons and clouds
+- New agent is too expensive
 
 ## Addons
 

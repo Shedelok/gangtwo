@@ -86,7 +86,8 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
         {actionAddons.map(addon => {
           const active = step !== 'idle' && activeAddonId === addon.id;
           const locked = (lockedByOther && state.actionCardLock?.addonId === addon.id) || returningAddonId === addon.id;
-          const dimmed = iAmImprisoned || (lockedByOther && !locked) || (iAmUsingACard && !active);
+          // Spec: "When an action card is not available for use for any reason, the card is dimmed"
+          const dimmed = !active && (iAmImprisoned || (lockedByOther && !locked) || iAmUsingACard || !isAddonAvailable(addon.id, state));
           return (
             <div
               key={addon.id}
