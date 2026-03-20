@@ -348,19 +348,20 @@ addon names mean leaf nodes with that addon.
 3. Black & Red
 4. Short Deck
 5.
-    1. Additional Card Flop
-    2. Additional Card Turn
-    3. Additional Card River
+    1. 
+        1. Additional Card Flop
+        2. Additional Card Turn
+        3. Additional Card River
+    2. 
+        1. No White Chips
+        2. No Yellow Chips
+        3. No Orange Chips
 6.
     1. Black 1s
     2. Black Ns
     3. Black Xs
-7.
-    1. No White Chips
-    2. No Yellow Chips
-    3. No Orange Chips
-8. No Old Chips
-9. Prison
+7. No Old Chips
+8. Prison
 
 ## Positive Addons
 

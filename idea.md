@@ -7,6 +7,7 @@
 - When an action card cannot be used, it should be clear. For example, reroll card on preflop or when you are prisoned.
 - New agent is too expensive
 - Make sure multiple guesses have the same order in buttons and clouds
+- Guess card value addon should not list impossible options (when short deck is present).
 
 ### Maybe Later
 

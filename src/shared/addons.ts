@@ -27,19 +27,21 @@ export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
   { addonId: 'clubs-spades-diamonds-hearth' },
   { addonId: 'short-deck' },
   { children: [
-    { addonId: 'additional-card-flop' },
-    { addonId: 'additional-card-turn' },
-    { addonId: 'additional-card-river' },
+    { children: [
+      { addonId: 'additional-card-flop' },
+      { addonId: 'additional-card-turn' },
+      { addonId: 'additional-card-river' },
+    ]},
+    { children: [
+      { addonId: 'no-white-chips' },
+      { addonId: 'no-yellow-chips' },
+      { addonId: 'no-orange-chips' },
+    ]},
   ]},
   { children: [
     { addonId: 'ones-are-black' },
     { addonId: 'ns-are-black' },
     { addonId: 'xs-are-black' },
-  ]},
-  { children: [
-    { addonId: 'no-white-chips' },
-    { addonId: 'no-yellow-chips' },
-    { addonId: 'no-orange-chips' },
   ]},
   { addonId: 'no-old-chips' },
   { addonId: 'prison' },

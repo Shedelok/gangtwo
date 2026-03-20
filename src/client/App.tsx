@@ -58,7 +58,7 @@ function playSound(file: string, masterVolume: number, multiplier: number): void
 }
 
 const ADDON_COUNT_BITS = 4; // covers 0–15 negative addons
-const POS_COUNT_BITS = 2;  // covers 0–2 positive addons
+const POS_COUNT_BITS = 3;  // covers 0–7 positive addons
 const RFC4648 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 function encodeSetup(addonPool: string[], negativeAddonCount: number, positiveAddonCount: number): string {
