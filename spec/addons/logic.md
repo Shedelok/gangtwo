@@ -264,6 +264,8 @@ then one of other players. After that the selected player sees the selected card
 that the card flips back face down just as it was before. The player using the card also sees the flipping card
 animation (from face up to face down, and then after 5 seconds from face down to face up).
 
+If the card chosen to be shown is already face-up for all players, the flipping animation is not played.
+
 The action card for this addon has no text, has a simple eye image in its center and has a black background.
 
 ## Unsuited Card

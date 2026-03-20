@@ -4,8 +4,6 @@
 
 ### Maybe Now
 
-- When an action card cannot be used, it should be clear. For example, reroll card on preflop or when you are prisoned.
-- Showing unsuited card shows old one replaced with it
 
 ### Maybe Later
 

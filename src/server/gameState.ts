@@ -831,8 +831,15 @@ export function useShowCard(socketId: string, targetPlayerId: string, cardIndex:
   const holeCards = state.holeCards[playerId];
   if (!holeCards) return 'No hole cards';
   const card = holeCards[cardIndex];
+  // Spec: "If the card chosen to be shown is already face-up for all players, the flipping
+  // animation is not played." — unsuited jack/X cards are always face-up for everyone.
+  const isAlreadyFaceUpForAll =
+    (state.unsuitedJacks.get(playerId) === cardIndex) ||
+    (state.unsuitedXs.get(playerId) === cardIndex);
   state.showCardUsed = true;
-  state.showCardData = { sourceId: playerId, targetId: targetPlayerId, card, cardIndex };
+  if (!isAlreadyFaceUpForAll) {
+    state.showCardData = { sourceId: playerId, targetId: targetPlayerId, card, cardIndex };
+  }
   state.actionCardLock = null;
   return null;
 }
