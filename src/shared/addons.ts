@@ -193,24 +193,6 @@ export const ADDONS: AddonDef[] = [
     type: 'negative',
   },
   {
-    id: 'ones-are-black',
-    short: "Black 1s",
-    long: "All chips of value 1 become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time.",
-    type: 'negative',
-  },
-  {
-    id: 'ns-are-black',
-    short: "Black Ns",
-    long: "The highest value chips (value equal to the number of players) become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time.",
-    type: 'negative',
-  },
-  {
-    id: 'xs-are-black',
-    short: "Black Xs",
-    long: "A random number X from 1 to N is determined at the start of the game. Chips with value X become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time. X stays the same through all rounds.",
-    type: 'negative',
-  },
-  {
     id: 'no-white-chips',
     short: "No White Chips",
     long: "There is no distribution of white chips. The game starts from the 2nd round.",
@@ -226,6 +208,24 @@ export const ADDONS: AddonDef[] = [
     id: 'no-orange-chips',
     short: "No Orange Chips",
     long: "There is no distribution of orange chips. After the common cards of the 3rd round are revealed, the round is immediately over and the game moves to the 4th round.",
+    type: 'negative',
+  },
+  {
+    id: 'ones-are-black',
+    short: "Black 1s",
+    long: "All chips of value 1 become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time.",
+    type: 'negative',
+  },
+  {
+    id: 'ns-are-black',
+    short: "Black Ns",
+    long: "The highest value chips (value equal to the number of players) become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time.",
+    type: 'negative',
+  },
+  {
+    id: 'xs-are-black',
+    short: "Black Xs",
+    long: "A random number X from 1 to N is determined at the start of the game. Chips with value X become black. A black chip can't be stolen or dropped after it's taken from the middle of the table for the first time. X stays the same through all rounds.",
     type: 'negative',
   },
   {

@@ -13,6 +13,11 @@ const CARD_VALUES = [
   '(8) Eight', '(7) Seven', '(6) Six', '(5) Five', '(4) Four', '(3) Three', '(2) Two',
 ];
 
+/** Card values available only in Short Deck (10 through Ace). */
+const SHORT_DECK_CARD_VALUES = [
+  '(A) Ace', '(K) King', '(Q) Queen', '(J) Jack', '(10) Ten',
+];
+
 const btn: React.CSSProperties = {
   padding: '2px 7px',
   borderRadius: 10,
@@ -173,7 +178,7 @@ export default function PlayerSeat({
 
       {/* Guess UI — one per feature targeting this seat (shown for non-target viewers) */}
       {guessRankUIs.map(ui => {
-        const options = ui.feature === 'card-value' ? CARD_VALUES : HAND_RANKS;
+        const options = ui.feature === 'card-value' ? (shortDeck ? SHORT_DECK_CARD_VALUES : CARD_VALUES) : HAND_RANKS;
         const buttonLabel = ui.feature === 'card-value' ? 'Guess Card' : 'Guess Hand';
         return (
           <div key={ui.addonId} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

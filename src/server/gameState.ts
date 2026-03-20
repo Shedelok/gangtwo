@@ -119,6 +119,11 @@ const VALID_CARD_VALUES = new Set([
   '(8) Eight', '(7) Seven', '(6) Six', '(5) Five', '(4) Four', '(3) Three', '(2) Two',
 ]);
 
+/** Card values excluded from the deck when Short Deck addon is active (values 2-9). */
+const SHORT_DECK_EXCLUDED_CARD_VALUES = new Set([
+  '(9) Nine', '(8) Eight', '(7) Seven', '(6) Six', '(5) Five', '(4) Four', '(3) Three', '(2) Two',
+]);
+
 function getPlayerBySocket(socketId: string): PlayerPublicState | undefined {
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return undefined;
@@ -573,7 +578,14 @@ export function submitRankGuess(socketId: string, addonId: string, rank: string)
   if (!state.enabledAddons.has(addonId)) return 'Addon not active';
   const feature = guessAddonFeature(addonId);
   if (feature === 'hand-rank' && !VALID_HAND_RANKS.has(rank)) return 'Invalid rank';
-  if (feature === 'card-value' && !VALID_CARD_VALUES.has(rank)) return 'Invalid card value';
+  if (feature === 'card-value') {
+    if (!VALID_CARD_VALUES.has(rank)) return 'Invalid card value';
+    // When Short Deck is active, card values 2-9 are excluded from the deck
+    // and therefore cannot be guessed
+    if (state.enabledAddons.has('short-deck') && SHORT_DECK_EXCLUDED_CARD_VALUES.has(rank)) {
+      return 'Invalid card value for short deck';
+    }
+  }
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
   const targetId = findGuessTargetId(addonId, state.players);

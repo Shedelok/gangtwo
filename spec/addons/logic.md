@@ -48,7 +48,9 @@ agree on a card value that player has (ace/queen/seven/etc.).
 Functionality: The functionality is as described in General Details below. The player that needs to be guessed is
 the player with the highest value red chip. The feature needed to be guessed is a card value they have. The guess button
 says "Guess Card". The guess options are, top-to-down: (A) Ace, (K) King, (Q) Queen, (J) Jack, (10) Ten, (9) Nine,
-(8) Eight, (7) Seven, (6) Six, (5) Five, (4) Four, (3) Three, (2) Two.
+(8) Eight, (7) Seven, (6) Six, (5) Five, (4) Four, (3) Three, (2) Two. If a card value is known to the players to be
+excluded from the deck before dealing the pocket cards and therefore there's no possibility somebody has it, this
+option is not shown in this list.
 
 ### General Details
 
@@ -334,6 +336,9 @@ This section describes which addons are actually present in the game and how the
 together. Groups can have nested groups. Only addons listed in this section are present in the game, others are not
 visible to the players in any way.
 
+When addons are displayed as a list anywhere in the game, they should be in the same order that they go in here (if you
+go top to down ignoring the nesting).
+
 The tree structure of the groups is described as Markdown enumerated list. Nested elements mean children of a node,
 addon names mean leaf nodes with that addon.
 
@@ -348,11 +353,11 @@ addon names mean leaf nodes with that addon.
 3. Black & Red
 4. Short Deck
 5.
-    1. 
+    1.
         1. Additional Card Flop
         2. Additional Card Turn
         3. Additional Card River
-    2. 
+    2.
         1. No White Chips
         2. No Yellow Chips
         3. No Orange Chips
