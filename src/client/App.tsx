@@ -7,9 +7,9 @@ import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H } from './comp
 import type { ClientGameState } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 
-const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3'];
+const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'moving-plant.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
-type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN' | 'PRISON_TAKEN_EFFECT';
+type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN' | 'PRISON_TAKEN_EFFECT' | 'CARD_DISCARDED';
 const SOUND_DEFAULTS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'bell-1.mp3',
   CHIP_MOVE: 'fast-woosh.mp3',
@@ -18,6 +18,7 @@ const SOUND_DEFAULTS: Record<SoundKey, string> = {
   ACTION_CARD_PLAYED: 'magic-1.mp3',
   ACTION_CARD_TAKEN: 'minutochku.mp3',
   PRISON_TAKEN_EFFECT: 'prison-close.mp3',
+  CARD_DISCARDED: 'moving-plant.mp3',
 };
 const SOUND_LABELS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'Steal from you',
@@ -27,6 +28,7 @@ const SOUND_LABELS: Record<SoundKey, string> = {
   ACTION_CARD_PLAYED: 'Action card played',
   ACTION_CARD_TAKEN: 'Action card taken',
   PRISON_TAKEN_EFFECT: 'Prison taken effect',
+  CARD_DISCARDED: 'Card discarded',
 };
 const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   STEAL_FROM_YOU: 1,
@@ -36,6 +38,7 @@ const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   ACTION_CARD_PLAYED: 1,
   ACTION_CARD_TAKEN: 1,
   PRISON_TAKEN_EFFECT: 1,
+  CARD_DISCARDED: 1,
 };
 
 const preloadedAudio: Record<string, HTMLAudioElement> = {};
@@ -406,6 +409,11 @@ export default function App() {
       (!prev.tryAnotherCardUsed && state.tryAnotherCardUsed);
     if (actionCardCommitted) {
       playSound(files.ACTION_CARD_PLAYED, vol, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_PLAYED);
+    }
+
+    // Card discarded sound: play when the try-another-card flow completes (player drops a card)
+    if (prev.tryAnotherCardPlayerId && !state.tryAnotherCardPlayerId) {
+      playSound(files.CARD_DISCARDED, vol, SOUND_VOLUME_MULTIPLIER.CARD_DISCARDED);
     }
 
     // Prison sound: play when entering the prison round (prisonPlayerId becomes non-null)

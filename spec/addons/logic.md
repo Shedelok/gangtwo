@@ -350,6 +350,9 @@ next round" button's text changes to "Drop Card". The current player needs to se
 cards and then press the Drop Card button. The player can't do anything besides choosing the card and confirming it
 until they do. Once confirmed, the dropped card is discarded.
 
+When the card is discarded, all players hear "CARD_DISCARDED" sound which defaults to
+spec/base/resources/sounds/moving-plant.mp3.
+
 The action card for this addon has green background. It has 3 vertical rectangles (like bars) displayed on it: first two
 are black and third one is yellow.
 

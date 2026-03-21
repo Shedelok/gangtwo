@@ -7,7 +7,6 @@
 - Make sure that the deck can't run out of cards (for example, when playing with short deck, 3 additional cards and 7
   player).
 - Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
-- Add sound when card is discarded (during try another card addon).
 
 ### Maybe Later
 
