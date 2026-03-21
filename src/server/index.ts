@@ -27,6 +27,8 @@ import {
   useUnsuitedJack,
   useUnsuitedX,
   useRerollCommon,
+  useTryAnotherCard,
+  dropCard,
   buildClientState,
 } from './gameState';
 
@@ -133,6 +135,12 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'USE_REROLL_COMMON':
       error = useRerollCommon(socketId, action.cardIndex);
+      break;
+    case 'USE_TRY_ANOTHER_CARD':
+      error = useTryAnotherCard(socketId);
+      break;
+    case 'DROP_CARD':
+      error = dropCard(socketId, action.cardIndex);
       break;
     case 'FINISH_GAME':
       finishGame(true);

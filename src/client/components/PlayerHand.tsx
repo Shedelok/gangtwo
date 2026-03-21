@@ -135,10 +135,62 @@ interface Props {
   shownCardInfo?: { idx: 0 | 1; card: Card; faceUp: boolean } | null;
   // When true, dark gray diagonal stripes are overlaid on the cards (guess-rank pending indicator)
   striped?: boolean;
+  // Try Another Card addon: 3-card hand for the acting player
+  tryAnotherCards?: Card[];
+  tryAnotherDropIndex?: number;
+  onTryAnotherCardSelect?: (idx: number) => void;
+  // Try Another Card addon: face-down card count for other players (when > 2)
+  tryAnotherFaceDownCount?: number;
 }
 
-export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, shortDeck = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false }: Props) {
+export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, shortDeck = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, tryAnotherCards, tryAnotherDropIndex, onTryAnotherCardSelect, tryAnotherFaceDownCount }: Props) {
   const gap = small ? 6 : 12;
+  const w = small ? 52 : 80;
+  const h = small ? 78 : 120;
+
+  // Try Another Card: show 3 face-down cards for other players
+  if (tryAnotherFaceDownCount && tryAnotherFaceDownCount > 2) {
+    return (
+      <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
+        {Array.from({ length: tryAnotherFaceDownCount }, (_, idx) => (
+          <CardBack key={idx} small={small} />
+        ))}
+      </div>
+    );
+  }
+
+  // Try Another Card: show 3 face-up cards for acting player with selection
+  if (tryAnotherCards && tryAnotherCards.length > 0) {
+    return (
+      <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
+        {tryAnotherCards.map((card, idx) => {
+          const selected = tryAnotherDropIndex === idx;
+          const isJack = unsuitedJackIndex === idx;
+          const isX = unsuitedXIndex === idx;
+          return (
+            <div
+              key={idx}
+              onClick={onTryAnotherCardSelect ? () => onTryAnotherCardSelect(idx) : undefined}
+              style={{
+                cursor: onTryAnotherCardSelect ? 'pointer' : 'default',
+                borderRadius: small ? 5 : 8,
+                boxShadow: onTryAnotherCardSelect ? (selected ? '0 0 10px 4px rgba(239,68,68,0.75)' : '0 0 8px 3px rgba(250,204,21,0.75)') : undefined,
+                position: 'relative',
+              }}
+            >
+              {isJack
+                ? <UnsuitedCard small={small} rank="J" />
+                : isX
+                  ? <UnsuitedCard small={small} rank={unsuitedXRank ?? 'X'} />
+                  : <PlayingCard card={card} small={small} blackAndRed={blackAndRed} shortDeck={shortDeck} />
+              }
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   // If neither card is special and we have no card data, show placeholder
   if (!cards && unsuitedJackIndex === undefined && unsuitedXIndex === undefined && !faceDown && !shownCardInfo) {
     return (
@@ -147,8 +199,6 @@ export default function PlayerHand({ cards, faceDown = false, small = false, bla
       </div>
     );
   }
-  const w = small ? 52 : 80;
-  const h = small ? 78 : 120;
   return (
     <div style={{ display: 'flex', gap, justifyContent: 'center' }}>
       {([0, 1] as const).map(idx => {

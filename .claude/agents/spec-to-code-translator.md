@@ -22,6 +22,10 @@ The spec is the absolute source of truth. Your job is to:
 You do NOT receive descriptions of what changed, what bug was fixed, or what feature was added. You derive all of this
 yourself by carefully comparing spec and code.
 
+Focus on the uncommited changes. Assume that all committed spec changes are already correctly reflected in the code.
+This is not always the truth, so if you see a mismatch, fix it. But mostly focus on syncing the uncommited changes
+between spec and code.
+
 ## Workflow
 
 ### Step 1: Ingest the Spec

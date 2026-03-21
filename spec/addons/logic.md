@@ -332,6 +332,27 @@ The action card for this addon has no text, has a simple "refresh" sign image in
 When this action is commited, the chosen common card flips face down, then it flips again face up, but now it's a new
 card from the deck. Both flips happen with the flipping card animation.
 
+## Addon: [A] Try Another Card
+
+Short description: "[A] Try Another Card"
+
+Long description: Once per game, one of the players can take one card from the deck and add it to their hand. Afterward,
+this player must drop one of their cards. This can be the card that they have just drawn from the deck.
+
+Functionality: This addon adds an action card. When using this card, the player sees a modal window above their name
+that says "Use 'Try Another Card'?" and buttons under it "Confirm" and "Cancel".
+The player needs
+to click that button for the action card to take effect. Once the action card is played, the player sees one additional
+card where their pocket cards are. The game is logically paused at this moment: other player's can't do anything (can't
+move chips, play action cards, etc.) and are
+just waiting. Other players see that the current player has 3 cards, but they see them face down as usual. The "move to
+next round" button's text changes to "Drop Card". The current player needs to select one of their
+cards and then press the Drop Card button. The player can't do anything besides choosing the card and confirming it
+until they do. Once confirmed, the dropped card is discarded.
+
+The action card for this addon has green background. It has 3 vertical rectangles (like bars) displayed on it: first two
+are black and third one is yellow.
+
 # Addon Groupings
 
 This section describes which addons are actually present in the game and how they are grouped. Some addons are grouped
@@ -381,3 +402,4 @@ addon names mean leaf nodes with that addon.
     1. [A] Unsuited Jack
     2. [A] Unsuited X
 5. [A] Reroll Common
+6. [A] Try Another Card

@@ -60,6 +60,7 @@ export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
     { addonId: 'action-unsuited-x' },
   ]},
   { addonId: 'action-reroll-common' },
+  { addonId: 'action-try-another-card' },
 ];
 
 /** Collect all leaf addon IDs from a tree node. */
@@ -283,6 +284,13 @@ export const ADDONS: AddonDef[] = [
     id: 'action-reroll-common',
     short: "[A] Reroll Common",
     long: "Once per game, one of the players can replace one of the common cards with another random card.",
+    type: 'positive',
+    hasAction: true,
+  },
+  {
+    id: 'action-try-another-card',
+    short: "[A] Try Another Card",
+    long: "Once per game, one of the players can take one card from the deck and add it to their hand. Afterward, this player must drop one of their cards. This can be the card that they have just drawn from the deck.",
     type: 'positive',
     hasAction: true,
   },

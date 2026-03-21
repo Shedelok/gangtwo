@@ -249,7 +249,7 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
       cursor: onClick ? 'pointer' : 'default',
       borderRadius: 6,
       border: isUnsuited ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
-      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : '#1a2d1a',
+      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : addonId === 'action-try-another-card' ? '#1a6b1a' : '#1a2d1a',
       display: 'flex', flexDirection: 'column',
       padding: '6px 6px',
       userSelect: 'none',
@@ -277,6 +277,12 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
             <polyline points="1,20 1,14 7,14" />
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
           </svg>
+        </div>
+      ) : addonId === 'action-try-another-card' ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <div style={{ width: 12, height: 40, background: '#000', borderRadius: 2 }} />
+          <div style={{ width: 12, height: 40, background: '#000', borderRadius: 2 }} />
+          <div style={{ width: 12, height: 40, background: '#f5e642', borderRadius: 2 }} />
         </div>
       ) : (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>{label}</div>
@@ -308,6 +314,7 @@ export default function App() {
   const [actionStep, setActionStep] = useState<ActionWorkflowStep>('idle');
   const [actionCardIndex, setActionCardIndex] = useState<0 | 1 | null>(null);
   const [activeAddonId, setActiveAddonId] = useState<string | null>(null);
+  const [tryAnotherDropIndex, setTryAnotherDropIndex] = useState<number | null>(null);
   const cardElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const seatElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const prevLockRef = useRef<ClientGameState['actionCardLock'] | undefined>(undefined);
@@ -395,7 +402,8 @@ export default function App() {
       (!prev.showCardUsed && state.showCardUsed) ||
       (!prev.unsuitedJackUsed && state.unsuitedJackUsed) ||
       (!prev.unsuitedXUsed && state.unsuitedXUsed) ||
-      (!prev.rerollCommonUsed && state.rerollCommonUsed);
+      (!prev.rerollCommonUsed && state.rerollCommonUsed) ||
+      (!prev.tryAnotherCardUsed && state.tryAnotherCardUsed);
     if (actionCardCommitted) {
       playSound(files.ACTION_CARD_PLAYED, vol, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_PLAYED);
     }
@@ -470,7 +478,8 @@ export default function App() {
       const wasUsed = (prev.addonId === 'show-1-card-to-1-player' && state.showCardUsed)
         || (prev.addonId === 'action-unsuited-jack' && state.unsuitedJackUsed)
         || (prev.addonId === 'action-unsuited-x' && state.unsuitedXUsed)
-        || (prev.addonId === 'action-reroll-common' && state.rerollCommonUsed);
+        || (prev.addonId === 'action-reroll-common' && state.rerollCommonUsed)
+        || (prev.addonId === 'action-try-another-card' && state.tryAnotherCardUsed);
       if (wasUsed) {
         setFlyingCard(null);
       } else {
@@ -719,7 +728,7 @@ export default function App() {
       {state.phase === 'lobby' && <Lobby state={state} sendAction={sendAction} />}
       {state.phase === 'game' && (
         <Game state={state} sendAction={sendAction}
-          actionInProgress={actionStep !== 'idle'}
+          actionInProgress={actionStep !== 'idle' || !!state.tryAnotherCardPlayerId}
           onCardSelect={actionStep === 'select-card' && activeAddonId !== 'action-reroll-common' ? (idx) => {
             if (activeAddonId === 'action-unsuited-jack') {
               sendAction({ type: 'USE_UNSUITED_JACK', cardIndex: idx });
@@ -734,6 +743,9 @@ export default function App() {
           onPlayerSelect={actionStep === 'select-player' && actionCardIndex !== null ? (playerId) => { sendAction({ type: 'USE_SHOW_CARD', targetPlayerId: playerId, cardIndex: actionCardIndex }); setActionStep('idle'); setActionCardIndex(null); setActiveAddonId(null); } : undefined}
           onCommonCardClick={actionStep === 'select-card' && activeAddonId === 'action-reroll-common' ? (idx) => { sendAction({ type: 'USE_REROLL_COMMON', cardIndex: idx }); setActionStep('idle'); setActiveAddonId(null); } : undefined}
           onSeatElRef={(id, el) => { if (el) seatElsRef.current.set(id, el); else seatElsRef.current.delete(id); }}
+          tryAnotherDropIndex={tryAnotherDropIndex}
+          onTryAnotherCardSelect={state.tryAnotherCardPlayerId === state.myId ? (idx: number) => setTryAnotherDropIndex(idx) : undefined}
+          onTryAnotherDropConfirm={state.tryAnotherCardPlayerId === state.myId && tryAnotherDropIndex !== null ? () => { sendAction({ type: 'DROP_CARD', cardIndex: tryAnotherDropIndex }); setTryAnotherDropIndex(null); } : undefined}
         />
       )}
       {state.phase === 'finished' && <Game state={state} sendAction={sendAction} readOnly={true} />}
@@ -743,12 +755,98 @@ export default function App() {
           step={actionStep}
           activeAddonId={activeAddonId}
           returningAddonId={returningAddonId}
-          onStart={(addonId) => { sendAction({ type: 'LOCK_ACTION_CARD', addonId }); setActiveAddonId(addonId); setActionStep('select-card'); setActionCardIndex(null); }}
-          onCancel={() => { if (activeAddonId) sendAction({ type: 'UNLOCK_ACTION_CARD', addonId: activeAddonId }); setActionStep('idle'); setActionCardIndex(null); setActiveAddonId(null); }}
+          onStart={(addonId) => {
+            sendAction({ type: 'LOCK_ACTION_CARD', addonId });
+            setActiveAddonId(addonId);
+            if (addonId === 'action-try-another-card') {
+              setActionStep('confirm-try-another');
+            } else {
+              setActionStep('select-card');
+            }
+            setActionCardIndex(null);
+            setTryAnotherDropIndex(null);
+          }}
+          onCancel={() => { if (activeAddonId) sendAction({ type: 'UNLOCK_ACTION_CARD', addonId: activeAddonId }); setActionStep('idle'); setActionCardIndex(null); setActiveAddonId(null); setTryAnotherDropIndex(null); }}
           onCardElRef={(addonId, el) => { if (el) cardElsRef.current.set(addonId, el); else cardElsRef.current.delete(addonId); }}
         />
       )}
       {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} addonId={flyingCard.addonId} label={flyingCard.label} snap={flyingCard.snap} unsuitedXRank={state?.unsuitedXRank} onClick={returningAddonId === flyingCard.addonId ? handleReturnCardClick : undefined} />}
+      {/* Try Another Card confirmation modal */}
+      {actionStep === 'confirm-try-another' && (() => {
+        const seatEl = state.myId ? seatElsRef.current.get(state.myId) : null;
+        const seatRect = seatEl?.getBoundingClientRect();
+        const modalStyle: React.CSSProperties = seatRect ? {
+          position: 'fixed',
+          left: seatRect.left + seatRect.width / 2,
+          top: seatRect.top - 10,
+          transform: 'translate(-50%, -100%)',
+          zIndex: 9999,
+        } : {
+          position: 'fixed',
+          left: '50%',
+          top: '40%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 9999,
+        };
+        return createPortal(
+          <div style={modalStyle}>
+            <div style={{
+              background: '#1e293b',
+              border: '1px solid #475569',
+              borderRadius: 10,
+              padding: '12px 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+            }}>
+              <div style={{ color: '#e2e8f0', fontSize: 13, textAlign: 'center' }}>Use 'Try Another Card'?</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => {
+                    sendAction({ type: 'USE_TRY_ANOTHER_CARD' });
+                    setActionStep('idle');
+                    setActiveAddonId(null);
+                    setTryAnotherDropIndex(null);
+                  }}
+                  style={{
+                    padding: '6px 20px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: '#166534',
+                    color: '#bbf7d0',
+                    fontSize: 13,
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}>
+                  Confirm
+                </button>
+                <button
+                  onClick={() => {
+                    if (activeAddonId) sendAction({ type: 'UNLOCK_ACTION_CARD', addonId: activeAddonId });
+                    setActionStep('idle');
+                    setActiveAddonId(null);
+                    setTryAnotherDropIndex(null);
+                  }}
+                  style={{
+                    padding: '6px 20px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: '#7f1c1c',
+                    color: '#fca5a5',
+                    fontSize: 13,
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
     </div>
   );
 }

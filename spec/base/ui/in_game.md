@@ -50,6 +50,12 @@ has 3 or more stars they should form a circle. If a chip has 3 stars, one star i
 left and right corners. If a chip has 4 stars, they are at the top left, top right, bottom left and bottom right
 corners.
 
+If a chip can be taken (from the table), there's clickable "Take" text under it. If a chip can be stolen (from another
+player), there's clickable "Steal" text under it. If a chip can be returned (to the table), there's clickable "Return"
+text under it. If nothing can be done to the chip by the player at the moment, none of these texts are displayed. If an
+action was possible, but became not, the text should be hidden until it's possible again. The golden rule that should
+always be followed: If one of these texts is displayed, it must be clickable.
+
 The chips of the same color are always sorted by value ascending when are put next to each other.
 
 The chips of different colors are always sorted by their corresponding round number ascending when are put next to each

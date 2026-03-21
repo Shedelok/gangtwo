@@ -51,6 +51,10 @@ export interface ClientGameState {
   unsuitedXUsed: boolean;        // whether the unsuited-x action has been used this game
   unsuitedXRank: string | null;  // the random rank for the unsuited-x addon, null if not active
   rerollCommonUsed: boolean;     // whether the reroll-common action has been used this game
+  tryAnotherCardUsed: boolean;   // whether the try-another-card action has been used this game
+  tryAnotherCardPlayerId: string | null; // player currently in the try-another-card flow (game paused)
+  myTryAnotherCards: Card[] | null; // the 3-card hand visible only to the acting player during try-another-card flow
+  otherPlayerCardCount: Record<string, number>; // playerId → card count (only populated when someone has 3 cards)
   blackjackPhase: boolean;       // true during any share-info pre-game round
   blackjackSums: Record<string, number>; // playerId → share-info value (only populated during blackjackPhase)
   shareInfoLabel: string;        // label shown on the table during the share-info phase
@@ -77,6 +81,8 @@ export type ClientAction =
   | { type: 'USE_UNSUITED_JACK'; cardIndex: 0 | 1 }
   | { type: 'USE_UNSUITED_X'; cardIndex: 0 | 1 }
   | { type: 'USE_REROLL_COMMON'; cardIndex: number }
+  | { type: 'USE_TRY_ANOTHER_CARD' }
+  | { type: 'DROP_CARD'; cardIndex: number }
   | { type: 'LOCK_ACTION_CARD'; addonId: string }
   | { type: 'UNLOCK_ACTION_CARD'; addonId: string };
 

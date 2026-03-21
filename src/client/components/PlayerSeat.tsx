@@ -60,6 +60,11 @@ interface Props {
   striped?: boolean;
   imprisoned?: boolean;
   guessTargetedRedChipNumbers?: Set<number>;
+  tryAnotherCards?: Card[];
+  tryAnotherFaceDownCount?: number;
+  tryAnotherDropIndex?: number;
+  onTryAnotherCardSelect?: (idx: number) => void;
+  onTryAnotherDropConfirm?: () => void;
   style?: React.CSSProperties;
 }
 
@@ -68,7 +73,7 @@ export default function PlayerSeat({
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
   blackAndRed = false, shortDeck = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
-  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, style,
+  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm, style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
@@ -149,7 +154,13 @@ export default function PlayerSeat({
       </div>
 
       {/* Cards */}
-      <PlayerHand cards={holeCards} faceDown={showFaceDown} small blackAndRed={blackAndRed} shortDeck={shortDeck} onCardClick={isMe && onCardSelect ? onCardSelect : undefined} unsuitedJackIndex={unsuitedJackIndex} unsuitedXIndex={unsuitedXIndex} unsuitedXRank={unsuitedXRank} shownCardInfo={shownCardInfo} striped={striped} />
+      {tryAnotherCards ? (
+        <PlayerHand cards={holeCards} faceDown={false} small blackAndRed={blackAndRed} shortDeck={shortDeck} unsuitedJackIndex={unsuitedJackIndex} unsuitedXIndex={unsuitedXIndex} unsuitedXRank={unsuitedXRank} shownCardInfo={shownCardInfo} striped={striped} tryAnotherCards={tryAnotherCards} tryAnotherDropIndex={tryAnotherDropIndex} onTryAnotherCardSelect={onTryAnotherCardSelect} />
+      ) : tryAnotherFaceDownCount ? (
+        <PlayerHand cards={null} faceDown={true} small blackAndRed={blackAndRed} shortDeck={shortDeck} tryAnotherFaceDownCount={tryAnotherFaceDownCount} />
+      ) : (
+        <PlayerHand cards={holeCards} faceDown={showFaceDown} small blackAndRed={blackAndRed} shortDeck={shortDeck} onCardClick={isMe && onCardSelect ? onCardSelect : undefined} unsuitedJackIndex={unsuitedJackIndex} unsuitedXIndex={unsuitedXIndex} unsuitedXRank={unsuitedXRank} shownCardInfo={shownCardInfo} striped={striped} />
+      )}
 
       {/* Chips — sorted by round asc, number asc; always rendered to reserve height */}
       <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center', minHeight: 54 }}>
@@ -225,8 +236,25 @@ export default function PlayerSeat({
         </button>
       )}
 
+      {/* Drop Card button — shown during try-another-card flow */}
+      {!readOnly && isMe && tryAnotherCards && (
+        <button
+          style={{
+            ...btn,
+            position: 'absolute',
+            bottom: 8,
+            background: tryAnotherDropIndex !== undefined && tryAnotherDropIndex !== null ? '#166534' : '#374151',
+            color: tryAnotherDropIndex !== undefined && tryAnotherDropIndex !== null ? '#bbf7d0' : '#9ca3af',
+            cursor: tryAnotherDropIndex !== undefined && tryAnotherDropIndex !== null ? 'pointer' : 'not-allowed',
+          }}
+          disabled={tryAnotherDropIndex === undefined || tryAnotherDropIndex === null}
+          onClick={onTryAnotherDropConfirm}>
+          Drop Card
+        </button>
+      )}
+
       {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size; hidden when imprisoned */}
-      {!readOnly && isMe && !actionInProgress && !imprisoned && (
+      {!readOnly && isMe && !tryAnotherCards && !actionInProgress && !imprisoned && (
         <button
           style={{
             ...btn,

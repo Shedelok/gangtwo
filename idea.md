@@ -4,6 +4,11 @@
 
 ### Maybe Now
 
+- Make sure that the deck can't run out of cards (for example, when playing with short deck, 3 additional cards and 7
+  player).
+- Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
+- Add sound when card is discarded (during try another card addon).
+
 ### Maybe Later
 
 - (Maybe) Make chips clickable
@@ -56,15 +61,12 @@
     cannot share further details.
 21. Decide which of you will share with everyone how many cards of a specific
     value they have in their hand
-22. Decide which of you will take one card from the deck and add it to their hand.
-    Afterward, this player must place one of their pocket cards face down on the
-    discard pile. This can be the card that they have just drawn from the deck.
-23. Once the pocket cards have been dealt in Round 1, each of you chooses one
+22. Once the pocket cards have been dealt in Round 1, each of you chooses one
     of your pocket cards. Everyone then simultaneously passes their chosen card
     to the player on their left as a pocket card.
-24. All names are hidden (you don't know where is who) and players are random shuffled every time.
-25. On a random round (or during whole game) instead of being placed on the table, chips are randomly distributed to
+23. All names are hidden (you don't know where is who) and players are random shuffled every time.
+24. On a random round (or during whole game) instead of being placed on the table, chips are randomly distributed to
     players (maybe everyone gets same rank chip as their last one). Instead of taking, dropping, stealing players can
     only swap their current chip to the one in someone's hands.
-26. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
+25. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
     they can check how many Jacks are in the deck.

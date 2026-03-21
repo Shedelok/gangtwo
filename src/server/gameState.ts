@@ -39,6 +39,9 @@ interface ServerGameState {
   unsuitedXs: Map<string, number>;    // playerId → card index
   unsuitedXRank: string | null;
   rerollCommonUsed: boolean;
+  tryAnotherCardUsed: boolean;
+  tryAnotherCardPlayerId: string | null; // player currently in the try-another-card flow
+  tryAnotherCardExtraCard: Card | null;  // the extra card drawn from the deck
   blackjackPhase: boolean;
   shareInfoQueue: string[];  // ordered list of share-info addon IDs to process
   shareInfoIndex: number;    // index into shareInfoQueue of the current addon
@@ -77,6 +80,9 @@ const state: ServerGameState = {
   unsuitedXs: new Map(),
   unsuitedXRank: null,
   rerollCommonUsed: false,
+  tryAnotherCardUsed: false,
+  tryAnotherCardPlayerId: null,
+  tryAnotherCardExtraCard: null,
   blackjackPhase: false,
   shareInfoQueue: [],
   shareInfoIndex: 0,
@@ -210,6 +216,7 @@ function advanceRound(): void {
 
 function checkAndAdvance(): void {
   if (state.blackjackPhase) return;
+  if (state.tryAnotherCardPlayerId) return;
   const excludeIds = new Set<string>();
   if (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId) {
     excludeIds.add(state.prisonPlayerId);
@@ -373,6 +380,9 @@ export function startGame(shufflePlayers = true): string | null {
   state.unsuitedJacks = new Map();
   state.unsuitedXs = new Map();
   state.rerollCommonUsed = false;
+  state.tryAnotherCardUsed = false;
+  state.tryAnotherCardPlayerId = null;
+  state.tryAnotherCardExtraCard = null;
 
   // Prison addon: determine random round R and random player P
   if (state.enabledAddons.has('prison')) {
@@ -411,6 +421,7 @@ export function startGame(shufflePlayers = true): string | null {
 export function discardChip(socketId: string, chipNumber: number): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
+  if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
@@ -432,6 +443,7 @@ export function discardChip(socketId: string, chipNumber: number): string | null
 export function takeFromMiddle(socketId: string, chipNumber: number): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
+  if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
@@ -459,6 +471,7 @@ export function stealChip(
 ): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
+  if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
@@ -499,6 +512,7 @@ export function stealChip(
 
 export function setReady(socketId: string, ready: boolean): string | null {
   if (state.phase !== 'game') return 'Not in game';
+  if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
@@ -740,6 +754,9 @@ export function finishGame(keepAddons = false): void {
   state.unsuitedXs = new Map();
   state.unsuitedXRank = null;
   state.rerollCommonUsed = false;
+  state.tryAnotherCardUsed = false;
+  state.tryAnotherCardPlayerId = null;
+  state.tryAnotherCardExtraCard = null;
   state.blackjackPhase = false;
   state.shareInfoQueue = [];
   state.shareInfoIndex = 0;
@@ -798,8 +815,67 @@ export function useRerollCommon(socketId: string, cardIndex: number): string | n
   return null;
 }
 
+export function useTryAnotherCard(socketId: string): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('action-try-another-card')) return 'Addon not active';
+  if (state.tryAnotherCardUsed) return 'Action already used this game';
+  if (state.deck.length === 0) return 'No cards left in deck';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  const [[extraCard], remaining] = [state.deck.slice(0, 1), state.deck.slice(1)];
+  state.deck = remaining;
+  state.tryAnotherCardUsed = true;
+  state.tryAnotherCardPlayerId = playerId;
+  state.tryAnotherCardExtraCard = extraCard;
+  state.actionCardLock = null;
+  return null;
+}
+
+export function dropCard(socketId: string, cardIndex: number): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  if (state.tryAnotherCardPlayerId !== playerId) return 'You are not in the try-another-card flow';
+  const holeCards = state.holeCards[playerId];
+  if (!holeCards) return 'No hole cards';
+  const extraCard = state.tryAnotherCardExtraCard;
+  if (!extraCard) return 'No extra card';
+  // The player has 3 cards: holeCards[0], holeCards[1], extraCard (index 2)
+  if (cardIndex < 0 || cardIndex > 2) return 'Invalid card index';
+  const allCards: Card[] = [holeCards[0], holeCards[1], extraCard];
+  // Remove the chosen card, keep the other two as new hole cards
+  allCards.splice(cardIndex, 1);
+  state.holeCards[playerId] = [allCards[0], allCards[1]];
+
+  // Update unsuited jack/X index mappings if the dropped card shifts indices
+  const jackIdx = state.unsuitedJacks.get(playerId);
+  if (jackIdx !== undefined) {
+    if (cardIndex === jackIdx) {
+      // The unsuited card itself was dropped
+      state.unsuitedJacks.delete(playerId);
+    } else if (cardIndex < jackIdx) {
+      // A card before the unsuited card was dropped, shift index down
+      state.unsuitedJacks.set(playerId, jackIdx - 1);
+    }
+    // If cardIndex > jackIdx, no change needed
+  }
+  const xIdx = state.unsuitedXs.get(playerId);
+  if (xIdx !== undefined) {
+    if (cardIndex === xIdx) {
+      state.unsuitedXs.delete(playerId);
+    } else if (cardIndex < xIdx) {
+      state.unsuitedXs.set(playerId, xIdx - 1);
+    }
+  }
+
+  state.tryAnotherCardPlayerId = null;
+  state.tryAnotherCardExtraCard = null;
+  return null;
+}
+
 export function lockActionCard(socketId: string, addonId: string): string | null {
   if (state.phase !== 'game') return 'Not in game';
+  if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
   if (isPlayerImprisoned(playerId)) return 'You are imprisoned this round';
@@ -925,6 +1001,18 @@ export function buildClientState(socketId: string): ClientGameState {
     unsuitedXUsed: state.unsuitedXs.size > 0,
     unsuitedXRank: state.unsuitedXRank,
     rerollCommonUsed: state.rerollCommonUsed,
+    tryAnotherCardUsed: state.tryAnotherCardUsed,
+    tryAnotherCardPlayerId: state.tryAnotherCardPlayerId,
+    myTryAnotherCards: (playerId && state.tryAnotherCardPlayerId === playerId && state.holeCards[playerId] && state.tryAnotherCardExtraCard)
+      ? [state.holeCards[playerId][0], state.holeCards[playerId][1], state.tryAnotherCardExtraCard]
+      : null,
+    otherPlayerCardCount: (() => {
+      const counts: Record<string, number> = {};
+      if (state.tryAnotherCardPlayerId && state.tryAnotherCardExtraCard) {
+        counts[state.tryAnotherCardPlayerId] = 3;
+      }
+      return counts;
+    })(),
     blackjackPhase: state.blackjackPhase,
     blackjackSums: (() => {
       if (!state.blackjackPhase) return {};

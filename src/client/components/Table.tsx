@@ -89,11 +89,14 @@ interface Props {
   onCommonCardClick?: (idx: number) => void;
   actionInProgress?: boolean;
   onSeatElRef?: (playerId: string, el: HTMLDivElement | null) => void;
+  tryAnotherDropIndex?: number | null;
+  onTryAnotherCardSelect?: (idx: number) => void;
+  onTryAnotherDropConfirm?: () => void;
 }
 
 function getScale() { return (window.innerWidth * 0.6) / CONTAINER_W; }
 
-export default function Table({ state, sendAction, readOnly, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef }: Props) {
+export default function Table({ state, sendAction, readOnly, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm }: Props) {
   const currentRound = (state.currentRound ?? 1) as RoundNumber;
   const myIndex = state.players.findIndex(p => p.id === state.myId);
   const rotated = myIndex >= 0
@@ -475,7 +478,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                         {!readOnly && !amIImprisoned && (
                           <button
                             onClick={inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? () => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number }) : undefined}
-                            style={{ padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'pointer' : 'default' }}>
+                            style={{ padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'pointer' : 'default' }}>
                             Take
                           </button>
                         )}
@@ -586,6 +589,11 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             striped={showStripes}
             imprisoned={!readOnly && state.prisonPlayerId === player.id}
             guessTargetedRedChipNumbers={guessTargetedRedChipNumbers}
+            tryAnotherCards={isMe ? state.myTryAnotherCards ?? undefined : undefined}
+            tryAnotherFaceDownCount={(!isMe && state.otherPlayerCardCount[player.id]) ? state.otherPlayerCardCount[player.id] : undefined}
+            tryAnotherDropIndex={isMe ? tryAnotherDropIndex ?? undefined : undefined}
+            onTryAnotherCardSelect={isMe ? onTryAnotherCardSelect : undefined}
+            onTryAnotherDropConfirm={isMe ? onTryAnotherDropConfirm : undefined}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );
