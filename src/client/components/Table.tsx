@@ -335,6 +335,22 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.myShownCardOutIndex]);
 
+  // Track show-card cone of light (visible to all players during flipping animation)
+  const [showCone, setShowCone] = useState<{ sourceId: string; targetId: string } | null>(null);
+  const coneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (state.showCardCone) {
+      // Cone appears when show-card begins
+      setShowCone(state.showCardCone);
+      if (coneTimerRef.current) clearTimeout(coneTimerRef.current);
+    } else if (showCone) {
+      // Server cleared showCardCone (5s elapsed): keep cone during flip-back animation (~1s)
+      if (coneTimerRef.current) clearTimeout(coneTimerRef.current);
+      coneTimerRef.current = setTimeout(() => setShowCone(null), 1050);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.showCardCone]);
+
   const registerChip = useCallback((key: string, el: HTMLDivElement | null) => {
     if (el) chipElsRef.current.set(key, el);
     else    chipElsRef.current.delete(key);
@@ -627,6 +643,43 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             </div>
           );
         })}
+
+        {/* Cone of light for show-card addon */}
+        {showCone && (() => {
+          const sourceIdx = rotated.findIndex(p => p.id === showCone.sourceId);
+          const targetIdx = rotated.findIndex(p => p.id === showCone.targetId);
+          if (sourceIdx < 0 || targetIdx < 0) return null;
+          const src = getSeatPos(sourceIdx, n);
+          const tgt = getSeatPos(targetIdx, n);
+          // Direction vector from source to target
+          const dx = tgt.x - src.x;
+          const dy = tgt.y - src.y;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          if (len < 1) return null;
+          // Perpendicular unit vector
+          const px = -dy / len;
+          const py = dx / len;
+          // Cone: dot at source, widens to ~60px half-width at target
+          const halfWidth = 50;
+          const points = [
+            `${src.x},${src.y}`,
+            `${tgt.x + px * halfWidth},${tgt.y + py * halfWidth}`,
+            `${tgt.x - px * halfWidth},${tgt.y - py * halfWidth}`,
+          ].join(' ');
+          return (
+            <svg style={{ position: 'absolute', left: 0, top: 0, width: CONTAINER_W, height: CONTAINER_H, pointerEvents: 'none', zIndex: 10000 }}>
+              <defs>
+                <linearGradient id="cone-grad"
+                  gradientUnits="userSpaceOnUse"
+                  x1={String(src.x)} y1={String(src.y)} x2={String(tgt.x)} y2={String(tgt.y)}>
+                  <stop offset="0%" stopColor="rgba(255,255,200,0.35)" />
+                  <stop offset="100%" stopColor="rgba(255,255,200,0.10)" />
+                </linearGradient>
+              </defs>
+              <polygon points={points} fill="url(#cone-grad)" />
+            </svg>
+          );
+        })()}
 
         {/* Animated chip overlay */}
         {animations.map(entry => (

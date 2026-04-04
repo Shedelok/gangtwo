@@ -1040,5 +1040,6 @@ export function buildClientState(socketId: string): ClientGameState {
       ? state.prisonPlayerId
       : null,
     prisonRound: state.enabledAddons.has('prison') ? state.prisonRound : null,
+    showCardCone: state.showCardData ? { sourceId: state.showCardData.sourceId, targetId: state.showCardData.targetId } : null,
   };
 }

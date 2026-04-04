@@ -60,6 +60,7 @@ export interface ClientGameState {
   shareInfoLabel: string;        // label shown on the table during the share-info phase
   prisonPlayerId: string | null; // player currently imprisoned (null if not prison round)
   prisonRound: number | null;    // the round number where prison takes effect (null if addon not active)
+  showCardCone: { sourceId: string; targetId: string } | null; // cone of light from source to target during show-card animation
 }
 
 // Client → Server actions

@@ -266,6 +266,12 @@ animation (from face up to face down, and then after 5 seconds from face down to
 
 If the card chosen to be shown is already face-up for all players, the flipping animation is not played.
 
+When the target player is selected and the card reveal begins, all players see a cone of light from the
+using player toward the target player. The cone is just a dot at the using player's side and widens toward the target
+player. It is semi-transparent, pale yellow, and visually soft (not
+bright or distracting). The cone is displayed for the full duration of the flipping animation.
+The cone is rendered above all table elements.
+
 The action card for this addon has no text, has a simple eye image in its center and has a black background.
 
 ## Unsuited Card
@@ -285,7 +291,7 @@ Both action card and the actual card in hand from this addon look the same: they
 similarly to other playing cards have "J" symbol in the top left corner, but also in the center in the card where a
 normal card would have its suit.
 
-### Addon: [A] Unsuited X
+### Addon: [A] Unsuited Xrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
 
 Same as "Addon: [A] Unsuited Jack", but instead of Jack a random card Rank (from 2 to A) is determined at the beginning
 of the game and an unsuited card with rank X is available to be taken. X stays the same through all rounds.
