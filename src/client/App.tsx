@@ -160,7 +160,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
     fontSize: '12px',
     color: '#aaa',
-    zIndex: 300,
+    zIndex: 10000,
   },
   soundBarRow: {
     display: 'flex',

@@ -10,6 +10,8 @@ screen in width.
 
 The players can also see the code of the current addons setup.
 
+The addon panel is always displayed above everything else on the screen, including the table.
+
 # Action Cards
 
 ## Action Cards Table

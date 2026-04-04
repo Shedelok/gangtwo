@@ -8,7 +8,6 @@
   player).
 - Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
 - Show 1 card to 1 player should make it understandable for everyone who was chosen to see the card
-- Question mark on positive addons is not fully hoverable (blocked by table area)
 
 ### Maybe Later
 
