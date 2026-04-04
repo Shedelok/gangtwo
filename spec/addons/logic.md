@@ -315,7 +315,8 @@ During round R, one fewer chips are placed on the table. The round ends when all
 the current round and are ready.
 
 The prison effect lasts only for round R (the chip-distribution phase). It does not extend into any card-revealing or
-rank-guessing phase.
+rank-guessing phase. It also does not apply to any pre-round phases (such as share info addon phases) that happen before
+round chip distribution begins.
 
 ## Addon: [A] Reroll Common
 

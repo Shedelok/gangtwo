@@ -145,7 +145,8 @@ function isRoundSkipped(round: number): boolean {
 function isPlayerImprisoned(playerId: string): boolean {
   return state.enabledAddons.has('prison') &&
          state.prisonRound === state.currentRound &&
-         state.prisonPlayerId === playerId;
+         state.prisonPlayerId === playerId &&
+         !state.blackjackPhase; // Prison does not apply during pre-round phases (e.g. share info)
 }
 
 /** Returns the set of chip values that are "black" (immovable once taken from the middle). */
@@ -1035,7 +1036,7 @@ export function buildClientState(socketId: string): ClientGameState {
     shareInfoLabel: state.blackjackPhase
       ? (state.shareInfoQueue[state.shareInfoIndex] === 'share-number-of-faces' ? 'Number of Faces' : 'Blackjack Sum')
       : '',
-    prisonPlayerId: (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId)
+    prisonPlayerId: (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId && !state.blackjackPhase)
       ? state.prisonPlayerId
       : null,
     prisonRound: state.enabledAddons.has('prison') ? state.prisonRound : null,
