@@ -24,8 +24,10 @@ export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
     { addonId: 'guess-highest-red-chip-card-value' },
   ]},
   { addonId: 'only-neighbors-steal' },
-  { addonId: 'clubs-spades-diamonds-hearth' },
-  { addonId: 'short-deck' },
+  { children: [
+    { addonId: 'clubs-spades-diamonds-hearth' },
+    { addonId: 'short-deck' },
+  ]},
   { children: [
     { children: [
       { addonId: 'additional-card-flop' },

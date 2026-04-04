@@ -376,9 +376,10 @@ addon names mean leaf nodes with that addon.
     3. Guess Hand Lowest
     4. Guess Card Highest
 2. Only Neighbors Steal
-3. Black & Red
-4. Short Deck
-5.
+3.
+    1. Black & Red
+    2. Short Deck
+4.
     1.
         1. Additional Card Flop
         2. Additional Card Turn
@@ -387,12 +388,12 @@ addon names mean leaf nodes with that addon.
         1. No White Chips
         2. No Yellow Chips
         3. No Orange Chips
-6.
+5.
     1. Black 1s
     2. Black Ns
     3. Black Xs
-7. No Old Chips
-8. Prison
+6. No Old Chips
+7. Prison
 
 ## Positive Addons
 
