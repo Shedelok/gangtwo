@@ -244,6 +244,10 @@ player has a dialogue cloud as well). Also, there's an addon-specific text writt
 this phase. No other text is written on the table during this phase. Each player has the normal ready button. Once
 everyone is ready, the rest of the first round happens as normal.
 
+If the information that the shared value depends on changes for any reason (for example, player takes unsuited card
+instead of one of their cards and the addon value depended on their pocket cards), the shared value is updated
+accordingly.
+
 When multiple share info addons are in the same game, they take effect one by one: for each of them there's info shared
 by each player and a table text. Once everyone is ready, the next addon changes the current one, until there are no more
 share info addons.

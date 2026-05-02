@@ -9,7 +9,6 @@
 - Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
 - Add Russian language
 - Add voting for won/lost at the end (to make sure everyone agrees it's a win)
-- When taking an unsuited card at the "share" round, the shared value should update accordingly
 - Cards hint should be on top of all other elements (currently addons are above it).
 
 

@@ -1023,11 +1023,25 @@ export function buildClientState(socketId: string): ClientGameState {
       for (const p of state.players) {
         const cards = state.holeCards[p.id];
         if (cards) {
+          // Spec: "If the information that the shared value depends on changes for any
+          // reason (for example, player takes unsuited card instead of one of their cards
+          // and the addon value depended on their pocket cards), the shared value is
+          // updated accordingly." Apply unsuited jack / unsuited X overrides to the
+          // effective rank used in the calculation.
+          const jackIdx = state.unsuitedJacks.get(p.id);
+          const xIdx = state.unsuitedXs.get(p.id);
+          const effRank = (idx: 0 | 1): string => {
+            if (jackIdx === idx) return 'J';
+            if (xIdx === idx && state.unsuitedXRank) return state.unsuitedXRank;
+            return cards[idx].rank;
+          };
+          const r0 = effRank(0);
+          const r1 = effRank(1);
           if (isFaces) {
-            sums[p.id] = (cards[0].rank === 'J' || cards[0].rank === 'Q' || cards[0].rank === 'K' ? 1 : 0)
-                       + (cards[1].rank === 'J' || cards[1].rank === 'Q' || cards[1].rank === 'K' ? 1 : 0);
+            const isFace = (r: string) => r === 'J' || r === 'Q' || r === 'K';
+            sums[p.id] = (isFace(r0) ? 1 : 0) + (isFace(r1) ? 1 : 0);
           } else {
-            sums[p.id] = bjValue(cards[0].rank) + bjValue(cards[1].rank);
+            sums[p.id] = bjValue(r0) + bjValue(r1);
           }
         }
       }
