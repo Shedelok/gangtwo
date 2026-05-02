@@ -7,6 +7,11 @@
 - Make sure that the deck can't run out of cards (for example, when playing with short deck, 3 additional cards and 7
   player).
 - Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
+- Add Russian language
+- Add voting for won/lost at the end (to make sure everyone agrees it's a win)
+- When taking an unsuited card at the "share" round, the shared value should update accordingly
+- Cards hint should be on top of all other elements (currently addons are above it).
+
 
 ### Maybe Later
 
@@ -69,3 +74,4 @@
     only swap their current chip to the one in someone's hands.
 25. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
     they can check how many Jacks are in the deck.
+26. One player once can swap one of their pocket cards with a common card
