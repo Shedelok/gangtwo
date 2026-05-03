@@ -372,9 +372,9 @@ to click that button for the action card to take effect. Once the action card is
 card where their pocket cards are. The game is logically paused at this moment: other player's can't do anything (can't
 move chips, play action cards, etc.) and are
 just waiting. Other players see that the current player has 3 cards, but they see them face down as usual. The "move to
-next round" button's text changes to "Drop Card". The current player needs to select one of their
-cards and then press the Drop Card button. The player can't do anything besides choosing the card and confirming it
-until they do. Once confirmed, the dropped card is discarded.
+next round" button's text changes to "Pick card to drop" when no card is selected yet and "Drop card" when a card is
+selected. The current player needs to select one of their cards and then press the Drop Card button. The player can't do
+anything besides choosing the card and confirming it until they do. Once confirmed, the dropped card is discarded.
 
 When the card is discarded, all players hear "CARD_DISCARDED" sound which defaults to
 spec/base/resources/sounds/moving-plant.mp3.
@@ -424,11 +424,11 @@ addon names mean leaf nodes with that addon.
 ## Positive Addons
 
 1. Pass 1 Card
-2. 
+2.
     1. Share Blackjack Sum
     2. Share Number of Faces
 3. [A] Show 1 Card to 1 Player
-4. 
+4.
     1. [A] Unsuited Jack
     2. [A] Unsuited X
 5. [A] Reroll Common

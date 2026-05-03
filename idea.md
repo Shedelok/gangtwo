@@ -10,9 +10,6 @@
 - Add Russian language
 - Add voting for won/lost at the end (to make sure everyone agrees it's a win)
 - Cards hint should be on top of all other elements (currently addons are above it).
-- Improve UI for "try another card", so that it's clear whether you need to pick a card to drop or 2 cards to keep.
-  Maybe the ready button should read "Pick card to drop" while gray.
-- Make sure the "tick / red-cross-next-to-name" logic for public readiness is described only once across the spec.
 
 ### Maybe Later
 

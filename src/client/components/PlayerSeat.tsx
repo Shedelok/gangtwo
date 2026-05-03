@@ -281,7 +281,7 @@ export default function PlayerSeat({
           }}
           disabled={tryAnotherDropIndex === undefined || tryAnotherDropIndex === null}
           onClick={onTryAnotherDropConfirm}>
-          Drop Card
+          {tryAnotherDropIndex !== undefined && tryAnotherDropIndex !== null ? 'Drop card' : 'Pick card to drop'}
         </button>
       )}
 
