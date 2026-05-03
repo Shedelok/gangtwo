@@ -61,6 +61,13 @@ export interface ClientGameState {
   prisonPlayerId: string | null; // player currently imprisoned (null if not prison round)
   prisonRound: number | null;    // the round number where prison takes effect (null if addon not active)
   showCardCone: { sourceId: string; targetId: string } | null; // cone of light from source to target during show-card animation
+  passCardPhase: boolean;        // true during the pass-1-card pre-game phase (after dealing pocket cards, before share info / chip distribution)
+  passCardChoices: Record<string, number>; // playerId → index of card chosen to pass (0 or 1); only populated during passCardPhase
+  // Active pass-1-card flying animations (one entry per card moved during the simultaneous pass).
+  // When populated, clients render flying cards from the source seat/slot to the destination
+  // seat/slot for ~2 seconds, and the destination slot is hidden in place during the animation.
+  // Cleared by the server 2 seconds after the swap.
+  passCardAnimations: Array<{ fromPlayerId: string; fromSlot: 0 | 1; toPlayerId: string; toSlot: 0 | 1 }>;
 }
 
 // Client → Server actions
@@ -85,7 +92,8 @@ export type ClientAction =
   | { type: 'USE_TRY_ANOTHER_CARD' }
   | { type: 'DROP_CARD'; cardIndex: number }
   | { type: 'LOCK_ACTION_CARD'; addonId: string }
-  | { type: 'UNLOCK_ACTION_CARD'; addonId: string };
+  | { type: 'UNLOCK_ACTION_CARD'; addonId: string }
+  | { type: 'SET_PASS_CARD_CHOICE'; cardIndex: 0 | 1 | null };
 
 // Server → Client messages
 export type ServerMessage =

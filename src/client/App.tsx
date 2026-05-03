@@ -754,6 +754,9 @@ export default function App() {
           tryAnotherDropIndex={tryAnotherDropIndex}
           onTryAnotherCardSelect={state.tryAnotherCardPlayerId === state.myId ? (idx: number) => setTryAnotherDropIndex(idx) : undefined}
           onTryAnotherDropConfirm={state.tryAnotherCardPlayerId === state.myId && tryAnotherDropIndex !== null ? () => { sendAction({ type: 'DROP_CARD', cardIndex: tryAnotherDropIndex }); setTryAnotherDropIndex(null); } : undefined}
+          onPassCardSelect={state.passCardPhase ? (idx: 0 | 1) => sendAction({ type: 'SET_PASS_CARD_CHOICE', cardIndex: idx }) : undefined}
+          onPassCardSubmit={state.passCardPhase ? () => sendAction({ type: 'SET_READY', ready: true }) : undefined}
+          onPassCardCancel={state.passCardPhase ? () => sendAction({ type: 'SET_READY', ready: false }) : undefined}
         />
       )}
       {state.phase === 'finished' && <Game state={state} sendAction={sendAction} readOnly={true} />}

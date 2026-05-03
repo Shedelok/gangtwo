@@ -45,6 +45,12 @@ interface ServerGameState {
   blackjackPhase: boolean;
   shareInfoQueue: string[];  // ordered list of share-info addon IDs to process
   shareInfoIndex: number;    // index into shareInfoQueue of the current addon
+  passCardPhase: boolean;
+  passCardChoices: Map<string, number>; // playerId → chosen card index for pass-1-card
+  // Active pass-1-card animations: each entry describes a card movement that is currently
+  // being animated (source player/slot → destination player/slot). Populated when the
+  // simultaneous pass swap is performed; cleared 2 seconds later (animation duration).
+  passCardAnimations: Array<{ fromPlayerId: string; fromSlot: 0 | 1; toPlayerId: string; toSlot: 0 | 1 }>;
   prisonRound: number | null;    // the round where prison takes effect
   prisonPlayerId: string | null; // the player who is imprisoned
   gameId: string;
@@ -86,6 +92,9 @@ const state: ServerGameState = {
   blackjackPhase: false,
   shareInfoQueue: [],
   shareInfoIndex: 0,
+  passCardPhase: false,
+  passCardChoices: new Map(),
+  passCardAnimations: [],
   prisonRound: null,
   prisonPlayerId: null,
   gameId: '',
@@ -146,7 +155,8 @@ function isPlayerImprisoned(playerId: string): boolean {
   return state.enabledAddons.has('prison') &&
          state.prisonRound === state.currentRound &&
          state.prisonPlayerId === playerId &&
-         !state.blackjackPhase; // Prison does not apply during pre-round phases (e.g. share info)
+         !state.blackjackPhase && // Prison does not apply during pre-round phases (e.g. share info)
+         !state.passCardPhase;     // Prison does not apply during pass-1-card pre-round phase either
 }
 
 /** Returns the set of chip values that are "black" (immovable once taken from the middle). */
@@ -345,13 +355,17 @@ export function startGame(shufflePlayers = true): string | null {
   const SHARE_INFO_ADDON_IDS = ['share-blackjack-sum', 'share-number-of-faces'];
   state.shareInfoQueue = SHARE_INFO_ADDON_IDS.filter(id => state.enabledAddons.has(id));
   state.shareInfoIndex = 0;
+  const passCardActive = state.enabledAddons.has('pass-1-card');
   const blackjackActive = state.shareInfoQueue.length > 0;
+  // Pre-round phases (pass-1-card, share-info) defer community-card dealing
+  // and chip distribution until the phase ends.
+  const preRoundActive = passCardActive || blackjackActive;
   let startRound = 1;
-  // Skip disabled starting rounds; if blackjack phase is active, defer their community cards
-  // until the phase ends (spec: "before any other aspects of the normal rounds have happened,
-  // for example, dealing chips or cards")
+  // Skip disabled starting rounds; if any pre-round phase is active, defer their
+  // community cards until the phase ends (spec: "before any other aspects of the
+  // normal rounds have happened, for example, dealing chips or cards")
   while (startRound <= 3 && isRoundSkipped(startRound)) {
-    if (!blackjackActive) {
+    if (!preRoundActive) {
       const count = roundCommunityCardCount(startRound);
       if (count > 0) {
         const [drawn, remaining] = drawCards(state.deck, count);
@@ -366,8 +380,10 @@ export function startGame(shufflePlayers = true): string | null {
     player.chips = [];
     player.readyForNextRound = false;
   }
-  state.blackjackPhase = blackjackActive;
-  state.middleChips = blackjackActive ? [] : createChipsForRound(startRound as RoundNumber, state.players.length);
+  state.passCardPhase = passCardActive;
+  state.passCardChoices = new Map();
+  state.blackjackPhase = !passCardActive && blackjackActive;
+  state.middleChips = preRoundActive ? [] : createChipsForRound(startRound as RoundNumber, state.players.length);
   const ALL_RANKS: string[] = isShortDeck
     ? ['10','J','Q','K','A']
     : ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
@@ -405,9 +421,11 @@ export function startGame(shufflePlayers = true): string | null {
   state.gameId = randomUUID();
   state.phase = 'game';
 
-  // If prison round is the starting round, set up accordingly
+  // If prison round is the starting round, set up accordingly.
+  // Pre-round phases (pass-1-card, share-info) defer chip distribution, so we only
+  // adjust chip count / auto-ready when no pre-round phase is active.
   const isPrisonStartRound = state.enabledAddons.has('prison') && state.prisonRound === state.currentRound;
-  if (isPrisonStartRound && !state.blackjackPhase) {
+  if (isPrisonStartRound && !state.blackjackPhase && !state.passCardPhase) {
     // Reduce chips by 1 for prison round
     const chipCount = state.players.length - 1;
     state.middleChips = createChipsForRound(state.currentRound, chipCount);
@@ -422,6 +440,7 @@ export function startGame(shufflePlayers = true): string | null {
 export function discardChip(socketId: string, chipNumber: number): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
+  if (state.passCardPhase) return 'Cannot interact with chips during Pass 1 Card phase';
   if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
@@ -444,6 +463,7 @@ export function discardChip(socketId: string, chipNumber: number): string | null
 export function takeFromMiddle(socketId: string, chipNumber: number): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
+  if (state.passCardPhase) return 'Cannot interact with chips during Pass 1 Card phase';
   if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
@@ -472,6 +492,7 @@ export function stealChip(
 ): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (state.blackjackPhase) return 'Cannot interact with chips during Blackjack Sum phase';
+  if (state.passCardPhase) return 'Cannot interact with chips during Pass 1 Card phase';
   if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
@@ -517,6 +538,14 @@ export function setReady(socketId: string, ready: boolean): string | null {
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
+
+  if (state.passCardPhase) {
+    // During pass-1-card phase, players can only become ready if they have chosen a card.
+    if (ready && !state.passCardChoices.has(player.id)) return 'Choose a card to pass first';
+    player.readyForNextRound = ready;
+    maybeFinishPassCardPhase();
+    return null;
+  }
 
   player.readyForNextRound = ready;
 
@@ -761,6 +790,9 @@ export function finishGame(keepAddons = false): void {
   state.blackjackPhase = false;
   state.shareInfoQueue = [];
   state.shareInfoIndex = 0;
+  state.passCardPhase = false;
+  state.passCardChoices = new Map();
+  state.passCardAnimations = [];
   state.prisonRound = null;
   state.prisonPlayerId = null;
   state.enabledAddons = new Set();
@@ -876,6 +908,7 @@ export function dropCard(socketId: string, cardIndex: number): string | null {
 
 export function lockActionCard(socketId: string, addonId: string): string | null {
   if (state.phase !== 'game') return 'Not in game';
+  if (state.passCardPhase) return 'Cannot use action cards during Pass 1 Card phase';
   if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
@@ -923,6 +956,123 @@ export function useShowCard(socketId: string, targetPlayerId: string, cardIndex:
 
 export function clearShowCardData(): void {
   state.showCardData = null;
+}
+
+/**
+ * Set or clear the current player's chosen card index for the pass-1-card phase.
+ * This only updates the choice — readiness is controlled separately via SET_READY.
+ * If the player un-selects their choice (cardIndex = null) while ready, they are
+ * also un-readied (since "each player must choose one of their cards and press the
+ * ready button" — readiness without a choice is not allowed).
+ */
+export function setPassCardChoice(socketId: string, cardIndex: 0 | 1 | null): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.passCardPhase) return 'Not in pass-card phase';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return 'Player not found';
+  if (cardIndex === null) {
+    state.passCardChoices.delete(playerId);
+    player.readyForNextRound = false;
+    return null;
+  }
+  if (cardIndex !== 0 && cardIndex !== 1) return 'Invalid card index';
+  // Changing the chosen card unsets readiness (player must press the button again to confirm).
+  if (state.passCardChoices.get(playerId) !== cardIndex) {
+    state.passCardChoices.set(playerId, cardIndex);
+    player.readyForNextRound = false;
+  }
+  return null;
+}
+
+/**
+ * Perform the simultaneous pass-1-card swap if all players are ready and have a choice,
+ * then transition to the next phase (share-info or normal round). No-op otherwise.
+ * Returns true if the swap was performed (caller should schedule animation cleanup).
+ */
+function maybeFinishPassCardPhase(): boolean {
+  if (!state.passCardPhase) return false;
+  const everyoneReady = state.players.every(
+    (p) => p.readyForNextRound && state.passCardChoices.has(p.id)
+  );
+  if (!everyoneReady) return false;
+  // Compute the swap: each player at index i passes their chosen card to the player
+  // at index (i - 1 + n) % n (the player to their left). The new card takes the
+  // same slot index that the passed-away card was in.
+  const n = state.players.length;
+  const newHoleCards: Record<string, [Card, Card]> = {};
+  for (let i = 0; i < n; i++) {
+    const me = state.players[i];
+    const myCards = state.holeCards[me.id];
+    if (!myCards) continue;
+    newHoleCards[me.id] = [myCards[0], myCards[1]];
+  }
+  // Build animation entries: each card moving from its giver's slot to its recipient's slot.
+  const animations: Array<{ fromPlayerId: string; fromSlot: 0 | 1; toPlayerId: string; toSlot: 0 | 1 }> = [];
+  for (let i = 0; i < n; i++) {
+    const me = state.players[i];
+    const giverIdx = (i + 1) % n; // the player to my right gives me their chosen card
+    const giver = state.players[giverIdx];
+    const giverCards = state.holeCards[giver.id];
+    const giverChoice = state.passCardChoices.get(giver.id);
+    if (!giverCards || giverChoice === undefined) continue;
+    const myChoice = state.passCardChoices.get(me.id);
+    if (myChoice === undefined) continue;
+    // The card I give away leaves slot `myChoice`; the new card from my right neighbor
+    // takes that same slot, preserving position.
+    const incomingCard = giverCards[giverChoice];
+    newHoleCards[me.id][myChoice] = incomingCard;
+    animations.push({
+      fromPlayerId: giver.id,
+      fromSlot: (giverChoice as 0 | 1),
+      toPlayerId: me.id,
+      toSlot: (myChoice as 0 | 1),
+    });
+  }
+  for (const p of state.players) {
+    if (newHoleCards[p.id]) state.holeCards[p.id] = newHoleCards[p.id];
+  }
+  // End the pass-card phase. Reset readiness; advance to share-info phase or normal
+  // round chip distribution as appropriate.
+  state.passCardPhase = false;
+  state.passCardChoices = new Map();
+  state.passCardAnimations = animations;
+  for (const p of state.players) p.readyForNextRound = false;
+  if (state.shareInfoQueue.length > 0) {
+    state.blackjackPhase = true;
+  } else {
+    // No share-info phase — start the normal round (deal community cards for any
+    // skipped starting rounds, then chips for the current round, and auto-ready
+    // any prison-round prisoner).
+    for (let r = 1; r < state.currentRound; r++) {
+      const count = roundCommunityCardCount(r);
+      if (count > 0) {
+        const [drawn, remaining] = drawCards(state.deck, count);
+        state.communityCards.push(...drawn);
+        state.deck = remaining;
+      }
+    }
+    const isPrisonRound = state.enabledAddons.has('prison') && state.prisonRound === state.currentRound;
+    const chipCount = isPrisonRound ? state.players.length - 1 : state.players.length;
+    state.middleChips = createChipsForRound(state.currentRound, chipCount);
+    if (isPrisonRound && state.prisonPlayerId) {
+      const prisonPlayer = state.players.find((p) => p.id === state.prisonPlayerId);
+      if (prisonPlayer) prisonPlayer.readyForNextRound = true;
+    }
+  }
+  return true;
+}
+
+/** Clear pass-card animations after the 2-second flying card animation completes. */
+export function clearPassCardAnimations(): void {
+  state.passCardAnimations = [];
+}
+
+/** Returns true if pass-card animations are currently active (used by server/index.ts to know
+ *  whether to schedule the 2s cleanup after a SET_READY action that triggered the swap). */
+export function hasActivePassCardAnimations(): boolean {
+  return state.passCardAnimations.length > 0;
 }
 
 function bjValue(rank: string): number {
@@ -1050,10 +1200,13 @@ export function buildClientState(socketId: string): ClientGameState {
     shareInfoLabel: state.blackjackPhase
       ? (state.shareInfoQueue[state.shareInfoIndex] === 'share-number-of-faces' ? 'Number of Faces' : 'Blackjack Sum')
       : '',
-    prisonPlayerId: (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId && !state.blackjackPhase)
+    prisonPlayerId: (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId && !state.blackjackPhase && !state.passCardPhase)
       ? state.prisonPlayerId
       : null,
     prisonRound: state.enabledAddons.has('prison') ? state.prisonRound : null,
     showCardCone: state.showCardData ? { sourceId: state.showCardData.sourceId, targetId: state.showCardData.targetId } : null,
+    passCardPhase: state.passCardPhase,
+    passCardChoices: state.passCardPhase ? Object.fromEntries(state.passCardChoices) : {},
+    passCardAnimations: [...state.passCardAnimations],
   };
 }

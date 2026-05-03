@@ -52,6 +52,7 @@ export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
 /** Positive addons grouping tree as defined in the spec's "Addon Groupings" section. */
 export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
   { addonId: 'see-1-neighbor-cards' },
+  { addonId: 'pass-1-card' },
   { children: [
     { addonId: 'share-blackjack-sum' },
     { addonId: 'share-number-of-faces' },
@@ -247,6 +248,12 @@ export const ADDONS: AddonDef[] = [
     id: 'see-1-neighbor-cards',
     short: "See 1 Neighbor's Cards",
     long: "Besides your own cards you can also see pocket cards of the player next to your left.",
+    type: 'positive',
+  },
+  {
+    id: 'pass-1-card',
+    short: "Pass 1 Card",
+    long: "Once the pocket cards have been dealt in Round 1, each of you chooses one of your pocket cards. Everyone then simultaneously passes their chosen card to the player on their left as a pocket card.",
     type: 'positive',
   },
   {

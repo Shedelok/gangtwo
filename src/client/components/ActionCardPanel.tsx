@@ -22,6 +22,8 @@ function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
   if (state.phase !== 'game') return false;
   // Imprisoned players cannot use any action cards
   if (state.prisonPlayerId === state.myId) return false;
+  // Action cards are unavailable during the pass-1-card pre-round phase
+  if (state.passCardPhase) return false;
   // Game is paused during try-another-card flow
   if (state.tryAnotherCardPlayerId) return false;
   if (addonId === 'show-1-card-to-1-player') return !state.showCardUsed && !!state.myHoleCards;

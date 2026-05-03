@@ -14,12 +14,15 @@ interface Props {
   tryAnotherDropIndex?: number | null;
   onTryAnotherCardSelect?: (idx: number) => void;
   onTryAnotherDropConfirm?: () => void;
+  onPassCardSelect?: (idx: 0 | 1) => void;
+  onPassCardSubmit?: () => void;
+  onPassCardCancel?: () => void;
 }
 
-export default function Game({ state, sendAction, readOnly = false, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm }: Props) {
+export default function Game({ state, sendAction, readOnly = false, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm, onPassCardSelect, onPassCardSubmit, onPassCardCancel }: Props) {
   return (
     <div style={{ overflow: 'visible', padding: '8px 0', position: 'relative', zIndex: 500 }}>
-      <Table state={state} sendAction={sendAction} readOnly={readOnly} onCardSelect={onCardSelect} onPlayerSelect={onPlayerSelect} onCommonCardClick={onCommonCardClick} actionInProgress={actionInProgress} onSeatElRef={onSeatElRef} tryAnotherDropIndex={tryAnotherDropIndex} onTryAnotherCardSelect={onTryAnotherCardSelect} onTryAnotherDropConfirm={onTryAnotherDropConfirm} />
+      <Table state={state} sendAction={sendAction} readOnly={readOnly} onCardSelect={onCardSelect} onPlayerSelect={onPlayerSelect} onCommonCardClick={onCommonCardClick} actionInProgress={actionInProgress} onSeatElRef={onSeatElRef} tryAnotherDropIndex={tryAnotherDropIndex} onTryAnotherCardSelect={onTryAnotherCardSelect} onTryAnotherDropConfirm={onTryAnotherDropConfirm} onPassCardSelect={onPassCardSelect} onPassCardSubmit={onPassCardSubmit} onPassCardCancel={onPassCardCancel} />
     </div>
   );
 }

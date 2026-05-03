@@ -209,6 +209,26 @@ Long description: Besides your own cards you can also see pocket cards of the pl
 
 Functionality: During the game each player sees the cards of their immediate neighbors on the left face up.
 
+## Addon: Pass 1 Card
+
+Short description: "Pass 1 Card"
+
+Long description: Once the pocket cards have been dealt in Round 1, each of you chooses one of your pocket cards.
+Everyone then simultaneously passes their chosen card to the player on their left as a pocket card.
+
+Functionality: Immediately after the pocket cards are dealt and before anything else happens (before dealing chips,
+before starting the share info phase, etc.), each player must choose one of their cards and press the ready button. The
+UI for picking a card is the same as for action cards, when needed to pick one of the pocket cards. The ready button
+reads "Pass card". The readiness is public during this phase. Once everyone is ready, chosen pocket card is given to the
+player on the left for all players. All cards move at the same time with flying card animation. The cards don't visually
+instantly teleport, but rather a moving animation is played that lasts 2 seconds and moves each card from its origin to
+destination simultaneously.
+
+The new card coming to the player's hand takes the same position that the one passed was, so that all other cards stay
+on their positions.
+
+During this phase, the text on the table is "Pass 1 Card".
+
 ## Share Info Addons
 
 ### Addon: Share Blackjack Sum
@@ -409,12 +429,13 @@ addon names mean leaf nodes with that addon.
 ## Positive Addons
 
 1. See 1 Neighbor's Cards
-2.
+2. Pass 1 Card
+3.
     1. Share Blackjack Sum
     2. Share Number of Faces
-3. [A] Show 1 Card to 1 Player
-4.
+4. [A] Show 1 Card to 1 Player
+5.
     1. [A] Unsuited Jack
     2. [A] Unsuited X
-5. [A] Reroll Common
-6. [A] Try Another Card
+6. [A] Reroll Common
+7. [A] Try Another Card

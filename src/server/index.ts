@@ -29,6 +29,9 @@ import {
   useRerollCommon,
   useTryAnotherCard,
   dropCard,
+  setPassCardChoice,
+  clearPassCardAnimations,
+  hasActivePassCardAnimations,
   buildClientState,
 } from './gameState';
 
@@ -107,6 +110,12 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'SET_READY':
       error = setReady(socketId, action.ready);
+      // If this SET_READY triggered the pass-1-card simultaneous swap, schedule a
+      // 2-second cleanup of the flying-card animations (spec: "a moving animation is
+      // played that lasts 2 seconds").
+      if (!error && hasActivePassCardAnimations()) {
+        setTimeout(() => { clearPassCardAnimations(); broadcastAll(); }, 2000);
+      }
       break;
     case 'REVEAL_CARDS':
       error = revealCards(socketId);
@@ -141,6 +150,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'DROP_CARD':
       error = dropCard(socketId, action.cardIndex);
+      break;
+    case 'SET_PASS_CARD_CHOICE':
+      error = setPassCardChoice(socketId, action.cardIndex);
       break;
     case 'FINISH_GAME':
       finishGame(true);

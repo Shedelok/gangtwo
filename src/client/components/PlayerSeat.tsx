@@ -65,6 +65,15 @@ interface Props {
   tryAnotherDropIndex?: number;
   onTryAnotherCardSelect?: (idx: number) => void;
   onTryAnotherDropConfirm?: () => void;
+  // Pass-1-card phase props
+  passCardPhaseActive?: boolean;
+  passCardChoiceIndex?: number;       // 0 or 1, the card chosen to pass (only for self)
+  onPassCardSelect?: (idx: 0 | 1) => void; // Called when player picks a card to pass
+  onPassCardSubmit?: () => void;       // Called when player presses "Pass card" to confirm readiness
+  onPassCardCancel?: () => void;       // Called when player presses "Pass card" again to un-ready
+  // Pass-1-card animation: the slot whose card is currently flying (in or out). The slot
+  // is hidden while the flying card overlay travels for ~2 seconds.
+  passCardAnimatingSlot?: 0 | 1;
   style?: React.CSSProperties;
 }
 
@@ -73,7 +82,9 @@ export default function PlayerSeat({
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
   blackAndRed = false, shortDeck = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
-  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm, style,
+  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm,
+  passCardPhaseActive = false, passCardChoiceIndex, onPassCardSelect, onPassCardSubmit, onPassCardCancel, passCardAnimatingSlot,
+  style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
@@ -159,7 +170,25 @@ export default function PlayerSeat({
       ) : tryAnotherFaceDownCount ? (
         <PlayerHand cards={null} faceDown={true} small blackAndRed={blackAndRed} shortDeck={shortDeck} tryAnotherFaceDownCount={tryAnotherFaceDownCount} />
       ) : (
-        <PlayerHand cards={holeCards} faceDown={showFaceDown} small blackAndRed={blackAndRed} shortDeck={shortDeck} onCardClick={isMe && onCardSelect ? onCardSelect : undefined} unsuitedJackIndex={unsuitedJackIndex} unsuitedXIndex={unsuitedXIndex} unsuitedXRank={unsuitedXRank} shownCardInfo={shownCardInfo} striped={striped} />
+        <PlayerHand
+          cards={holeCards}
+          faceDown={showFaceDown}
+          small
+          blackAndRed={blackAndRed}
+          shortDeck={shortDeck}
+          onCardClick={
+            isMe && passCardPhaseActive && onPassCardSelect
+              ? (idx) => onPassCardSelect(idx)
+              : (isMe && onCardSelect ? onCardSelect : undefined)
+          }
+          unsuitedJackIndex={unsuitedJackIndex}
+          unsuitedXIndex={unsuitedXIndex}
+          unsuitedXRank={unsuitedXRank}
+          shownCardInfo={shownCardInfo}
+          striped={striped}
+          passCardChoiceIndex={isMe ? passCardChoiceIndex : undefined}
+          passCardAnimatingSlot={passCardAnimatingSlot}
+        />
       )}
 
       {/* Chips — sorted by round asc, number asc; always rendered to reserve height */}
@@ -253,8 +282,37 @@ export default function PlayerSeat({
         </button>
       )}
 
-      {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size; hidden when imprisoned */}
-      {!readOnly && isMe && !tryAnotherCards && !actionInProgress && !imprisoned && (
+      {/* Pass card button — replaces the ready button during the pass-1-card phase */}
+      {!readOnly && isMe && passCardPhaseActive && !tryAnotherCards && !actionInProgress && (() => {
+        const hasChoice = passCardChoiceIndex !== undefined;
+        const isReady = player.readyForNextRound;
+        const enabled = hasChoice; // can only press when a card is chosen
+        const disabledStyle = !enabled;
+        return (
+          <button
+            style={{
+              ...btn,
+              position: 'absolute',
+              bottom: 8,
+              background: disabledStyle ? '#374151' : (isReady ? '#555' : '#1d4ed8'),
+              color: disabledStyle ? '#9ca3af' : (isReady ? '#aaa' : '#fff'),
+              cursor: disabledStyle ? 'not-allowed' : 'pointer',
+            }}
+            disabled={!enabled}
+            onClick={() => {
+              if (isReady) {
+                if (onPassCardCancel) onPassCardCancel();
+              } else {
+                if (onPassCardSubmit) onPassCardSubmit();
+              }
+            }}>
+            {isReady ? 'Waiting' : 'Pass card'}
+          </button>
+        );
+      })()}
+
+      {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size; hidden when imprisoned or during pass-card phase */}
+      {!readOnly && isMe && !passCardPhaseActive && !tryAnotherCards && !actionInProgress && !imprisoned && (
         <button
           style={{
             ...btn,

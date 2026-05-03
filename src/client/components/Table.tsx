@@ -41,6 +41,58 @@ function findChip(s: ClientGameState, key: string): Chip | undefined {
       if (`${chip.round}-${chip.number}` === key) return chip;
 }
 
+// Card slot offset within a seat box (small cards: 52x78, gap 6, so the row is 110x78
+// centered horizontally just below the player's name). The seat box has padding of 8px
+// at the top, then the name (height ~15px), then a 5px gap, then the cards. We compute
+// the cards' vertical center from those offsets. Slot 0 is the left card, slot 1 is the
+// right card; horizontal center offsets are -29 and +29 from the seat center (52/2 + 6/2).
+const PASS_CARD_SLOT_OFFSETS: Array<{ dx: number; dy: number }> = [
+  { dx: -29, dy: 0 },
+  { dx:  29, dy: 0 },
+];
+const PASS_CARD_W_SMALL = 52;
+const PASS_CARD_H_SMALL = 78;
+
+// ── Pass-1-card flying card overlay (face-down, 2s linear motion) ─────────────
+function PassCardFlyingCard({ from, to, small = true }: { from: { x: number; y: number }; to: { x: number; y: number }; small?: boolean }) {
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setArrived(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const w = small ? PASS_CARD_W_SMALL : 80;
+  const h = small ? PASS_CARD_H_SMALL : 120;
+  const pos = arrived ? to : from;
+  return (
+    <div style={{
+      position: 'absolute',
+      left: pos.x - w / 2,
+      top: pos.y - h / 2,
+      width: w,
+      height: h,
+      transition: 'left 2s linear, top 2s linear',
+      pointerEvents: 'none',
+      zIndex: 9500,
+      background: '#1a3a6e',
+      borderRadius: small ? 5 : 8,
+      border: '2px solid #2255aa',
+      boxSizing: 'border-box',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }}>
+      <div style={{
+        width: '80%', height: '80%',
+        borderRadius: 3,
+        border: '2px solid #3366cc',
+        boxSizing: 'border-box',
+        background: 'repeating-linear-gradient(45deg, #1a3a6e 0px, #1a3a6e 4px, #1e42a0 4px, #1e42a0 8px)',
+      }} />
+    </div>
+  );
+}
+
 // ── Flying chip overlay (animates from old position to new) ───────────────────
 interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to: { x: number; y: number }; blackInside: boolean; guessTarget: boolean; }
 
@@ -92,11 +144,14 @@ interface Props {
   tryAnotherDropIndex?: number | null;
   onTryAnotherCardSelect?: (idx: number) => void;
   onTryAnotherDropConfirm?: () => void;
+  onPassCardSelect?: (idx: 0 | 1) => void;
+  onPassCardSubmit?: () => void;
+  onPassCardCancel?: () => void;
 }
 
 function getScale() { return (window.innerWidth * 0.6) / CONTAINER_W; }
 
-export default function Table({ state, sendAction, readOnly, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm }: Props) {
+export default function Table({ state, sendAction, readOnly, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm, onPassCardSelect, onPassCardSubmit, onPassCardCancel }: Props) {
   const currentRound = (state.currentRound ?? 1) as RoundNumber;
   const myIndex = state.players.findIndex(p => p.id === state.myId);
   const rotated = myIndex >= 0
@@ -218,7 +273,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
       prevChipLocsForReadinessRef.current = new Map();
     }
 
-    if (readOnly || state.phase !== 'game' || state.blackjackPhase || state.players.length === 0) {
+    if (readOnly || state.phase !== 'game' || state.blackjackPhase || state.passCardPhase || state.players.length === 0) {
       if (readinessTickTimerRef.current) { clearTimeout(readinessTickTimerRef.current); readinessTickTimerRef.current = null; }
       if (showReadinessTicksRef.current) { setShowReadinessTicks(false); showReadinessTicksRef.current = false; }
       return;
@@ -293,6 +348,8 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
   hidingChipsRef.current = hidingChips;
   const flyingElsRef = useRef(new Map<string, HTMLDivElement>());
   const tableSlotElsRef = useRef(new Map<string, HTMLDivElement>());
+  // Local seat refs (used to compute card-slot positions for the pass-1-card flying animation).
+  const localSeatElsRef = useRef(new Map<string, HTMLDivElement>());
 
   // Track shown card for in-place flip animation (including flip-back when server clears it)
   const [shownCard, setShownCard] = useState<{ sourceId: string; idx: 0 | 1; card: Card; faceUp: boolean } | null>(null);
@@ -362,6 +419,22 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     const er = el.getBoundingClientRect(), cr = c.getBoundingClientRect();
     const s = scaleRef.current;
     return { x: (er.left - cr.left + er.width / 2) / s, y: (er.top - cr.top + er.height / 2) / s };
+  }
+
+  // Returns container-relative position (in unscaled units) of a player's card slot center.
+  // Cards row sits inside the seat just below the name: padding(8) + name(~14) + gap(5) = 27 from seat top,
+  // small card height is 78 (so cards center y = 27 + 39 = 66 from seat top). Slot 0 is left card,
+  // slot 1 is right card; centered horizontally with gap 6 (each card 52 wide → centers at ±29).
+  function cardSlotPos(playerId: string, slot: 0 | 1): { x: number; y: number } | null {
+    const seatEl = localSeatElsRef.current.get(playerId);
+    const c = containerRef.current;
+    if (!seatEl || !c) return null;
+    const sr = seatEl.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    const s = scaleRef.current;
+    const seatCenterX = (sr.left - cr.left + sr.width / 2) / s;
+    const seatTopY = (sr.top - cr.top) / s;
+    const cardsCenterY = seatTopY + 8 + 14 + 5 + PASS_CARD_H_SMALL / 2;
+    return { x: seatCenterX + PASS_CARD_SLOT_OFFSETS[slot].dx, y: cardsCenterY };
   }
 
   useLayoutEffect(() => {
@@ -452,8 +525,8 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
         }}>
           <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
 
-            {/* Round / Game Over badge — hidden during blackjack phase (only "Blackjack Sum" shown then) */}
-            {!state.blackjackPhase && (
+            {/* Round / Game Over badge — hidden during blackjack / pass-1-card phases (only their dedicated label is shown) */}
+            {!state.blackjackPhase && !state.passCardPhase && (
               <div style={{ background: 'rgba(0,0,0,0.45)', color: '#f0c040', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
                 {readOnly ? 'GAME OVER' : `ROUND ${currentRound} / 4`}
               </div>
@@ -463,6 +536,13 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             {state.blackjackPhase && (
               <div style={{ background: 'rgba(0,0,0,0.45)', color: '#a0d8ff', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
                 {state.shareInfoLabel}
+              </div>
+            )}
+
+            {/* Pass 1 Card phase label */}
+            {state.passCardPhase && (
+              <div style={{ background: 'rgba(0,0,0,0.45)', color: '#a0d8ff', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
+                Pass 1 Card
               </div>
             )}
 
@@ -592,12 +672,16 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               shortDeck={shortDeck}
               showRestartTick={showRestartTick}
               hasRestartVoted={state.restartVoterIds.includes(player.id)}
-              showShareInfoTick={state.blackjackPhase}
+              showShareInfoTick={state.blackjackPhase || state.passCardPhase}
               showReadinessTick={showReadinessTicks}
               onCardSelect={isMe ? onCardSelect : undefined}
             onPlayerSelect={!isMe && onPlayerSelect ? () => onPlayerSelect(player.id) : undefined}
             actionInProgress={actionInProgress}
-            onSeatElRef={onSeatElRef ? el => onSeatElRef(player.id, el) : undefined}
+            onSeatElRef={el => {
+              if (el) localSeatElsRef.current.set(player.id, el);
+              else localSeatElsRef.current.delete(player.id);
+              if (onSeatElRef) onSeatElRef(player.id, el);
+            }}
             unsuitedJackIndex={state.unsuitedJacks[player.id]}
             unsuitedXIndex={state.unsuitedXs[player.id]}
             unsuitedXRank={state.unsuitedXRank ?? undefined}
@@ -610,6 +694,21 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             tryAnotherDropIndex={isMe ? tryAnotherDropIndex ?? undefined : undefined}
             onTryAnotherCardSelect={isMe ? onTryAnotherCardSelect : undefined}
             onTryAnotherDropConfirm={isMe ? onTryAnotherDropConfirm : undefined}
+            passCardPhaseActive={state.passCardPhase}
+            passCardChoiceIndex={isMe ? state.passCardChoices[state.myId] : undefined}
+            onPassCardSelect={isMe ? onPassCardSelect : undefined}
+            onPassCardSubmit={isMe ? onPassCardSubmit : undefined}
+            onPassCardCancel={isMe ? onPassCardCancel : undefined}
+            passCardAnimatingSlot={(() => {
+              // The slot being animated for this player (where their card is leaving from
+              // / new card is arriving at). Both fromSlot and toSlot are the same for any
+              // given player by spec ("the new card takes the same position that the one
+              // passed was"). Find any animation entry referencing this player.
+              const anim = state.passCardAnimations.find(a => a.toPlayerId === player.id) ??
+                           state.passCardAnimations.find(a => a.fromPlayerId === player.id);
+              if (!anim) return undefined;
+              return anim.toPlayerId === player.id ? anim.toSlot : anim.fromSlot;
+            })()}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );
@@ -680,6 +779,16 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             </svg>
           );
         })()}
+
+        {/* Pass-1-card flying cards (face-down, 2s linear motion from giver slot to recipient slot) */}
+        {state.passCardAnimations.length > 0 && state.passCardAnimations.map((entry, idx) => {
+          const from = cardSlotPos(entry.fromPlayerId, entry.fromSlot);
+          const to = cardSlotPos(entry.toPlayerId, entry.toSlot);
+          if (!from || !to) return null;
+          return (
+            <PassCardFlyingCard key={`${entry.fromPlayerId}-${entry.toPlayerId}-${idx}`} from={from} to={to} small />
+          );
+        })}
 
         {/* Animated chip overlay */}
         {animations.map(entry => (

@@ -141,9 +141,14 @@ interface Props {
   onTryAnotherCardSelect?: (idx: number) => void;
   // Try Another Card addon: face-down card count for other players (when > 2)
   tryAnotherFaceDownCount?: number;
+  // Pass-1-card addon: when set, this card index is highlighted as the chosen card to pass
+  passCardChoiceIndex?: number;
+  // Pass-1-card animation: while a card is flying in/out of this slot, the slot is rendered
+  // as a face-down card placeholder so the visual matches the flying card animation.
+  passCardAnimatingSlot?: 0 | 1;
 }
 
-export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, shortDeck = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, tryAnotherCards, tryAnotherDropIndex, onTryAnotherCardSelect, tryAnotherFaceDownCount }: Props) {
+export default function PlayerHand({ cards, faceDown = false, small = false, blackAndRed = false, shortDeck = false, onCardClick, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, tryAnotherCards, tryAnotherDropIndex, onTryAnotherCardSelect, tryAnotherFaceDownCount, passCardChoiceIndex, passCardAnimatingSlot }: Props) {
   const gap = small ? 6 : 12;
   const w = small ? 52 : 80;
   const h = small ? 78 : 120;
@@ -230,6 +235,8 @@ export default function PlayerHand({ cards, faceDown = false, small = false, bla
           );
         }
 
+        const passSelected = passCardChoiceIndex === idx;
+        const passAnimating = passCardAnimatingSlot === idx;
         return (
           <div
             key={idx}
@@ -237,8 +244,13 @@ export default function PlayerHand({ cards, faceDown = false, small = false, bla
             style={{
               cursor: glowing ? 'pointer' : 'default',
               borderRadius: small ? 5 : 8,
-              boxShadow: glowing ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
+              boxShadow: passSelected
+                ? '0 0 10px 4px rgba(239,68,68,0.75)'
+                : glowing ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
               position: 'relative',
+              // Hide this slot during the pass-1-card flying animation so the
+              // animating card visually appears to leave/enter this slot.
+              visibility: passAnimating ? 'hidden' : 'visible',
             }}
           >
             {isJack
