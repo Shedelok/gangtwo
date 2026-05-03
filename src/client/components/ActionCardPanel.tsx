@@ -22,10 +22,12 @@ function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
   if (state.phase !== 'game') return false;
   // Imprisoned players cannot use any action cards
   if (state.prisonPlayerId === state.myId) return false;
-  // Action cards are unavailable during the pass-1-card pre-round phase
-  if (state.passCardPhase) return false;
   // Game is paused during try-another-card flow
   if (state.tryAnotherCardPlayerId) return false;
+  // Action cards may be used during the pass-1-card phase, except those whose own
+  // conditions prevent them (e.g. Reroll Common needs community cards on the table —
+  // during the pass-1-card phase community cards have not yet been dealt, so its
+  // own condition naturally disables it).
   if (addonId === 'show-1-card-to-1-player') return !state.showCardUsed && !!state.myHoleCards;
   if (addonId === 'action-unsuited-jack') return !state.unsuitedJackUsed && !!state.myHoleCards;
   if (addonId === 'action-unsuited-x') return !state.unsuitedXUsed && !!state.myHoleCards;

@@ -908,7 +908,6 @@ export function dropCard(socketId: string, cardIndex: number): string | null {
 
 export function lockActionCard(socketId: string, addonId: string): string | null {
   if (state.phase !== 'game') return 'Not in game';
-  if (state.passCardPhase) return 'Cannot use action cards during Pass 1 Card phase';
   if (state.tryAnotherCardPlayerId) return 'Game is paused while a player is choosing a card to drop';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
@@ -1091,19 +1090,6 @@ export function buildClientState(socketId: string): ClientGameState {
     }
   }
 
-  const neighborHoleCards: Record<string, [Card, Card]> = {};
-  if (state.phase === 'game' && playerId) {
-    const myIdx = state.players.findIndex((p) => p.id === playerId);
-    if (myIdx >= 0) {
-      const n = state.players.length;
-      const leftNeighbor = state.players[(myIdx - 1 + n) % n];
-      const rightNeighbor = state.players[(myIdx + 1) % n];
-      if (state.enabledAddons.has('see-1-neighbor-cards')) {
-        if (state.holeCards[leftNeighbor.id]) neighborHoleCards[leftNeighbor.id] = state.holeCards[leftNeighbor.id];
-      }
-    }
-  }
-
   const allRevealed = state.phase === 'finished' && state.players.every((p) => state.revealedPlayers.has(p.id));
 
   return {
@@ -1118,7 +1104,6 @@ export function buildClientState(socketId: string): ClientGameState {
     }),
     myId: playerId,
     myHoleCards,
-    neighborHoleCards,
     revealedHoleCards,
     communityCards: [...state.communityCards],
     currentRound: state.phase === 'lobby' ? null : state.currentRound,

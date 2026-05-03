@@ -177,9 +177,12 @@ export default function PlayerSeat({
           blackAndRed={blackAndRed}
           shortDeck={shortDeck}
           onCardClick={
-            isMe && passCardPhaseActive && onPassCardSelect
-              ? (idx) => onPassCardSelect(idx)
-              : (isMe && onCardSelect ? onCardSelect : undefined)
+            // Action-card workflows (when onCardSelect is provided) take priority over
+            // the pass-1-card card selection — the spec allows action cards during the
+            // pass-1-card phase, so during such a workflow card clicks belong to the action.
+            isMe && onCardSelect
+              ? onCardSelect
+              : (isMe && passCardPhaseActive && onPassCardSelect ? (idx) => onPassCardSelect(idx) : undefined)
           }
           unsuitedJackIndex={unsuitedJackIndex}
           unsuitedXIndex={unsuitedXIndex}

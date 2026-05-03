@@ -201,14 +201,6 @@ Functionality: When a new round starts and chips for this new round are placed o
 round are removed as if they were never in the game. Once the game is over and all players have revealed their cards,
 the chips are shown for the players to better analyze the game.
 
-## Addon: See 1 Neighbor's Cards
-
-Short description: "See 1 Neighbor's Cards"
-
-Long description: Besides your own cards you can also see pocket cards of the player next to your left.
-
-Functionality: During the game each player sees the cards of their immediate neighbors on the left face up.
-
 ## Addon: Pass 1 Card
 
 Short description: "Pass 1 Card"
@@ -228,6 +220,9 @@ The new card coming to the player's hand takes the same position that the one pa
 on their positions.
 
 During this phase, the text on the table is "Pass 1 Card".
+
+It is possible to use action cards during this phase, except for the cards that can't be used due to their own
+condition.
 
 ## Share Info Addons
 
@@ -315,7 +310,7 @@ Both action card and the actual card in hand from this addon look the same: they
 similarly to other playing cards have "J" symbol in the top left corner, but also in the center in the card where a
 normal card would have its suit.
 
-### Addon: [A] Unsuited Xrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+### Addon: [A] Unsuited X
 
 Same as "Addon: [A] Unsuited Jack", but instead of Jack a random card Rank (from 2 to A) is determined at the beginning
 of the game and an unsuited card with rank X is available to be taken. X stays the same through all rounds.
@@ -428,14 +423,13 @@ addon names mean leaf nodes with that addon.
 
 ## Positive Addons
 
-1. See 1 Neighbor's Cards
-2. Pass 1 Card
-3.
+1. Pass 1 Card
+2. 
     1. Share Blackjack Sum
     2. Share Number of Faces
-4. [A] Show 1 Card to 1 Player
-5.
+3. [A] Show 1 Card to 1 Player
+4. 
     1. [A] Unsuited Jack
     2. [A] Unsuited X
-6. [A] Reroll Common
-7. [A] Try Another Card
+5. [A] Reroll Common
+6. [A] Try Another Card

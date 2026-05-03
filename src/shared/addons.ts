@@ -51,7 +51,6 @@ export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
 
 /** Positive addons grouping tree as defined in the spec's "Addon Groupings" section. */
 export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
-  { addonId: 'see-1-neighbor-cards' },
   { addonId: 'pass-1-card' },
   { children: [
     { addonId: 'share-blackjack-sum' },
@@ -243,12 +242,6 @@ export const ADDONS: AddonDef[] = [
     short: "Prison",
     long: "On a random round (except the last one), a random player is imprisoned and can't participate in that round. One fewer chip is placed on the table that round.",
     type: 'negative',
-  },
-  {
-    id: 'see-1-neighbor-cards',
-    short: "See 1 Neighbor's Cards",
-    long: "Besides your own cards you can also see pocket cards of the player next to your left.",
-    type: 'positive',
   },
   {
     id: 'pass-1-card',

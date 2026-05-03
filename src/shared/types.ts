@@ -20,7 +20,6 @@ export interface ClientGameState {
   players: PlayerPublicState[];
   myId: string;               // '' if not yet joined
   myHoleCards: [Card, Card] | null;
-  neighborHoleCards: Record<string, [Card, Card]>; // populated when 'see-neighbors-cards' addon is active
   revealedHoleCards: Record<string, [Card, Card]>; // populated per player after they press "reveal cards"
   communityCards: Card[];
   currentRound: RoundNumber | null;

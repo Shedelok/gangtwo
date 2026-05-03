@@ -592,13 +592,12 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
           const { x, y } = getSeatPos(i, n);
           const isMe = player.id === state.myId;
           // In finished phase: show own cards to self always; others only if they revealed
-          // During game with neighbor-cards addons: show neighbor cards face up
           const holeCards = isMe
             ? state.myHoleCards
             : readOnly
               ? (state.revealedHoleCards[player.id] ?? null)
-              : (state.neighborHoleCards[player.id] ?? null);
-          const showFaceDown = !readOnly && !isMe && !state.neighborHoleCards[player.id];
+              : null;
+          const showFaceDown = !readOnly && !isMe;
           const myRound4Chip = myPlayer?.chips.find((c) => c.round === 4);
           const chipOrderCanReveal = !myRound4Chip || state.players
             .filter((p) => p.id !== state.myId)

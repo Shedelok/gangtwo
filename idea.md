@@ -66,13 +66,10 @@
     cannot share further details.
 21. Decide which of you will share with everyone how many cards of a specific
     value they have in their hand
-22. Once the pocket cards have been dealt in Round 1, each of you chooses one
-    of your pocket cards. Everyone then simultaneously passes their chosen card
-    to the player on their left as a pocket card.
-23. All names are hidden (you don't know where is who) and players are random shuffled every time.
-24. On a random round (or during whole game) instead of being placed on the table, chips are randomly distributed to
+22. All names are hidden (you don't know where is who) and players are random shuffled every time.
+23. On a random round (or during whole game) instead of being placed on the table, chips are randomly distributed to
     players (maybe everyone gets same rank chip as their last one). Instead of taking, dropping, stealing players can
     only swap their current chip to the one in someone's hands.
-25. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
+24. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
     they can check how many Jacks are in the deck.
-26. One player once can swap one of their pocket cards with a common card
+25. One player once can swap one of their pocket cards with a common card
