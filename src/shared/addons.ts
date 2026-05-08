@@ -62,6 +62,7 @@ export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
     { addonId: 'action-unsuited-x' },
   ]},
   { addonId: 'action-reroll-common' },
+  { addonId: 'action-swap-with-common' },
   { addonId: 'action-try-another-card' },
 ];
 
@@ -286,6 +287,13 @@ export const ADDONS: AddonDef[] = [
     id: 'action-reroll-common',
     short: "[A] Reroll Common",
     long: "Once per game, one of the players can replace one of the common cards with another random card.",
+    type: 'positive',
+    hasAction: true,
+  },
+  {
+    id: 'action-swap-with-common',
+    short: "[A] Swap With Common",
+    long: "Once per game, one of the players can swap one of their cards with one of the common cards.",
     type: 'positive',
     hasAction: true,
   },

@@ -69,4 +69,3 @@
     only swap their current chip to the one in someone's hands.
 24. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
     they can check how many Jacks are in the deck.
-25. One player once can swap one of their pocket cards with a common card

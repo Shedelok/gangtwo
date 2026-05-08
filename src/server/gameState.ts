@@ -35,10 +35,36 @@ interface ServerGameState {
   showCardUsed: boolean;
   showCardData: { sourceId: string; targetId: string; card: Card; cardIndex: 0 | 1 } | null;
   actionCardLock: { addonId: string; playerId: string } | null;
-  unsuitedJacks: Map<string, number>; // playerId → card index
-  unsuitedXs: Map<string, number>;    // playerId → card index
+  unsuitedJacks: Map<string, number>; // playerId → pocket card index (when held in a player's hand)
+  unsuitedXs: Map<string, number>;    // playerId → pocket card index (when held in a player's hand)
+  // When the unsuited Jack/X has been moved to the common cards (e.g., via swap-with-common),
+  // it sits in this common-card slot index instead of in any player's hand. The spec for
+  // [A] Unsuited Jack states: "This Jack is always unsuited (orange) even if it becomes a
+  // common card." Same applies to [A] Unsuited X.
+  unsuitedJackCommonIndex: number | null;
+  unsuitedXCommonIndex: number | null;
+  // Persistent "used this game" flags for the unsuited Jack/X action cards. Spec: "If unsuited
+  // Jack is discarded at any point of the game, it's just normally discarded, the action card
+  // doesn't return to the table." Once these are set, the action card stays unavailable for the
+  // remainder of the game even if the unsuited card itself is later discarded (e.g., dropped
+  // via try-another-card or rerolled out of a common slot).
+  unsuitedJackUsed: boolean;
+  unsuitedXUsed: boolean;
   unsuitedXRank: string | null;
   rerollCommonUsed: boolean;
+  swapWithCommonUsed: boolean;
+  // Active swap-with-common animation. `pocketUnsuitedRank` / `commonUnsuitedRank` carry
+  // the rank ('J' or X's random rank) when the corresponding flying card is the unsuited
+  // Jack / Unsuited X (in which case clients render it as orange and face up, per spec).
+  swapWithCommonAnimation: {
+    playerId: string;
+    pocketIndex: 0 | 1;
+    commonIndex: number;
+    pocketCard: Card;
+    commonCard: Card;
+    pocketUnsuitedRank: string | null;
+    commonUnsuitedRank: string | null;
+  } | null;
   tryAnotherCardUsed: boolean;
   tryAnotherCardPlayerId: string | null; // player currently in the try-another-card flow
   tryAnotherCardExtraCard: Card | null;  // the extra card drawn from the deck
@@ -84,8 +110,14 @@ const state: ServerGameState = {
   actionCardLock: null,
   unsuitedJacks: new Map(),
   unsuitedXs: new Map(),
+  unsuitedJackCommonIndex: null,
+  unsuitedXCommonIndex: null,
+  unsuitedJackUsed: false,
+  unsuitedXUsed: false,
   unsuitedXRank: null,
   rerollCommonUsed: false,
+  swapWithCommonUsed: false,
+  swapWithCommonAnimation: null,
   tryAnotherCardUsed: false,
   tryAnotherCardPlayerId: null,
   tryAnotherCardExtraCard: null,
@@ -396,7 +428,13 @@ export function startGame(shufflePlayers = true): string | null {
   state.actionCardLock = null;
   state.unsuitedJacks = new Map();
   state.unsuitedXs = new Map();
+  state.unsuitedJackCommonIndex = null;
+  state.unsuitedXCommonIndex = null;
+  state.unsuitedJackUsed = false;
+  state.unsuitedXUsed = false;
   state.rerollCommonUsed = false;
+  state.swapWithCommonUsed = false;
+  state.swapWithCommonAnimation = null;
   state.tryAnotherCardUsed = false;
   state.tryAnotherCardPlayerId = null;
   state.tryAnotherCardExtraCard = null;
@@ -782,8 +820,14 @@ export function finishGame(keepAddons = false): void {
   state.actionCardLock = null;
   state.unsuitedJacks = new Map();
   state.unsuitedXs = new Map();
+  state.unsuitedJackCommonIndex = null;
+  state.unsuitedXCommonIndex = null;
+  state.unsuitedJackUsed = false;
+  state.unsuitedXUsed = false;
   state.unsuitedXRank = null;
   state.rerollCommonUsed = false;
+  state.swapWithCommonUsed = false;
+  state.swapWithCommonAnimation = null;
   state.tryAnotherCardUsed = false;
   state.tryAnotherCardPlayerId = null;
   state.tryAnotherCardExtraCard = null;
@@ -813,10 +857,11 @@ export function finishGame(keepAddons = false): void {
 export function useUnsuitedJack(socketId: string, cardIndex: 0 | 1): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (!state.enabledAddons.has('action-unsuited-jack')) return 'Addon not active';
-  if (state.unsuitedJacks.size > 0) return 'Action already used this game';
+  if (state.unsuitedJackUsed) return 'Action already used this game';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
   state.unsuitedJacks.set(playerId, cardIndex);
+  state.unsuitedJackUsed = true;
   state.actionCardLock = null;
   return null;
 }
@@ -824,10 +869,11 @@ export function useUnsuitedJack(socketId: string, cardIndex: 0 | 1): string | nu
 export function useUnsuitedX(socketId: string, cardIndex: 0 | 1): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (!state.enabledAddons.has('action-unsuited-x')) return 'Addon not active';
-  if (state.unsuitedXs.size > 0) return 'Action already used this game';
+  if (state.unsuitedXUsed) return 'Action already used this game';
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
   state.unsuitedXs.set(playerId, cardIndex);
+  state.unsuitedXUsed = true;
   state.actionCardLock = null;
   return null;
 }
@@ -843,9 +889,74 @@ export function useRerollCommon(socketId: string, cardIndex: number): string | n
   const [[newCard], remaining] = [state.deck.slice(0, 1), state.deck.slice(1)];
   state.communityCards[cardIndex] = newCard;
   state.deck = remaining;
+  // Spec: "This works for any common card (even if it's unsuited)." — if the rerolled common
+  // slot was holding the unsuited Jack/X, the unsuited identity is discarded together with the
+  // old card; the new card from the deck is a normal (suited) card.
+  if (state.unsuitedJackCommonIndex === cardIndex) state.unsuitedJackCommonIndex = null;
+  if (state.unsuitedXCommonIndex === cardIndex) state.unsuitedXCommonIndex = null;
   state.rerollCommonUsed = true;
   state.actionCardLock = null;
   return null;
+}
+
+export function useSwapWithCommon(socketId: string, pocketIndex: 0 | 1, commonIndex: number): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('action-swap-with-common')) return 'Addon not active';
+  if (state.swapWithCommonUsed) return 'Action already used this game';
+  if (pocketIndex !== 0 && pocketIndex !== 1) return 'Invalid pocket index';
+  if (commonIndex < 0 || commonIndex >= state.communityCards.length) return 'Invalid common card index';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  const holeCards = state.holeCards[playerId];
+  if (!holeCards) return 'No hole cards';
+  // Spec: "The selected cards swap places: the player's pocket card replaces the common card and
+  // the common card replaces player's card in their hand."
+  const pocketCard = holeCards[pocketIndex];
+  const commonCard = state.communityCards[commonIndex];
+  state.holeCards[playerId] = pocketIndex === 0
+    ? [commonCard, holeCards[1]]
+    : [holeCards[0], commonCard];
+  state.communityCards[commonIndex] = pocketCard;
+  // Spec ([A] Unsuited Jack): "This Jack is always unsuited (orange) even if it becomes a
+  // common card." Same applies to [A] Unsuited X. Move the unsuited tracking with the card:
+  // pocket → common when the unsuited card was selected from the hand, common → pocket when
+  // the selected common card was the unsuited one.
+  const pocketWasUnsuitedJack = state.unsuitedJacks.get(playerId) === pocketIndex;
+  const pocketWasUnsuitedX = state.unsuitedXs.get(playerId) === pocketIndex;
+  const commonWasUnsuitedJack = state.unsuitedJackCommonIndex === commonIndex;
+  const commonWasUnsuitedX = state.unsuitedXCommonIndex === commonIndex;
+  if (pocketWasUnsuitedJack) {
+    state.unsuitedJacks.delete(playerId);
+    state.unsuitedJackCommonIndex = commonIndex;
+  }
+  if (pocketWasUnsuitedX) {
+    state.unsuitedXs.delete(playerId);
+    state.unsuitedXCommonIndex = commonIndex;
+  }
+  if (commonWasUnsuitedJack) {
+    state.unsuitedJackCommonIndex = null;
+    state.unsuitedJacks.set(playerId, pocketIndex);
+  }
+  if (commonWasUnsuitedX) {
+    state.unsuitedXCommonIndex = null;
+    state.unsuitedXs.set(playerId, pocketIndex);
+  }
+  // Compute unsuited rank for each flying side based on the original (pre-swap) state, so
+  // that the client renders the Jack/X as orange while it's flying between slots.
+  const pocketUnsuitedRank = pocketWasUnsuitedJack ? 'J' : (pocketWasUnsuitedX ? state.unsuitedXRank : null);
+  const commonUnsuitedRank = commonWasUnsuitedJack ? 'J' : (commonWasUnsuitedX ? state.unsuitedXRank : null);
+  state.swapWithCommonUsed = true;
+  state.swapWithCommonAnimation = {
+    playerId, pocketIndex, commonIndex, pocketCard, commonCard,
+    pocketUnsuitedRank, commonUnsuitedRank,
+  };
+  state.actionCardLock = null;
+  return null;
+}
+
+/** Clear swap-with-common animation after the 2-second flying-card animation completes. */
+export function clearSwapWithCommonAnimation(): void {
+  state.swapWithCommonAnimation = null;
 }
 
 export function useTryAnotherCard(socketId: string): string | null {
@@ -1009,6 +1120,11 @@ function maybeFinishPassCardPhase(): boolean {
   }
   // Build animation entries: each card moving from its giver's slot to its recipient's slot.
   const animations: Array<{ fromPlayerId: string; fromSlot: 0 | 1; toPlayerId: string; toSlot: 0 | 1 }> = [];
+  // Spec ([A] Unsuited Jack/X): "If unsuited Jack moves to table or to another player, it
+  // moves normally as any other card." Transfer the unsuited tracking with the card when it
+  // gets passed to another player.
+  const newUnsuitedJacks = new Map<string, number>();
+  const newUnsuitedXs = new Map<string, number>();
   for (let i = 0; i < n; i++) {
     const me = state.players[i];
     const giverIdx = (i + 1) % n; // the player to my right gives me their chosen card
@@ -1022,6 +1138,16 @@ function maybeFinishPassCardPhase(): boolean {
     // takes that same slot, preserving position.
     const incomingCard = giverCards[giverChoice];
     newHoleCards[me.id][myChoice] = incomingCard;
+    // Transfer unsuited tracking: if the giver's chosen card was the unsuited Jack/X, it
+    // becomes mine at the slot the new card now occupies. (My card that I gave away takes
+    // care of itself: the giver of that card sees it transferred via the same loop iteration
+    // for the recipient.)
+    if (state.unsuitedJacks.get(giver.id) === giverChoice) {
+      newUnsuitedJacks.set(me.id, myChoice);
+    }
+    if (state.unsuitedXs.get(giver.id) === giverChoice) {
+      newUnsuitedXs.set(me.id, myChoice);
+    }
     animations.push({
       fromPlayerId: giver.id,
       fromSlot: (giverChoice as 0 | 1),
@@ -1031,7 +1157,19 @@ function maybeFinishPassCardPhase(): boolean {
   }
   for (const p of state.players) {
     if (newHoleCards[p.id]) state.holeCards[p.id] = newHoleCards[p.id];
+    // For each player, the unsuited identity tracking is replaced by the result of the swap.
+    // If a player's old unsuited card was kept (not the one they passed), preserve it.
+    const oldJackIdx = state.unsuitedJacks.get(p.id);
+    if (oldJackIdx !== undefined && state.passCardChoices.get(p.id) !== oldJackIdx) {
+      newUnsuitedJacks.set(p.id, oldJackIdx);
+    }
+    const oldXIdx = state.unsuitedXs.get(p.id);
+    if (oldXIdx !== undefined && state.passCardChoices.get(p.id) !== oldXIdx) {
+      newUnsuitedXs.set(p.id, oldXIdx);
+    }
   }
+  state.unsuitedJacks = newUnsuitedJacks;
+  state.unsuitedXs = newUnsuitedXs;
   // End the pass-card phase. Reset readiness; advance to share-info phase or normal
   // round chip distribution as appropriate.
   state.passCardPhase = false;
@@ -1132,11 +1270,15 @@ export function buildClientState(socketId: string): ClientGameState {
     myShownCardOutIndex: (playerId && state.showCardData?.sourceId === playerId) ? state.showCardData.cardIndex : null,
     actionCardLock: state.actionCardLock,
     unsuitedJacks: Object.fromEntries(state.unsuitedJacks),
-    unsuitedJackUsed: state.unsuitedJacks.size > 0,
+    unsuitedJackUsed: state.unsuitedJackUsed,
+    unsuitedJackCommonIndex: state.unsuitedJackCommonIndex,
     unsuitedXs: Object.fromEntries(state.unsuitedXs),
-    unsuitedXUsed: state.unsuitedXs.size > 0,
+    unsuitedXUsed: state.unsuitedXUsed,
+    unsuitedXCommonIndex: state.unsuitedXCommonIndex,
     unsuitedXRank: state.unsuitedXRank,
     rerollCommonUsed: state.rerollCommonUsed,
+    swapWithCommonUsed: state.swapWithCommonUsed,
+    swapWithCommonAnimation: state.swapWithCommonAnimation,
     tryAnotherCardUsed: state.tryAnotherCardUsed,
     tryAnotherCardPlayerId: state.tryAnotherCardPlayerId,
     myTryAnotherCards: (playerId && state.tryAnotherCardPlayerId === playerId && state.holeCards[playerId] && state.tryAnotherCardExtraCard)

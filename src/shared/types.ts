@@ -44,12 +44,36 @@ export interface ClientGameState {
   myShownCardIndex: 0 | 1 | null;    // which card index (0 or 1) of the source player was shown
   myShownCardOutIndex: 0 | 1 | null; // index of my card I am currently showing to someone else (null if not showing)
   actionCardLock: { addonId: string; playerId: string } | null; // which player is currently using which action card
-  unsuitedJacks: Record<string, number>; // playerId → card index (0 or 1) of unsuited jack
+  unsuitedJacks: Record<string, number>; // playerId → pocket card index (0 or 1) of unsuited jack
   unsuitedJackUsed: boolean;     // whether the unsuited jack action has been used this game
-  unsuitedXs: Record<string, number>;    // playerId → card index (0 or 1) of unsuited X card
+  // When the unsuited Jack has been moved to a common card slot (e.g., via swap-with-common),
+  // this is its index in `communityCards`. The Jack is rendered as orange (unsuited) at that
+  // common-card slot. Null when the Jack is in a player's hand or not in play.
+  unsuitedJackCommonIndex: number | null;
+  unsuitedXs: Record<string, number>;    // playerId → pocket card index (0 or 1) of unsuited X card
   unsuitedXUsed: boolean;        // whether the unsuited-x action has been used this game
+  // Same as `unsuitedJackCommonIndex` but for the [A] Unsuited X card.
+  unsuitedXCommonIndex: number | null;
   unsuitedXRank: string | null;  // the random rank for the unsuited-x addon, null if not active
   rerollCommonUsed: boolean;     // whether the reroll-common action has been used this game
+  swapWithCommonUsed: boolean;   // whether the swap-with-common action has been used this game
+  // Active swap-with-common animation: while populated, clients render a flying pocket card
+  // (face down) and a flying common card (face up) traveling between the player's slot and the
+  // community card slot for ~2 seconds. The slots involved are hidden in place during the animation.
+  // Cleared by the server 2 seconds after the swap.
+  // `pocketUnsuitedRank` / `commonUnsuitedRank` are non-null when the corresponding flying
+  // card is the unsuited Jack / unsuited X — in which case clients render that flying card
+  // as orange and face up (per spec: "This Jack is always unsuited (orange) even if it
+  // becomes a common card.").
+  swapWithCommonAnimation: {
+    playerId: string;
+    pocketIndex: 0 | 1;
+    commonIndex: number;
+    pocketCard: Card;
+    commonCard: Card;
+    pocketUnsuitedRank: string | null;
+    commonUnsuitedRank: string | null;
+  } | null;
   tryAnotherCardUsed: boolean;   // whether the try-another-card action has been used this game
   tryAnotherCardPlayerId: string | null; // player currently in the try-another-card flow (game paused)
   myTryAnotherCards: Card[] | null; // the 3-card hand visible only to the acting player during try-another-card flow
@@ -88,6 +112,7 @@ export type ClientAction =
   | { type: 'USE_UNSUITED_JACK'; cardIndex: 0 | 1 }
   | { type: 'USE_UNSUITED_X'; cardIndex: 0 | 1 }
   | { type: 'USE_REROLL_COMMON'; cardIndex: number }
+  | { type: 'USE_SWAP_WITH_COMMON'; pocketIndex: 0 | 1; commonIndex: number }
   | { type: 'USE_TRY_ANOTHER_CARD' }
   | { type: 'DROP_CARD'; cardIndex: number }
   | { type: 'LOCK_ACTION_CARD'; addonId: string }

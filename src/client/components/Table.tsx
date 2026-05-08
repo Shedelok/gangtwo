@@ -93,6 +93,99 @@ function PassCardFlyingCard({ from, to, small = true }: { from: { x: number; y: 
   );
 }
 
+const SUIT_SYMBOLS_TABLE: Record<string, string> = {
+  spades: '♠', hearts: '♥', diamonds: '♦', clubs: '♣',
+};
+const RED_SUITS_TABLE = new Set(['hearts', 'diamonds']);
+
+// ── Swap-with-common flying card overlay (2s linear motion). Renders either a
+// face-down small card (pocket card flying to common slot — face-down for everyone except
+// the acting player; we keep face-down to all to keep it visually simple/consistent with
+// the spec which doesn't require revealing) or a face-up community-style card. When
+// `unsuitedRank` is provided, the card is rendered as an orange unsuited card (per
+// "[A] Unsuited Jack/X" spec: the unsuited card is always face up and orange, even while
+// flying between common and pocket slots).
+function SwapFlyingCard({ from, to, faceUp, card, blackAndRed, shortDeck, unsuitedRank, small = true }: {
+  from: { x: number; y: number }; to: { x: number; y: number };
+  faceUp: boolean; card: Card; blackAndRed: boolean; shortDeck: boolean; unsuitedRank?: string | null; small?: boolean;
+}) {
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setArrived(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  const w = small ? PASS_CARD_W_SMALL : 80;
+  const h = small ? PASS_CARD_H_SMALL : 120;
+  const pos = arrived ? to : from;
+  const isUnsuited = !!unsuitedRank;
+  const isRed = RED_SUITS_TABLE.has(card.suit);
+  const suitBg = isRed ? '#c0392b' : '#1a1a2e';
+  const background = blackAndRed ? suitBg : 'white';
+  const color = blackAndRed ? 'white' : (isRed ? '#c0392b' : '#1a1a2e');
+  const symbol = SUIT_SYMBOLS_TABLE[card.suit];
+  // Unsuited cards render face-up (orange) regardless of `faceUp`, since the unsuited
+  // Jack/X is always face up for all players per spec.
+  const renderFaceUp = isUnsuited || faceUp;
+  return (
+    <div style={{
+      position: 'absolute',
+      left: pos.x - w / 2,
+      top: pos.y - h / 2,
+      width: w,
+      height: h,
+      transition: 'left 2s linear, top 2s linear',
+      pointerEvents: 'none',
+      zIndex: 9500,
+      borderRadius: small ? 5 : 8,
+      boxSizing: 'border-box',
+      boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+      ...(renderFaceUp
+        ? { background: isUnsuited ? '#B87333' : background, display: 'flex', flexDirection: shortDeck && !isUnsuited ? 'column' : 'column', padding: small ? 4 : 8 }
+        : { background: '#1a3a6e', border: '2px solid #2255aa', display: 'flex', alignItems: 'center', justifyContent: 'center' }),
+    }}>
+      {renderFaceUp ? (
+        isUnsuited ? (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color: '#fff' }}>
+              <span style={{ fontSize: small ? 12 : 18, fontWeight: 'bold' }}>{unsuitedRank}</span>
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: small ? 20 : 32, color: '#fff', fontWeight: 'bold' }}>
+              {unsuitedRank}
+            </div>
+          </>
+        ) : shortDeck ? (
+          <>
+            <div style={{ height: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+              <span style={{ fontSize: small ? 24 : 36, fontWeight: 'bold', lineHeight: 1 }}>{card.rank}</span>
+            </div>
+            <div style={{ height: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+              <span style={{ fontSize: small ? 24 : 36, lineHeight: 1 }}>{symbol}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, color }}>
+              <span style={{ fontSize: small ? 12 : 18, fontWeight: 'bold' }}>{card.rank}</span>
+              <span style={{ fontSize: small ? 10 : 14 }}>{symbol}</span>
+            </div>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: small ? 20 : 32, color }}>
+              {symbol}
+            </div>
+          </>
+        )
+      ) : (
+        <div style={{
+          width: '80%', height: '80%',
+          borderRadius: 3,
+          border: '2px solid #3366cc',
+          boxSizing: 'border-box',
+          background: 'repeating-linear-gradient(45deg, #1a3a6e 0px, #1a3a6e 4px, #1e42a0 4px, #1e42a0 8px)',
+        }} />
+      )}
+    </div>
+  );
+}
+
 // ── Flying chip overlay (animates from old position to new) ───────────────────
 interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to: { x: number; y: number }; blackInside: boolean; guessTarget: boolean; }
 
@@ -350,6 +443,9 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
   const tableSlotElsRef = useRef(new Map<string, HTMLDivElement>());
   // Local seat refs (used to compute card-slot positions for the pass-1-card flying animation).
   const localSeatElsRef = useRef(new Map<string, HTMLDivElement>());
+  // Community card element refs — used to compute community card positions for the
+  // swap-with-common flying animation.
+  const communityCardElsRef = useRef(new Map<number, HTMLDivElement>());
 
   // Track shown card for in-place flip animation (including flip-back when server clears it)
   const [shownCard, setShownCard] = useState<{ sourceId: string; idx: 0 | 1; card: Card; faceUp: boolean } | null>(null);
@@ -435,6 +531,16 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     const seatTopY = (sr.top - cr.top) / s;
     const cardsCenterY = seatTopY + 8 + 14 + 5 + PASS_CARD_H_SMALL / 2;
     return { x: seatCenterX + PASS_CARD_SLOT_OFFSETS[slot].dx, y: cardsCenterY };
+  }
+
+  // Returns container-relative position (in unscaled units) of a community card slot center.
+  function communityCardSlotPos(idx: number): { x: number; y: number } | null {
+    const el = communityCardElsRef.current.get(idx);
+    const c = containerRef.current;
+    if (!el || !c) return null;
+    const er = el.getBoundingClientRect(), cr = c.getBoundingClientRect();
+    const s = scaleRef.current;
+    return { x: (er.left - cr.left + er.width / 2) / s, y: (er.top - cr.top + er.height / 2) / s };
   }
 
   useLayoutEffect(() => {
@@ -547,7 +653,17 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             )}
 
             {/* Community cards */}
-            <CommunityCards cards={state.communityCards} blackAndRed={blackAndRed} shortDeck={shortDeck} onCardClick={onCommonCardClick} />
+            <CommunityCards
+              cards={state.communityCards}
+              blackAndRed={blackAndRed}
+              shortDeck={shortDeck}
+              onCardClick={onCommonCardClick}
+              onCardElRef={(idx, el) => { if (el) communityCardElsRef.current.set(idx, el); else communityCardElsRef.current.delete(idx); }}
+              hiddenIndices={state.swapWithCommonAnimation ? new Set([state.swapWithCommonAnimation.commonIndex]) : undefined}
+              unsuitedJackCommonIndex={state.unsuitedJackCommonIndex}
+              unsuitedXCommonIndex={state.unsuitedXCommonIndex}
+              unsuitedXRank={state.unsuitedXRank}
+            />
 
             {/* Middle chips – fixed dedicated slots for every chip in the game */}
             {(() => {
@@ -705,8 +821,13 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               // passed was"). Find any animation entry referencing this player.
               const anim = state.passCardAnimations.find(a => a.toPlayerId === player.id) ??
                            state.passCardAnimations.find(a => a.fromPlayerId === player.id);
-              if (!anim) return undefined;
-              return anim.toPlayerId === player.id ? anim.toSlot : anim.fromSlot;
+              if (anim) return anim.toPlayerId === player.id ? anim.toSlot : anim.fromSlot;
+              // Swap-with-common: hide the swapping player's pocket slot during animation
+              // (the card image is shown by the flying overlay).
+              if (state.swapWithCommonAnimation && state.swapWithCommonAnimation.playerId === player.id) {
+                return state.swapWithCommonAnimation.pocketIndex;
+              }
+              return undefined;
             })()}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
@@ -788,6 +909,36 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             <PassCardFlyingCard key={`${entry.fromPlayerId}-${entry.toPlayerId}-${idx}`} from={from} to={to} small />
           );
         })}
+
+        {/* Swap-with-common flying cards: pocket card flies to common slot (face-down for everyone),
+            and common card flies to pocket slot (face-up — common cards are public). 2s linear motion.
+            If a flying card is the unsuited Jack/X, it's rendered as an orange (face-up) unsuited card. */}
+        {state.swapWithCommonAnimation && (() => {
+          const anim = state.swapWithCommonAnimation;
+          const pocketPos = cardSlotPos(anim.playerId, anim.pocketIndex);
+          const commonPos = communityCardSlotPos(anim.commonIndex);
+          if (!pocketPos || !commonPos) return null;
+          return (
+            <>
+              <SwapFlyingCard
+                key={`swap-pocket-${anim.playerId}-${anim.pocketIndex}`}
+                from={pocketPos} to={commonPos}
+                faceUp={false} card={anim.pocketCard}
+                blackAndRed={blackAndRed} shortDeck={shortDeck}
+                unsuitedRank={anim.pocketUnsuitedRank}
+                small
+              />
+              <SwapFlyingCard
+                key={`swap-common-${anim.commonIndex}`}
+                from={commonPos} to={pocketPos}
+                faceUp={true} card={anim.commonCard}
+                blackAndRed={blackAndRed} shortDeck={shortDeck}
+                unsuitedRank={anim.commonUnsuitedRank}
+                small
+              />
+            </>
+          );
+        })()}
 
         {/* Animated chip overlay */}
         {animations.map(entry => (

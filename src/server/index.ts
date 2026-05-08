@@ -27,6 +27,8 @@ import {
   useUnsuitedJack,
   useUnsuitedX,
   useRerollCommon,
+  useSwapWithCommon,
+  clearSwapWithCommonAnimation,
   useTryAnotherCard,
   dropCard,
   setPassCardChoice,
@@ -144,6 +146,13 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'USE_REROLL_COMMON':
       error = useRerollCommon(socketId, action.cardIndex);
+      break;
+    case 'USE_SWAP_WITH_COMMON':
+      error = useSwapWithCommon(socketId, action.pocketIndex, action.commonIndex);
+      // Spec: "The chosen cards swap with animation similar to how other objects in the game
+      // move. Each card moves from its origin to destination point. The animation lasts 2 seconds."
+      // Clear the animation marker 2 seconds after the swap is committed.
+      if (!error) setTimeout(() => { clearSwapWithCommonAnimation(); broadcastAll(); }, 2000);
       break;
     case 'USE_TRY_ANOTHER_CARD':
       error = useTryAnotherCard(socketId);

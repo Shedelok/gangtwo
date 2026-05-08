@@ -251,8 +251,8 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
       pointerEvents: onClick ? 'auto' : 'none',
       cursor: onClick ? 'pointer' : 'default',
       borderRadius: 6,
-      border: isUnsuited ? '2px solid #8B5A1A' : '2px solid #4a7a4a',
-      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : addonId === 'action-try-another-card' ? '#1a6b1a' : '#1a2d1a',
+      border: isUnsuited ? '2px solid #8B5A1A' : addonId === 'action-swap-with-common' ? '2px solid #1e3a8a' : '2px solid #4a7a4a',
+      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : addonId === 'action-swap-with-common' ? '#2563eb' : addonId === 'action-try-another-card' ? '#1a6b1a' : '#1a2d1a',
       display: 'flex', flexDirection: 'column',
       padding: '6px 6px',
       userSelect: 'none',
@@ -280,6 +280,11 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
             <polyline points="1,20 1,14 7,14" />
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
           </svg>
+        </div>
+      ) : addonId === 'action-swap-with-common' ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Spec: "a simple white ring (circle with a hole in the middle)" */}
+          <div style={{ width: 36, height: 36, borderRadius: '50%', border: '6px solid #fff', boxSizing: 'border-box', background: 'transparent' }} />
         </div>
       ) : addonId === 'action-try-another-card' ? (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
@@ -406,6 +411,7 @@ export default function App() {
       (!prev.unsuitedJackUsed && state.unsuitedJackUsed) ||
       (!prev.unsuitedXUsed && state.unsuitedXUsed) ||
       (!prev.rerollCommonUsed && state.rerollCommonUsed) ||
+      (!prev.swapWithCommonUsed && state.swapWithCommonUsed) ||
       (!prev.tryAnotherCardUsed && state.tryAnotherCardUsed);
     if (actionCardCommitted) {
       playSound(files.ACTION_CARD_PLAYED, vol, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_PLAYED);
@@ -487,6 +493,7 @@ export default function App() {
         || (prev.addonId === 'action-unsuited-jack' && state.unsuitedJackUsed)
         || (prev.addonId === 'action-unsuited-x' && state.unsuitedXUsed)
         || (prev.addonId === 'action-reroll-common' && state.rerollCommonUsed)
+        || (prev.addonId === 'action-swap-with-common' && state.swapWithCommonUsed)
         || (prev.addonId === 'action-try-another-card' && state.tryAnotherCardUsed);
       if (wasUsed) {
         setFlyingCard(null);
@@ -744,12 +751,21 @@ export default function App() {
             } else if (activeAddonId === 'action-unsuited-x') {
               sendAction({ type: 'USE_UNSUITED_X', cardIndex: idx });
               setActionStep('idle'); setActiveAddonId(null);
+            } else if (activeAddonId === 'action-swap-with-common') {
+              // Swap-with-common: after picking pocket card, move to picking a common card.
+              setActionCardIndex(idx); setActionStep('select-common-card');
             } else {
               setActionCardIndex(idx); setActionStep('select-player');
             }
           } : undefined}
           onPlayerSelect={actionStep === 'select-player' && actionCardIndex !== null ? (playerId) => { sendAction({ type: 'USE_SHOW_CARD', targetPlayerId: playerId, cardIndex: actionCardIndex }); setActionStep('idle'); setActionCardIndex(null); setActiveAddonId(null); } : undefined}
-          onCommonCardClick={actionStep === 'select-card' && activeAddonId === 'action-reroll-common' ? (idx) => { sendAction({ type: 'USE_REROLL_COMMON', cardIndex: idx }); setActionStep('idle'); setActiveAddonId(null); } : undefined}
+          onCommonCardClick={
+            actionStep === 'select-card' && activeAddonId === 'action-reroll-common'
+              ? (idx) => { sendAction({ type: 'USE_REROLL_COMMON', cardIndex: idx }); setActionStep('idle'); setActiveAddonId(null); }
+              : actionStep === 'select-common-card' && activeAddonId === 'action-swap-with-common' && actionCardIndex !== null
+                ? (idx) => { sendAction({ type: 'USE_SWAP_WITH_COMMON', pocketIndex: actionCardIndex, commonIndex: idx }); setActionStep('idle'); setActionCardIndex(null); setActiveAddonId(null); }
+                : undefined
+          }
           onSeatElRef={(id, el) => { if (el) seatElsRef.current.set(id, el); else seatElsRef.current.delete(id); }}
           tryAnotherDropIndex={tryAnotherDropIndex}
           onTryAnotherCardSelect={state.tryAnotherCardPlayerId === state.myId ? (idx: number) => setTryAnotherDropIndex(idx) : undefined}

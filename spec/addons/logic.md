@@ -303,8 +303,11 @@ Long description: Once per game, one of the players can replace one of their car
 discard one of their cards to do so. The Jack has no suit (can't be used for flash).
 
 Functionality: This addon adds an action card. When using the card, the player needs to select one of their cards. After
-that, that card is discarded and the player gets an orange #B87333) Jack. For the rest of the game the player has this
-Jack as one of their cards. This Jack is always face up for all players.
+that, that card is discarded and the player gets an orange #B87333) Jack. This Jack is always face up for all players.
+This Jack is always unsuited (orange) even if it becomes a common card. If unsuited Jack is discarded at any point of
+the game, it's just normally discarded, the action card doesn't return to the table. If unsuited Jack moves to table or
+to another player, it moves normally as any other card. When unsuited Jack is flipped (animation), it flips just as a
+normal card.
 
 Both action card and the actual card in hand from this addon look the same: they have orange (#B87333) background and
 similarly to other playing cards have "J" symbol in the top left corner, but also in the center in the card where a
@@ -350,13 +353,34 @@ Short description: "[A] Reroll Common"
 Long description: Once per game, one of the players can replace one of the common cards with another random card.
 
 Functionality: This addon adds an action card. When using the card, the player needs to select one of the common cards.
-That card is discarded and another card from the deck takes its place. This card can't be used if there are no common
-cards.
+That card is discarded and another card from the deck takes its place. This works for any common card (even if it's
+unsuited). This action card can't be used if there are no common cards.
 
 The action card for this addon has no text, has a simple "refresh" sign image in its center and has a white background.
 
 When this action is commited, the chosen common card flips face down, then it flips again face up, but now it's a new
 card from the deck. Both flips happen with the flipping card animation.
+
+## Addon: [A] Swap With Common
+
+Short description: "[A] Swap With Common"
+
+Long description: Once per game, one of the players can swap one of their cards with one of the common cards.
+
+Functionality: This addon adds an action card. When using the card, the player needs to select one of their cards, then
+select one of the common cards. The selected cards swap places: the player's pocket card replaces the common card and
+the common card replaces player's card in their hand. The cards replace each other in the same slots: the common
+card takes the exact slot the pocket card was occupying in the hand, the pocket card takes the exact slot the common
+card
+was occupying on the table. The new pocket card becomes face down, the new common card becomes
+face up. This action card can't be used if there are no common cards.
+
+The action card for this addon has no text, has a simple white ring (circle with a hole in the middle) in its center and
+has a blue background.
+
+The chosen cards swap with animation similar to how other objects in the game move. Each card moves from its origin to
+destination point. The animation lasts 2 seconds. When the animation completes, both cards are immediately revealed
+(to whom it should be visible to), no flip or transition animation plays at the end.
 
 ## Addon: [A] Try Another Card
 
@@ -432,4 +456,5 @@ addon names mean leaf nodes with that addon.
     1. [A] Unsuited Jack
     2. [A] Unsuited X
 5. [A] Reroll Common
-6. [A] Try Another Card
+6. [A] Swap With Common
+7. [A] Try Another Card
