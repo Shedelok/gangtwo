@@ -253,7 +253,7 @@ Each share info addon works as follows: After the pocket cards in the beginning 
 other aspects of the normal rounds have happened (for example, dealing chips or cards), above each player (including the
 current one) there's a dialogue cloud with the value specific for the addon of their pocket cards as described above.
 The dialogue cloud should be displayed above the player's name.
-The dialogue clouds are displayed on top of any other UI element in the application. It must be above the table, above
+The dialogue clouds are displayed on top of any other UI element in the application, except the hand ranking. It must be above the table, above
 any other UI element of the player the cloud is on, above any UI element of any other player (even when that other
 player has a dialogue cloud as well). Also, there's an addon-specific text written at the middle of the table during
 this phase. No other text is written on the table during this phase. Each player has the normal ready button. Once

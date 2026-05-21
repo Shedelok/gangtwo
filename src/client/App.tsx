@@ -640,7 +640,7 @@ export default function App() {
             <span style={{ color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none', textDecoration: 'underline dotted' }}>Hand Ranking</span>
             {handHintVisible && handHintPos && createPortal(
               <img src="/hand-ranking.png" alt="Hand rankings"
-                style={{ position: 'fixed', top: handHintPos.top, left: handHintPos.left, maxWidth: 320, borderRadius: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.6)', zIndex: 9999 }} />,
+                style={{ position: 'fixed', top: handHintPos.top, left: handHintPos.left, maxWidth: 320, borderRadius: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.6)', zIndex: 20000 }} />,
               document.body
             )}
           </div>

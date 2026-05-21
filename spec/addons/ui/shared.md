@@ -19,7 +19,7 @@ question mark sing corresponds to which addon name.
 
 Above these 2 columns there's a header "Addons" in the same style and color as "Volume" text above it, but in uppercase.
 
-List of addons is always displayed on top any other element in the game. Nothing should block the list of addons, its
+List of addons is always displayed on top of any other element in the game, except the hand ranking. Nothing should block the list of addons, its
 buttons and on-hover descriptions.
 
 # Stop Game Button
