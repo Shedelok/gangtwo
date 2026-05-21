@@ -9,7 +9,6 @@
 - Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
 - Add Russian language
 - Add voting for won/lost at the end (to make sure everyone agrees it's a win)
-- Cards hint should be on top of all other elements (currently addons are above it).
 
 ### Maybe Later
 
@@ -43,29 +42,32 @@
     rankings
     are used for the rest of the game.
 11. You get 3 cards on preflop, but on flop you have to discard one of them.
-12. One player once can swap one of their cards with one of the common cards.
-13. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
+12. One player can once tell all other players 50/50 their rank (all other players see 2 ranks: the actual and a random
     one).
-14. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
-15. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
-16. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
-17. Kickers (non-scoring cards) are reversed (go in reversed order).
-18. If at least one of the community cards in Round 2 is a J, Q, or K, the following
+13. When chip X is taken by a player who is actually Xth in the rank, the chip becomes black
+14. When a black chip is taken by a player who is actually Xth, it stays normal, otherwise it becomes white
+15. Rank X doesn't exist for this game (for example, flush is not a thing just as if it was never a poker hand).
+16. Kickers (non-scoring cards) are reversed (go in reversed order).
+17. If at least one of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the white 1-star chip (from Round 1) must put their
     pocket cards face down in the discard pile and draw new pocket cards from
     the deck.
-19. If none of the community cards in Round 2 is a J, Q, or K, the following
+18. If none of the community cards in Round 2 is a J, Q, or K, the following
     occurs: The player who has the highest-value white chip (from Round 1) must
     put their pocket cards face down in the discard pile and draw new pocket
     cards from the deck.
-20. Decide which of you will share what hand ranking their current hand has
+19. Decide which of you will share what hand ranking their current hand has
     (pocket cards plus current community cards) with the rest of the players. They
     cannot share further details.
-21. Decide which of you will share with everyone how many cards of a specific
+20. Decide which of you will share with everyone how many cards of a specific
     value they have in their hand
-22. All names are hidden (you don't know where is who) and players are random shuffled every time.
-23. On a random round (or during whole game) instead of being placed on the table, chips are randomly distributed to
+21. All names are hidden (you don't know where is who) and players are random shuffled every time.
+22. On a random round (or during whole game) instead of being placed on the table, chips are randomly distributed to
     players (maybe everyone gets same rank chip as their last one). Instead of taking, dropping, stealing players can
     only swap their current chip to the one in someone's hands.
-24. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
+23. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
     they can check how many Jacks are in the deck.
+24. Once per game one of the players can once delete all cards of selected rank from the game (from the deck, hands and
+    table).
+25. Once per game one player can take a specific card which stays with them for the rest of the game. This player
+    doesn't participate in the last round. Perhaps, this card can't be taken on the last round.
