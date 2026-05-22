@@ -430,9 +430,8 @@ action cards. There's one less chip dealt to the table during that round.
 
 When the last round starts and the vacation card takes effect (if any player holds it), all players hear
 "VACATION_STARTED" sound which defaults to spec/base/resources/sounds/airbus-cabin-beep.mp3. During this round there are
-thick vertical wavy blue lines displayed on top of the player (across the whole player's seat) visible to everyone (this
-effect is removed when the
-reveal cards phase starts).
+thick horizontal wavy blue lines displayed on top of the player (across the whole player's seat) visible to everyone
+(this effect is removed when the reveal cards phase starts).
 
 During the reveal cards phase, the vacation player reveals (can press the reveal button) after all players holding a red
 chip have revealed their cards.

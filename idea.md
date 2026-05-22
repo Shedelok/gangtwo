@@ -9,7 +9,6 @@
 - Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
 - Add Russian language
 - Add voting for won/lost at the end (to make sure everyone agrees it's a win)
-- Change vacation lines to be horizontal maybe
 
 
 ### Maybe Later

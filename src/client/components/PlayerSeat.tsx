@@ -62,7 +62,7 @@ interface Props {
   guessTargetedRedChipNumbers?: Set<number>;
   // Vacation addon: player is holding the vacation card (palm emojis around name).
   onVacation?: boolean;
-  // Vacation addon: during the last round (round 4), the vacation player has thick vertical
+  // Vacation addon: during the last round (round 4), the vacation player has thick horizontal
   // wavy blue lines overlaid on their seat (visible to everyone). Removed when the reveal
   // cards phase starts.
   vacationLines?: boolean;
@@ -355,7 +355,7 @@ export default function PlayerSeat({
         </div>
       )}
 
-      {/* Vacation overlay — thick vertical wavy blue lines spanning the whole seat. Visible
+      {/* Vacation overlay — thick horizontal wavy blue lines spanning the whole seat. Visible
           to all players during the last round, removed when reveal-cards phase starts. */}
       {vacationLines && (
         <div style={{
@@ -365,16 +365,17 @@ export default function PlayerSeat({
           pointerEvents: 'none',
           zIndex: 50,
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'space-evenly',
           alignItems: 'stretch',
           overflow: 'hidden',
         }}>
           {Array.from({ length: 5 }, (_, i) => (
-            <svg key={i} width="8" preserveAspectRatio="none"
-              viewBox="0 0 8 100"
-              style={{ height: '100%', opacity: 0.75 }}>
+            <svg key={i} height="8" preserveAspectRatio="none"
+              viewBox="0 0 100 8"
+              style={{ width: '100%', opacity: 0.75 }}>
               <path
-                d="M 4 0 Q 0 12.5 4 25 Q 8 37.5 4 50 Q 0 62.5 4 75 Q 8 87.5 4 100"
+                d="M 0 4 Q 12.5 0 25 4 Q 37.5 8 50 4 Q 62.5 0 75 4 Q 87.5 8 100 4"
                 stroke="#2563eb"
                 strokeWidth="6"
                 fill="none"
