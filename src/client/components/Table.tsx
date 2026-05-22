@@ -406,13 +406,13 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     }
   }, [state]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 5s per-addon timer: hide guesses after each target reveals
+  // 10s per-addon timer: hide guesses after each target reveals
   const [hiddenGuessAddons, setHiddenGuessAddons] = useState<Set<string>>(new Set);
   const guessTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   useEffect(() => {
     for (const [addonId, info] of guessInfo) {
       if (info.targetRevealed && !guessTimersRef.current.has(addonId)) {
-        const t = setTimeout(() => setHiddenGuessAddons(prev => new Set([...prev, addonId])), 5000);
+        const t = setTimeout(() => setHiddenGuessAddons(prev => new Set([...prev, addonId])), 10000);
         guessTimersRef.current.set(addonId, t);
       }
     }

@@ -71,7 +71,7 @@ them in a style of a text a dialogue cloud. Once everyone has
 made a guess, the guesses are fixed and P can reveal their cards as normal. When guesses are fixed, the most popular
 guess is determined. If there are multiple guesses with maximum number of votes, a pure random chooses one of them.
 Guesses of the players who voted for that chosen option get yellow background, other guesses get more subtle more gray
-background and text. 5 seconds after P reveals their cards, all the guesses disappear.
+background and text. 10 seconds after P reveals their cards, all the guesses disappear.
 
 When the same player is under multiple "guess" addons that require guessing the same feature, it is logically and
 visually equal to them being under just one. There's no point in having players to guess the same thing twice.
