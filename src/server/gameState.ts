@@ -68,6 +68,13 @@ interface ServerGameState {
   tryAnotherCardUsed: boolean;
   tryAnotherCardPlayerId: string | null; // player currently in the try-another-card flow
   tryAnotherCardExtraCard: Card | null;  // the extra card drawn from the deck
+  // Vacation addon: once a player takes the vacation card, they hold it until the end of
+  // the game; during the last round (round 4) they are excluded from chip distribution and
+  // cannot take/steal chips or use action cards (similar to Prison). They are also excluded
+  // from win/lose determination after the last round, and during the reveal-cards phase
+  // they reveal after all red-chip holders have revealed.
+  vacationUsed: boolean;
+  vacationPlayerId: string | null;
   blackjackPhase: boolean;
   shareInfoQueue: string[];  // ordered list of share-info addon IDs to process
   shareInfoIndex: number;    // index into shareInfoQueue of the current addon
@@ -121,6 +128,8 @@ const state: ServerGameState = {
   tryAnotherCardUsed: false,
   tryAnotherCardPlayerId: null,
   tryAnotherCardExtraCard: null,
+  vacationUsed: false,
+  vacationPlayerId: null,
   blackjackPhase: false,
   shareInfoQueue: [],
   shareInfoIndex: 0,
@@ -191,6 +200,19 @@ function isPlayerImprisoned(playerId: string): boolean {
          !state.passCardPhase;     // Prison does not apply during pass-1-card pre-round phase either
 }
 
+/**
+ * Returns true if the given player is currently on vacation during the last round
+ * (round 4). Vacation players are excluded from chip distribution, cannot take/steal chips,
+ * cannot use action cards during round 4, and are auto-treated as ready.
+ */
+function isPlayerOnVacationThisRound(playerId: string): boolean {
+  return state.enabledAddons.has('action-vacation') &&
+         state.vacationPlayerId === playerId &&
+         state.currentRound === 4 &&
+         !state.blackjackPhase &&
+         !state.passCardPhase;
+}
+
 /** Returns the set of chip values that are "black" (immovable once taken from the middle). */
 function getBlackChipNumbers(): Set<number> {
   const black = new Set<number>();
@@ -232,11 +254,20 @@ function advanceRound(): void {
     }
     state.currentRound = nextRound as RoundNumber;
     const isPrisonRound = state.enabledAddons.has('prison') && state.prisonRound === nextRound;
-    const chipCount = isPrisonRound ? state.players.length - 1 : state.players.length;
+    // Vacation: during the last round (round 4), if any player holds the vacation card,
+    // one fewer chip is placed on the table and the vacation player is auto-ready.
+    const isLastRoundWithVacation =
+      nextRound === 4 && state.enabledAddons.has('action-vacation') && state.vacationPlayerId !== null;
+    let chipCount = state.players.length;
+    if (isPrisonRound) chipCount -= 1;
+    if (isLastRoundWithVacation) chipCount -= 1;
     state.middleChips = createChipsForRound(nextRound as RoundNumber, chipCount);
     for (const player of state.players) {
       // Imprisoned player is automatically ready during their prison round
       if (isPrisonRound && player.id === state.prisonPlayerId) {
+        player.readyForNextRound = true;
+      } else if (isLastRoundWithVacation && player.id === state.vacationPlayerId) {
+        // Vacation player is automatically ready during the last round
         player.readyForNextRound = true;
       } else {
         player.readyForNextRound = false;
@@ -263,6 +294,10 @@ function checkAndAdvance(): void {
   const excludeIds = new Set<string>();
   if (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId) {
     excludeIds.add(state.prisonPlayerId);
+  }
+  // Vacation: during the last round, the vacation player is excluded from round-completion check.
+  if (state.enabledAddons.has('action-vacation') && state.currentRound === 4 && state.vacationPlayerId) {
+    excludeIds.add(state.vacationPlayerId);
   }
   if (state.phase === 'game' && isRoundComplete(state.players, state.currentRound, excludeIds)) {
     advanceRound();
@@ -438,6 +473,8 @@ export function startGame(shufflePlayers = true): string | null {
   state.tryAnotherCardUsed = false;
   state.tryAnotherCardPlayerId = null;
   state.tryAnotherCardExtraCard = null;
+  state.vacationUsed = false;
+  state.vacationPlayerId = null;
 
   // Prison addon: determine random round R and random player P
   if (state.enabledAddons.has('prison')) {
@@ -462,6 +499,8 @@ export function startGame(shufflePlayers = true): string | null {
   // If prison round is the starting round, set up accordingly.
   // Pre-round phases (pass-1-card, share-info) defer chip distribution, so we only
   // adjust chip count / auto-ready when no pre-round phase is active.
+  // Vacation never matters at game start: it requires the vacation card to be taken
+  // (an action played by a player), which cannot happen on startGame.
   const isPrisonStartRound = state.enabledAddons.has('prison') && state.prisonRound === state.currentRound;
   if (isPrisonStartRound && !state.blackjackPhase && !state.passCardPhase) {
     // Reduce chips by 1 for prison round
@@ -483,6 +522,7 @@ export function discardChip(socketId: string, chipNumber: number): string | null
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
+  if (isPlayerOnVacationThisRound(player.id)) return 'You are on vacation this round';
 
   const idx = player.chips.findIndex(
     (c) => c.round === state.currentRound && c.number === chipNumber
@@ -506,6 +546,7 @@ export function takeFromMiddle(socketId: string, chipNumber: number): string | n
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
+  if (isPlayerOnVacationThisRound(player.id)) return 'You are on vacation this round';
 
   if (player.chips.some((c) => c.round === state.currentRound)) {
     return 'You already hold a chip for this round';
@@ -535,6 +576,7 @@ export function stealChip(
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
+  if (isPlayerOnVacationThisRound(player.id)) return 'You are on vacation this round';
 
   if (player.chips.some((c) => c.round === state.currentRound)) {
     return 'You already hold a chip for this round';
@@ -576,6 +618,7 @@ export function setReady(socketId: string, ready: boolean): string | null {
   const player = getPlayerBySocket(socketId);
   if (!player) return 'Player not found';
   if (isPlayerImprisoned(player.id)) return 'You are imprisoned this round';
+  if (isPlayerOnVacationThisRound(player.id)) return 'You are on vacation this round';
 
   if (state.passCardPhase) {
     // During pass-1-card phase, players can only become ready if they have chosen a card.
@@ -604,12 +647,21 @@ export function setReady(socketId: string, ready: boolean): string | null {
           }
         }
         const isPrisonRoundAfterBJ = state.enabledAddons.has('prison') && state.prisonRound === state.currentRound;
-        const chipCountAfterBJ = isPrisonRoundAfterBJ ? state.players.length - 1 : state.players.length;
+        const isLastRoundWithVacationBJ =
+          state.currentRound === 4 && state.enabledAddons.has('action-vacation') && state.vacationPlayerId !== null;
+        let chipCountAfterBJ = state.players.length;
+        if (isPrisonRoundAfterBJ) chipCountAfterBJ -= 1;
+        if (isLastRoundWithVacationBJ) chipCountAfterBJ -= 1;
         state.middleChips = createChipsForRound(state.currentRound, chipCountAfterBJ);
         // Auto-ready imprisoned player after blackjack phase ends
         if (isPrisonRoundAfterBJ && state.prisonPlayerId) {
           const prisonPlayer = state.players.find(p => p.id === state.prisonPlayerId);
           if (prisonPlayer) prisonPlayer.readyForNextRound = true;
+        }
+        // Auto-ready vacation player when blackjack phase ends on the last round
+        if (isLastRoundWithVacationBJ && state.vacationPlayerId) {
+          const vacationPlayer = state.players.find(p => p.id === state.vacationPlayerId);
+          if (vacationPlayer) vacationPlayer.readyForNextRound = true;
         }
       }
       // else: stay in blackjackPhase for the next share-info addon
@@ -635,6 +687,17 @@ export function revealCards(socketId: string): string | null {
       const theirChip = player.chips.find((c) => c.round === 4);
       if (theirChip && theirChip.number < myChip.number && !state.revealedPlayers.has(player.id)) {
         return 'Wait for players with smaller chips to reveal first';
+      }
+    }
+  }
+  // Spec (Vacation): "During the reveal cards phase, the vacation player reveals (can press
+  // the reveal button) after all players holding a red chip have revealed their cards."
+  if (state.enabledAddons.has('action-vacation') && state.vacationPlayerId === playerId) {
+    for (const player of state.players) {
+      if (player.id === playerId) continue;
+      const theirChip = player.chips.find((c) => c.round === 4);
+      if (theirChip && !state.revealedPlayers.has(player.id)) {
+        return 'Wait for all red-chip holders to reveal first';
       }
     }
   }
@@ -831,6 +894,8 @@ export function finishGame(keepAddons = false): void {
   state.tryAnotherCardUsed = false;
   state.tryAnotherCardPlayerId = null;
   state.tryAnotherCardExtraCard = null;
+  state.vacationUsed = false;
+  state.vacationPlayerId = null;
   state.blackjackPhase = false;
   state.shareInfoQueue = [];
   state.shareInfoIndex = 0;
@@ -959,6 +1024,20 @@ export function clearSwapWithCommonAnimation(): void {
   state.swapWithCommonAnimation = null;
 }
 
+export function useVacation(socketId: string): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('action-vacation')) return 'Addon not active';
+  if (state.vacationUsed) return 'Action already used this game';
+  // Spec: "The vacation card can't be taken during the last round."
+  if (state.currentRound === 4) return 'Cannot take vacation during the last round';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  state.vacationUsed = true;
+  state.vacationPlayerId = playerId;
+  state.actionCardLock = null;
+  return null;
+}
+
 export function useTryAnotherCard(socketId: string): string | null {
   if (state.phase !== 'game') return 'Not in game';
   if (!state.enabledAddons.has('action-try-another-card')) return 'Addon not active';
@@ -1023,6 +1102,7 @@ export function lockActionCard(socketId: string, addonId: string): string | null
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
   if (isPlayerImprisoned(playerId)) return 'You are imprisoned this round';
+  if (isPlayerOnVacationThisRound(playerId)) return 'You are on vacation this round';
   // Race condition guard: if the lock is already held, silently ignore the attempt
   // (spec: "at most one of them enters the usage workflow; the other's attempt is silently ignored").
   // We return null (no error) so the server broadcasts state, letting the client see who holds the lock.
@@ -1191,11 +1271,19 @@ function maybeFinishPassCardPhase(): boolean {
       }
     }
     const isPrisonRound = state.enabledAddons.has('prison') && state.prisonRound === state.currentRound;
-    const chipCount = isPrisonRound ? state.players.length - 1 : state.players.length;
+    const isLastRoundWithVacation =
+      state.currentRound === 4 && state.enabledAddons.has('action-vacation') && state.vacationPlayerId !== null;
+    let chipCount = state.players.length;
+    if (isPrisonRound) chipCount -= 1;
+    if (isLastRoundWithVacation) chipCount -= 1;
     state.middleChips = createChipsForRound(state.currentRound, chipCount);
     if (isPrisonRound && state.prisonPlayerId) {
       const prisonPlayer = state.players.find((p) => p.id === state.prisonPlayerId);
       if (prisonPlayer) prisonPlayer.readyForNextRound = true;
+    }
+    if (isLastRoundWithVacation && state.vacationPlayerId) {
+      const vacationPlayer = state.players.find((p) => p.id === state.vacationPlayerId);
+      if (vacationPlayer) vacationPlayer.readyForNextRound = true;
     }
   }
   return true;
@@ -1281,6 +1369,8 @@ export function buildClientState(socketId: string): ClientGameState {
     swapWithCommonAnimation: state.swapWithCommonAnimation,
     tryAnotherCardUsed: state.tryAnotherCardUsed,
     tryAnotherCardPlayerId: state.tryAnotherCardPlayerId,
+    vacationUsed: state.vacationUsed,
+    vacationPlayerId: state.vacationPlayerId,
     myTryAnotherCards: (playerId && state.tryAnotherCardPlayerId === playerId && state.holeCards[playerId] && state.tryAnotherCardExtraCard)
       ? [state.holeCards[playerId][0], state.holeCards[playerId][1], state.tryAnotherCardExtraCard]
       : null,

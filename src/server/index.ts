@@ -30,6 +30,7 @@ import {
   useSwapWithCommon,
   clearSwapWithCommonAnimation,
   useTryAnotherCard,
+  useVacation,
   dropCard,
   setPassCardChoice,
   clearPassCardAnimations,
@@ -156,6 +157,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'USE_TRY_ANOTHER_CARD':
       error = useTryAnotherCard(socketId);
+      break;
+    case 'USE_VACATION':
+      error = useVacation(socketId);
       break;
     case 'DROP_CARD':
       error = dropCard(socketId, action.cardIndex);

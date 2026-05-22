@@ -78,6 +78,8 @@ export interface ClientGameState {
   tryAnotherCardPlayerId: string | null; // player currently in the try-another-card flow (game paused)
   myTryAnotherCards: Card[] | null; // the 3-card hand visible only to the acting player during try-another-card flow
   otherPlayerCardCount: Record<string, number>; // playerId → card count (only populated when someone has 3 cards)
+  vacationUsed: boolean;             // whether the vacation action card has been used this game
+  vacationPlayerId: string | null;   // player currently holding the vacation card (null if none)
   blackjackPhase: boolean;       // true during any share-info pre-game round
   blackjackSums: Record<string, number>; // playerId → share-info value (only populated during blackjackPhase)
   shareInfoLabel: string;        // label shown on the table during the share-info phase
@@ -114,6 +116,7 @@ export type ClientAction =
   | { type: 'USE_REROLL_COMMON'; cardIndex: number }
   | { type: 'USE_SWAP_WITH_COMMON'; pocketIndex: 0 | 1; commonIndex: number }
   | { type: 'USE_TRY_ANOTHER_CARD' }
+  | { type: 'USE_VACATION' }
   | { type: 'DROP_CARD'; cardIndex: number }
   | { type: 'LOCK_ACTION_CARD'; addonId: string }
   | { type: 'UNLOCK_ACTION_CARD'; addonId: string }

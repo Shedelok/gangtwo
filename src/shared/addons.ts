@@ -64,6 +64,7 @@ export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
   { addonId: 'action-reroll-common' },
   { addonId: 'action-swap-with-common' },
   { addonId: 'action-try-another-card' },
+  { addonId: 'action-vacation' },
 ];
 
 /** Collect all leaf addon IDs from a tree node. */
@@ -301,6 +302,13 @@ export const ADDONS: AddonDef[] = [
     id: 'action-try-another-card',
     short: "[A] Try Another Card",
     long: "Once per game, one of the players can take one card from the deck and add it to their hand. Afterward, this player must drop one of their cards. This can be the card that they have just drawn from the deck.",
+    type: 'positive',
+    hasAction: true,
+  },
+  {
+    id: 'action-vacation',
+    short: "[A] Vacation",
+    long: "Once per game, one of the players can take a special \"Vacation\" card that stays with them until the end of the game. Player holding the vacation card doesn't participate in the last round. This player is not counted when determining win/lose after the last round. The vacation card can't be taken during the last round.",
     type: 'positive',
     hasAction: true,
   },

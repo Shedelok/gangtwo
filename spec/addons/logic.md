@@ -253,7 +253,8 @@ Each share info addon works as follows: After the pocket cards in the beginning 
 other aspects of the normal rounds have happened (for example, dealing chips or cards), above each player (including the
 current one) there's a dialogue cloud with the value specific for the addon of their pocket cards as described above.
 The dialogue cloud should be displayed above the player's name.
-The dialogue clouds are displayed on top of any other UI element in the application, except the hand ranking. It must be above the table, above
+The dialogue clouds are displayed on top of any other UI element in the application, except the hand ranking. It must be
+above the table, above
 any other UI element of the player the cloud is on, above any UI element of any other player (even when that other
 player has a dialogue cloud as well). Also, there's an addon-specific text written at the middle of the table during
 this phase. No other text is written on the table during this phase. Each player has the normal ready button. Once
@@ -392,7 +393,8 @@ this player must drop one of their cards. This can be the card that they have ju
 Functionality: This addon adds an action card. When using this card, the player sees a modal window above their name
 that says "Use 'Try Another Card'?" and buttons under it "Confirm" and "Cancel".
 The player needs
-to click that button for the action card to take effect. Once the action card is played, the player sees one additional
+to click the Confirm button for the action card to take effect. Once the action card is played, the player sees one
+additional
 card where their pocket cards are. The game is logically paused at this moment: other player's can't do anything (can't
 move chips, play action cards, etc.) and are
 just waiting. Other players see that the current player has 3 cards, but they see them face down as usual. The "move to
@@ -405,6 +407,38 @@ spec/base/resources/sounds/moving-plant.mp3.
 
 The action card for this addon has green background. It has 3 vertical rectangles (like bars) displayed on it: first two
 are black and third one is yellow.
+
+## Addon: [A] Vacation
+
+Short description: "[A] Vacation"
+
+Long description: Once per game, one of the players can take a special "Vacation" card that stays with them until the
+end of the game. Player holding the vacation card doesn't participate in the last round. This player is not counted when
+determining win/lose after the last round. The vacation card can't be taken during the last round.
+
+Functionality: This addon adds an action card. When using this card, the player sees a modal window above their name
+that says "Take 'Vacation' card?" and buttons under it "Confirm" and "Cancel".
+The player needs
+to click the Confirm button for the action card to take effect. This action card can be used at
+any stage
+of game before the last round starts. Once the action card is played, the player logically
+holds the
+vacation card for the rest of the game. A palm tree emoji is displayed both before and after their name to indicate
+this. When the last round starts, similarly to how "Prison" addon works, the player holding the vacation card can't
+participate in the round, they cannot take a chip from the table, cannot steal a chip from another player, cannot use
+action cards. There's one less chip dealt to the table during that round.
+
+When the last round starts and the vacation card takes effect (if any player holds it), all players hear
+"VACATION_STARTED" sound which defaults to spec/base/resources/sounds/airbus-cabin-beep.mp3. During this round there are
+thick vertical wavy blue lines displayed on top of the player (across the whole player's seat) visible to everyone (this
+effect is removed when the
+reveal cards phase starts).
+
+During the reveal cards phase, the vacation player reveals (can press the reveal button) after all players holding a red
+chip have revealed their cards.
+
+The action card for this addon has blue background. It also has big palm (palm tree emoji) displayed in the center of
+it.
 
 # Addon Groupings
 
@@ -458,3 +492,4 @@ addon names mean leaf nodes with that addon.
 5. [A] Reroll Common
 6. [A] Swap With Common
 7. [A] Try Another Card
+8. [A] Vacation

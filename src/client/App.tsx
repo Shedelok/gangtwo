@@ -3,13 +3,13 @@ import { createPortal } from 'react-dom';
 import { useWebSocket } from './hooks/useWebSocket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
-import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H } from './components/ActionCardPanel';
+import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H, PalmIcon } from './components/ActionCardPanel';
 import type { ClientGameState } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 
-const AVAILABLE_MP3S = ['bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'moving-plant.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3'];
+const AVAILABLE_MP3S = ['airbus-cabin-beep.mp3', 'bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'moving-plant.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
-type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN' | 'PRISON_TAKEN_EFFECT' | 'CARD_DISCARDED';
+type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN' | 'PRISON_TAKEN_EFFECT' | 'CARD_DISCARDED' | 'VACATION_STARTED';
 const SOUND_DEFAULTS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'bell-1.mp3',
   CHIP_MOVE: 'fast-woosh.mp3',
@@ -19,6 +19,7 @@ const SOUND_DEFAULTS: Record<SoundKey, string> = {
   ACTION_CARD_TAKEN: 'minutochku.mp3',
   PRISON_TAKEN_EFFECT: 'prison-close.mp3',
   CARD_DISCARDED: 'moving-plant.mp3',
+  VACATION_STARTED: 'airbus-cabin-beep.mp3',
 };
 const SOUND_LABELS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'Steal from you',
@@ -29,6 +30,7 @@ const SOUND_LABELS: Record<SoundKey, string> = {
   ACTION_CARD_TAKEN: 'Action card taken',
   PRISON_TAKEN_EFFECT: 'Prison taken effect',
   CARD_DISCARDED: 'Card discarded',
+  VACATION_STARTED: 'Vacation started',
 };
 const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   STEAL_FROM_YOU: 1,
@@ -39,6 +41,7 @@ const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   ACTION_CARD_TAKEN: 1,
   PRISON_TAKEN_EFFECT: 1,
   CARD_DISCARDED: 1,
+  VACATION_STARTED: 1,
 };
 
 const preloadedAudio: Record<string, HTMLAudioElement> = {};
@@ -61,7 +64,7 @@ function playSound(file: string, masterVolume: number, multiplier: number): void
 }
 
 const ADDON_COUNT_BITS = 4; // covers 0–15 negative addons
-const POS_COUNT_BITS = 3;  // covers 0–7 positive addons
+const POS_COUNT_BITS = 4;  // covers 0–15 positive addons
 const RFC4648 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
 function encodeSetup(addonPool: string[], negativeAddonCount: number, positiveAddonCount: number): string {
@@ -240,7 +243,7 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
   const isUnsuited = addonId === 'action-unsuited-jack' || addonId === 'action-unsuited-x';
   const unsuitedRank = addonId === 'action-unsuited-jack' ? 'J' : (unsuitedXRank ?? 'X');
   return createPortal(
-    <div onClick={onClick} style={{
+    <div onClick={onClick} title={label} style={{
       position: 'fixed',
       left: atDest ? to.x : from.x,
       top: atDest ? to.y : from.y,
@@ -251,8 +254,8 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
       pointerEvents: onClick ? 'auto' : 'none',
       cursor: onClick ? 'pointer' : 'default',
       borderRadius: 6,
-      border: isUnsuited ? '2px solid #8B5A1A' : addonId === 'action-swap-with-common' ? '2px solid #1e3a8a' : '2px solid #4a7a4a',
-      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : addonId === 'action-swap-with-common' ? '#2563eb' : addonId === 'action-try-another-card' ? '#1a6b1a' : '#1a2d1a',
+      border: isUnsuited ? '2px solid #8B5A1A' : addonId === 'action-swap-with-common' ? '2px solid #1e3a8a' : addonId === 'action-vacation' ? '2px solid #1e3a8a' : '2px solid #4a7a4a',
+      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : addonId === 'action-swap-with-common' ? '#2563eb' : addonId === 'action-try-another-card' ? '#1a6b1a' : addonId === 'action-vacation' ? '#2563eb' : '#1a2d1a',
       display: 'flex', flexDirection: 'column',
       padding: '6px 6px',
       userSelect: 'none',
@@ -291,6 +294,11 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
           <div style={{ width: 12, height: 40, background: '#000', borderRadius: 2 }} />
           <div style={{ width: 12, height: 40, background: '#000', borderRadius: 2 }} />
           <div style={{ width: 12, height: 40, background: '#f5e642', borderRadius: 2 }} />
+        </div>
+      ) : addonId === 'action-vacation' ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Spec: "big palm (palm tree emoji) displayed in the center of it." */}
+          <PalmIcon size={48} />
         </div>
       ) : (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>{label}</div>
@@ -412,7 +420,8 @@ export default function App() {
       (!prev.unsuitedXUsed && state.unsuitedXUsed) ||
       (!prev.rerollCommonUsed && state.rerollCommonUsed) ||
       (!prev.swapWithCommonUsed && state.swapWithCommonUsed) ||
-      (!prev.tryAnotherCardUsed && state.tryAnotherCardUsed);
+      (!prev.tryAnotherCardUsed && state.tryAnotherCardUsed) ||
+      (!prev.vacationUsed && state.vacationUsed);
     if (actionCardCommitted) {
       playSound(files.ACTION_CARD_PLAYED, vol, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_PLAYED);
     }
@@ -425,6 +434,16 @@ export default function App() {
     // Prison sound: play when entering the prison round (prisonPlayerId becomes non-null)
     if (state.prisonPlayerId && !prev.prisonPlayerId) {
       playSound(files.PRISON_TAKEN_EFFECT, vol, SOUND_VOLUME_MULTIPLIER.PRISON_TAKEN_EFFECT);
+    }
+
+    // Vacation sound: play when the last round (round 4) starts and the vacation card is
+    // held by some player — i.e. when the vacation effect takes hold. Spec: "When the last
+    // round starts and the vacation card takes effect (if any player holds it), all players
+    // hear VACATION_STARTED sound".
+    const vacationEffectActiveNow = !!state.vacationPlayerId && state.currentRound === 4 && !state.blackjackPhase && !state.passCardPhase;
+    const vacationEffectActivePrev = !!prev.vacationPlayerId && prev.currentRound === 4 && !prev.blackjackPhase && !prev.passCardPhase;
+    if (vacationEffectActiveNow && !vacationEffectActivePrev) {
+      playSound(files.VACATION_STARTED, vol, SOUND_VOLUME_MULTIPLIER.VACATION_STARTED);
     }
   }, [state]);
 
@@ -494,7 +513,8 @@ export default function App() {
         || (prev.addonId === 'action-unsuited-x' && state.unsuitedXUsed)
         || (prev.addonId === 'action-reroll-common' && state.rerollCommonUsed)
         || (prev.addonId === 'action-swap-with-common' && state.swapWithCommonUsed)
-        || (prev.addonId === 'action-try-another-card' && state.tryAnotherCardUsed);
+        || (prev.addonId === 'action-try-another-card' && state.tryAnotherCardUsed)
+        || (prev.addonId === 'action-vacation' && state.vacationUsed);
       if (wasUsed) {
         setFlyingCard(null);
       } else {
@@ -787,6 +807,8 @@ export default function App() {
             setActiveAddonId(addonId);
             if (addonId === 'action-try-another-card') {
               setActionStep('confirm-try-another');
+            } else if (addonId === 'action-vacation') {
+              setActionStep('confirm-vacation');
             } else {
               setActionStep('select-card');
             }
@@ -798,6 +820,80 @@ export default function App() {
         />
       )}
       {flyingCard && <FlyingActionCard from={flyingCard.from} to={flyingCard.to} addonId={flyingCard.addonId} label={flyingCard.label} snap={flyingCard.snap} unsuitedXRank={state?.unsuitedXRank} onClick={returningAddonId === flyingCard.addonId ? handleReturnCardClick : undefined} />}
+      {/* Vacation confirmation modal */}
+      {actionStep === 'confirm-vacation' && (() => {
+        const seatEl = state.myId ? seatElsRef.current.get(state.myId) : null;
+        const seatRect = seatEl?.getBoundingClientRect();
+        const modalStyle: React.CSSProperties = seatRect ? {
+          position: 'fixed',
+          left: seatRect.left + seatRect.width / 2,
+          top: seatRect.top - 10,
+          transform: 'translate(-50%, -100%)',
+          zIndex: 9999,
+        } : {
+          position: 'fixed',
+          left: '50%',
+          top: '40%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 9999,
+        };
+        return createPortal(
+          <div style={modalStyle}>
+            <div style={{
+              background: '#1e293b',
+              border: '1px solid #475569',
+              borderRadius: 10,
+              padding: '12px 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+            }}>
+              <div style={{ color: '#e2e8f0', fontSize: 13, textAlign: 'center' }}>Take 'Vacation' card?</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => {
+                    sendAction({ type: 'USE_VACATION' });
+                    setActionStep('idle');
+                    setActiveAddonId(null);
+                  }}
+                  style={{
+                    padding: '6px 20px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: '#166534',
+                    color: '#bbf7d0',
+                    fontSize: 13,
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}>
+                  Confirm
+                </button>
+                <button
+                  onClick={() => {
+                    if (activeAddonId) sendAction({ type: 'UNLOCK_ACTION_CARD', addonId: activeAddonId });
+                    setActionStep('idle');
+                    setActiveAddonId(null);
+                  }}
+                  style={{
+                    padding: '6px 20px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: '#7f1c1c',
+                    color: '#fca5a5',
+                    fontSize: 13,
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
       {/* Try Another Card confirmation modal */}
       {actionStep === 'confirm-try-another' && (() => {
         const seatEl = state.myId ? seatElsRef.current.get(state.myId) : null;

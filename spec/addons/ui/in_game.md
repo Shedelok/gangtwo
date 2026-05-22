@@ -20,6 +20,8 @@ On the right side of the main table, there is a rectangular table for action car
 
 Each card is a rectangle of the same size. Each card corresponds to one addon present in the game.
 
+When a player hovers over an action card, a tooltip with the addon's name is shown.
+
 ## Using an Action Card
 
 If the action is available to the player, they can click the card and start workflow of using it.

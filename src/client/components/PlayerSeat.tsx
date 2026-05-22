@@ -60,6 +60,12 @@ interface Props {
   striped?: boolean;
   imprisoned?: boolean;
   guessTargetedRedChipNumbers?: Set<number>;
+  // Vacation addon: player is holding the vacation card (palm emojis around name).
+  onVacation?: boolean;
+  // Vacation addon: during the last round (round 4), the vacation player has thick vertical
+  // wavy blue lines overlaid on their seat (visible to everyone). Removed when the reveal
+  // cards phase starts.
+  vacationLines?: boolean;
   tryAnotherCards?: Card[];
   tryAnotherFaceDownCount?: number;
   tryAnotherDropIndex?: number;
@@ -82,7 +88,7 @@ export default function PlayerSeat({
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
   blackAndRed = false, shortDeck = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
-  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm,
+  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, onVacation = false, vacationLines = false, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm,
   passCardPhaseActive = false, passCardChoiceIndex, onPassCardSelect, onPassCardSubmit, onPassCardCancel, passCardAnimatingSlot,
   style,
 }: Props) {
@@ -150,8 +156,9 @@ export default function PlayerSeat({
 
       {/* Name */}
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontSize: 12, fontWeight: 'bold', color: isMe ? '#90c0ff' : '#bbb', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>
-          {player.name}{isMe ? ' (you)' : ''}
+        <div style={{ fontSize: 12, fontWeight: 'bold', color: isMe ? '#90c0ff' : '#bbb', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>
+          {/* Vacation: palm tree emoji before and after the name */}
+          {onVacation ? '\u{1F334} ' : ''}{player.name}{isMe ? ' (you)' : ''}{onVacation ? ' \u{1F334}' : ''}
         </div>
         {showRestartTick && (
           <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: hasRestartVoted ? '#4ade80' : '#f87171', pointerEvents: 'none' }}>{hasRestartVoted ? '✓' : '✕'}</span>
@@ -314,8 +321,8 @@ export default function PlayerSeat({
         );
       })()}
 
-      {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size; hidden when imprisoned or during pass-card phase */}
-      {!readOnly && isMe && !passCardPhaseActive && !tryAnotherCards && !actionInProgress && !imprisoned && (
+      {/* Ready — only shown to the player themselves, absolutely positioned to not affect seat size; hidden when imprisoned, on vacation in the last round, or during pass-card phase */}
+      {!readOnly && isMe && !passCardPhaseActive && !tryAnotherCards && !actionInProgress && !imprisoned && !vacationLines && (
         <button
           style={{
             ...btn,
@@ -344,6 +351,36 @@ export default function PlayerSeat({
         }}>
           {Array.from({ length: 7 }, (_, i) => (
             <div key={i} style={{ width: 3, background: '#000', opacity: 0.7 }} />
+          ))}
+        </div>
+      )}
+
+      {/* Vacation overlay — thick vertical wavy blue lines spanning the whole seat. Visible
+          to all players during the last round, removed when reveal-cards phase starts. */}
+      {vacationLines && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: 10,
+          pointerEvents: 'none',
+          zIndex: 50,
+          display: 'flex',
+          justifyContent: 'space-evenly',
+          alignItems: 'stretch',
+          overflow: 'hidden',
+        }}>
+          {Array.from({ length: 5 }, (_, i) => (
+            <svg key={i} width="8" preserveAspectRatio="none"
+              viewBox="0 0 8 100"
+              style={{ height: '100%', opacity: 0.75 }}>
+              <path
+                d="M 4 0 Q 0 12.5 4 25 Q 8 37.5 4 50 Q 0 62.5 4 75 Q 8 87.5 4 100"
+                stroke="#2563eb"
+                strokeWidth="6"
+                fill="none"
+                strokeLinecap="round"
+              />
+            </svg>
           ))}
         </div>
       )}

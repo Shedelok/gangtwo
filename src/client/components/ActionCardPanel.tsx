@@ -2,10 +2,26 @@ import React from 'react';
 import type { ClientGameState } from '@shared/types';
 import { ADDONS } from '@shared/addons';
 
-export type ActionWorkflowStep = 'idle' | 'select-card' | 'select-player' | 'select-common-card' | 'confirm-try-another';
+export type ActionWorkflowStep = 'idle' | 'select-card' | 'select-player' | 'select-common-card' | 'confirm-try-another' | 'confirm-vacation';
 
 export const CARD_W = 80;
 export const CARD_H = 110;
+
+/**
+ * Palm tree emoji used on the [A] Vacation action card. Per spec, the action card "has
+ * big palm (palm tree emoji) displayed in the center of it" — we render the actual
+ * U+1F334 palm tree emoji at the requested size.
+ */
+export function PalmIcon({ size = 48 }: { size?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{ fontSize: size, lineHeight: 1, display: 'inline-block' }}
+    >
+      {'\u{1F334}'}
+    </span>
+  );
+}
 
 interface Props {
   state: ClientGameState;
@@ -22,6 +38,8 @@ function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
   if (state.phase !== 'game') return false;
   // Imprisoned players cannot use any action cards
   if (state.prisonPlayerId === state.myId) return false;
+  // Vacation player cannot use action cards during the last round (round 4).
+  if (state.vacationPlayerId === state.myId && state.currentRound === 4) return false;
   // Game is paused during try-another-card flow
   if (state.tryAnotherCardPlayerId) return false;
   // Action cards may be used during the pass-1-card phase, except those whose own
@@ -34,6 +52,8 @@ function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
   if (addonId === 'action-reroll-common') return !state.rerollCommonUsed && state.communityCards.length > 0;
   if (addonId === 'action-swap-with-common') return !state.swapWithCommonUsed && state.communityCards.length > 0 && !!state.myHoleCards;
   if (addonId === 'action-try-another-card') return !state.tryAnotherCardUsed && !!state.myHoleCards;
+  // Vacation: cannot be used during the last round (round 4)
+  if (addonId === 'action-vacation') return !state.vacationUsed && state.currentRound !== null && state.currentRound < 4;
   return false;
 }
 
@@ -44,6 +64,7 @@ function isAddonUsed(addonId: string, state: ClientGameState): boolean {
   if (addonId === 'action-reroll-common') return state.rerollCommonUsed;
   if (addonId === 'action-swap-with-common') return state.swapWithCommonUsed;
   if (addonId === 'action-try-another-card') return state.tryAnotherCardUsed;
+  if (addonId === 'action-vacation') return state.vacationUsed;
   return false;
 }
 
@@ -72,6 +93,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
   const lockedByOther = !!state.actionCardLock && state.actionCardLock.playerId !== state.myId;
   const iAmUsingACard = step !== 'idle';
   const iAmImprisoned = state.prisonPlayerId === state.myId;
+  const iAmOnVacationLastRound = state.vacationPlayerId === state.myId && state.currentRound === 4;
 
   const handleCardClick = (addonId: string) => {
     if (lockedByOther) return;
@@ -97,21 +119,22 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
           const active = step !== 'idle' && activeAddonId === addon.id;
           const locked = (lockedByOther && state.actionCardLock?.addonId === addon.id) || returningAddonId === addon.id;
           // Spec: "When an action card is not available for use for any reason, the card is dimmed"
-          const dimmed = !active && (iAmImprisoned || (lockedByOther && !locked) || iAmUsingACard || !isAddonAvailable(addon.id, state));
+          const dimmed = !active && (iAmImprisoned || iAmOnVacationLastRound || (lockedByOther && !locked) || iAmUsingACard || !isAddonAvailable(addon.id, state));
           return (
             <div
               key={addon.id}
               ref={el => onCardElRef(addon.id, el)}
               onClick={() => handleCardClick(addon.id)}
+              title={addon.short}
               style={{
                 width: CARD_W, height: CARD_H,
                 borderRadius: 6,
                 border: active
                   ? '2px solid #f87171'
-                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '2px solid #8B5A1A' : addon.id === 'action-swap-with-common' ? '2px solid #1e3a8a' : '2px solid #4a7a4a',
+                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '2px solid #8B5A1A' : addon.id === 'action-swap-with-common' ? '2px solid #1e3a8a' : addon.id === 'action-vacation' ? '2px solid #1e3a8a' : '2px solid #4a7a4a',
                 background: active
                   ? '#3d1515'
-                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : addon.id === 'action-swap-with-common' ? '#2563eb' : addon.id === 'action-try-another-card' ? '#1a6b1a' : '#1a2d1a',
+                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : addon.id === 'action-swap-with-common' ? '#2563eb' : addon.id === 'action-try-another-card' ? '#1a6b1a' : addon.id === 'action-vacation' ? '#2563eb' : '#1a2d1a',
                 display: 'flex', flexDirection: 'column',
                 padding: '6px 6px', cursor: (locked || dimmed) ? 'default' : 'pointer',
                 userSelect: 'none',
@@ -163,7 +186,13 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
                   <div style={{ width: 12, height: 40, background: '#f5e642', borderRadius: 2 }} />
                 </div>
               )}
-              {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'action-unsuited-x' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && addon.id !== 'action-swap-with-common' && addon.id !== 'action-try-another-card' && (
+              {!active && addon.id === 'action-vacation' && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {/* Spec: "big palm (palm tree emoji) displayed in the center of it." */}
+                  <PalmIcon size={48} />
+                </div>
+              )}
+              {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'action-unsuited-x' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && addon.id !== 'action-swap-with-common' && addon.id !== 'action-try-another-card' && addon.id !== 'action-vacation' && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>
                   {addon.short}
                 </div>

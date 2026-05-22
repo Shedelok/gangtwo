@@ -253,6 +253,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
   const myPlayer = state.players.find(p => p.id === state.myId);
   const iHaveCurrentRoundChip = !!myPlayer?.chips.some(c => c.round === currentRound);
   const amIImprisoned = state.prisonPlayerId === state.myId;
+  const amIOnVacationLastRound = state.vacationPlayerId === state.myId && currentRound === 4 && !state.blackjackPhase && !state.passCardPhase;
   const myCardsRevealed = !!state.revealedHoleCards[state.myId];
   const allCardsRevealed = readOnly && state.players.every(p => !!state.revealedHoleCards[p.id]);
   const showRestartTick = allCardsRevealed;
@@ -383,9 +384,12 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
     }
     prevChipLocsForReadinessRef.current = currLocs;
 
-    // Imprisoned players are excluded from the "all hold" check — they don't get a chip
+    // Imprisoned players and vacation players (during the last round) are excluded from
+    // the "all hold" check — they don't get a chip
     const allHold = state.players.every(p =>
-      (state.prisonPlayerId === p.id) || p.chips.some(c => c.round === currentRound)
+      (state.prisonPlayerId === p.id) ||
+      (state.vacationPlayerId === p.id && currentRound === 4) ||
+      p.chips.some(c => c.round === currentRound)
     );
 
     if (!allHold || chipMoved) {
@@ -687,7 +691,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                             <ChipCircle chip={chip} size={30} blackInside={blackNumbers.includes(chip.number)} guessTarget={chip.round === 4 && guessTargetedRedChipNumbers.has(chip.number)} />
                           </ChipAnimContext.Provider>
                         </div>
-                        {!readOnly && !amIImprisoned && (
+                        {!readOnly && !amIImprisoned && !amIOnVacationLastRound && (
                           <button
                             onClick={inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? () => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number }) : undefined}
                             style={{ padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'pointer' : 'default' }}>
@@ -721,11 +725,20 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               const theirChip = p.chips.find((c) => c.round === 4);
               return !theirChip || theirChip.number >= myRound4Chip.number || !!state.revealedHoleCards[p.id];
             });
+          // Spec (Vacation): "During the reveal cards phase, the vacation player reveals
+          // (can press the reveal button) after all players holding a red chip have revealed
+          // their cards."
+          const vacationOrderCanReveal = state.vacationPlayerId !== state.myId || state.players
+            .filter((p) => p.id !== state.myId)
+            .every((p) => {
+              const theirChip = p.chips.find((c) => c.round === 4);
+              return !theirChip || !!state.revealedHoleCards[p.id];
+            });
           // Block reveal if any active guess addon targets me and isn't locked yet
           const guessBlock = isMe && [...guessInfo.values()].some(
             info => info.targetId === state.myId && !info.locked
           );
-          const canReveal = chipOrderCanReveal && !guessBlock;
+          const canReveal = chipOrderCanReveal && vacationOrderCanReveal && !guessBlock;
           // Show dark gray diagonal stripes on the player's own cards when they are a
           // guess target and guessing for them is still pending (not yet locked).
           // Spec: "During the guessing phase if the current player is going to be guessed
@@ -776,7 +789,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
           return (
             <PlayerSeat key={player.id} player={player} isMe={isMe}
               holeCards={holeCards} showFaceDown={showFaceDown}
-              currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip || amIImprisoned}
+              currentRound={currentRound} iHaveCurrentRoundChip={iHaveCurrentRoundChip || amIImprisoned || amIOnVacationLastRound}
               sendAction={sendAction} readOnly={readOnly} myCardsRevealed={myCardsRevealed}
               canReveal={canReveal}
               guessRankUIs={guessRankUIs}
@@ -803,6 +816,8 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             shownCardInfo={shownCard?.sourceId === player.id ? { idx: shownCard.idx, card: shownCard.card, faceUp: shownCard.faceUp } : (isMe && sourceShownCard ? { idx: sourceShownCard.idx, card: sourceShownCard.card, faceUp: sourceShownCard.faceUp } : null)}
             striped={showStripes}
             imprisoned={!readOnly && state.prisonPlayerId === player.id}
+            onVacation={state.vacationPlayerId === player.id}
+            vacationLines={!readOnly && state.vacationPlayerId === player.id && state.currentRound === 4 && !state.blackjackPhase && !state.passCardPhase}
             guessTargetedRedChipNumbers={guessTargetedRedChipNumbers}
             tryAnotherCards={isMe ? state.myTryAnotherCards ?? undefined : undefined}
             tryAnotherFaceDownCount={(!isMe && state.otherPlayerCardCount[player.id]) ? state.otherPlayerCardCount[player.id] : undefined}
