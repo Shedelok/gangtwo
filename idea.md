@@ -8,7 +8,6 @@
   player).
 - Add voting for won/lost at the end (to make sure everyone agrees it's a win)
 
-
 ### Maybe Later
 
 - (Maybe) Make chips clickable
@@ -68,3 +67,7 @@
     only swap their current chip to the one in someone's hands.
 23. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
     they can check how many Jacks are in the deck.
+24. Share info round: each player reveals whether their pocket cards are suited (same suit) or off-suit.
+25. Share info round: each player reveals absolute value of differences of their cards (i.e. distance between their
+    ranks).
+26. [A] drop 1 card
