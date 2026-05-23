@@ -59,3 +59,16 @@
   padding: 4px;
   user-select: none;
 }
+
+/* [A] Destroy all Xs: top→bottom wipe. The card visual is progressively clipped from the
+   top down with constant (linear) speed over 5 seconds. After the animation completes the
+   slot is empty (the server clears destroyAllXsAnimatingRank, which makes the client render
+   a blank slot instead). */
+@keyframes destroy-wipe-top-to-bottom {
+  from { clip-path: inset(0% 0 0 0); }
+  to   { clip-path: inset(100% 0 0 0); }
+}
+
+.destroy-wipe {
+  animation: destroy-wipe-top-to-bottom 5s linear forwards;
+}

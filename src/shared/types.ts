@@ -80,6 +80,21 @@ export interface ClientGameState {
   otherPlayerCardCount: Record<string, number>; // playerId → card count (only populated when someone has 3 cards)
   vacationUsed: boolean;             // whether the vacation action card has been used this game
   vacationPlayerId: string | null;   // player currently holding the vacation card (null if none)
+  // [A] Destroy all Xs addon: once-per-game flag and the set of ranks that have been destroyed.
+  // Any card (deck/community/pocket) whose rank is in this set is treated as discarded — the
+  // client renders such slots as blank (other cards do not move to fill the space).
+  destroyAllXsUsed: boolean;
+  destroyedRanks: string[];
+  // Per-player destroyed pocket slot indices. Allows the client to render face-down pocket
+  // slots as blank when the underlying card's rank is destroyed (otherwise the viewer can't
+  // know which face-down slots to blank). Always populated for every player whenever any
+  // destroyed ranks exist.
+  destroyedPocketSlots: Record<string, number[]>;
+  // While non-null, every slot whose card has this rank is rendered with a 5-second
+  // top→bottom wipe animation (spec: "The card disappears top to bottom with constant speed.
+  // The animation takes 5 seconds. All cards disappear at the same time."). Once the server
+  // clears this field, the slots transition to their final blank state.
+  destroyAllXsAnimatingRank: string | null;
   blackjackPhase: boolean;       // true during any share-info pre-game round
   blackjackSums: Record<string, number>; // playerId → share-info value (only populated during blackjackPhase)
   shareInfoLabel: string;        // label shown on the table during the share-info phase
@@ -117,6 +132,7 @@ export type ClientAction =
   | { type: 'USE_SWAP_WITH_COMMON'; pocketIndex: 0 | 1; commonIndex: number }
   | { type: 'USE_TRY_ANOTHER_CARD' }
   | { type: 'USE_VACATION' }
+  | { type: 'USE_DESTROY_ALL_XS'; rank: string }
   | { type: 'DROP_CARD'; cardIndex: number }
   | { type: 'LOCK_ACTION_CARD'; addonId: string }
   | { type: 'UNLOCK_ACTION_CARD'; addonId: string }

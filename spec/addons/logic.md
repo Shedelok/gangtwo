@@ -409,6 +409,36 @@ spec/base/resources/sounds/moving-plant.mp3.
 The action card for this addon has green background. It has 3 vertical rectangles (like bars) displayed on it: first two
 are black and third one is yellow.
 
+## Addon: [A] Destroy all Xs
+
+Short description: "[A] Destroy all Xs"
+
+Long description: Once per game, one of the players can destroy all cards of chosen rank R. Destroying cards discards
+all of them whether they are in the deck, on the table or in players' hands.
+
+Functionality: This addon adds an action card. When using this card, the player sees a list of all ranks of cards that
+participate in the game, given the current game configuration like active addons, regardless of whether any card of
+such rank is still in the game. The list is hidden behind the "Choose rank" button that, when pressed, displays a
+pop-up list. If player selects one of the ranks, the pop-up list closes and that rank is shown instead of "Choose rank".
+The player can change their selection. If the player selects one of the ranks and
+presses the confirmation button, the action card is played
+and
+all cards of chosen rank are discarded. The confirmation button reads "Select rank to destroy" (and is inactive) when no
+rank
+is selected and
+"Destroy Jacks" or "Destroy 8s" or similar with the corresponding rank when a rank is selected. The list of ranks
+displays maximum 8 elements and is scrollable to navigate to more, similar to "guess rank" functionality. If some of the
+common
+cards
+are discarded, the space they were taking stays blank (other cards don't change their position because of this). Same
+with pocket cards - other cards don't change their position if some other are discarded.
+
+When the action card is played, all players hear "CARD_DISCARDED" sound. The cards that are being destroyed by this addon
+are not disappearing instantly, instead an animation is played. The card disappears top to bottom with constant speed.
+The animation takes 5 seconds. All cards disappear at the same time.
+
+The action card for this addon has black background. It also has big white skull (emoji) displayed in the center of it.
+
 ## Addon: [A] Vacation
 
 Short description: "[A] Vacation"
@@ -492,4 +522,5 @@ addon names mean leaf nodes with that addon.
 5. [A] Reroll Common
 6. [A] Swap With Common
 7. [A] Try Another Card
-8. [A] Vacation
+8. [A] Destroy all Xs
+9. [A] Vacation

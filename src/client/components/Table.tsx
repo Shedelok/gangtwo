@@ -667,6 +667,8 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               unsuitedJackCommonIndex={state.unsuitedJackCommonIndex}
               unsuitedXCommonIndex={state.unsuitedXCommonIndex}
               unsuitedXRank={state.unsuitedXRank}
+              destroyedRanks={new Set(state.destroyedRanks)}
+              destroyAllXsAnimatingRank={state.destroyAllXsAnimatingRank}
             />
 
             {/* Middle chips – fixed dedicated slots for every chip in the game */}
@@ -844,6 +846,9 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               }
               return undefined;
             })()}
+            destroyedRanks={state.destroyedRanks.length > 0 ? new Set(state.destroyedRanks) : undefined}
+            destroyedSlots={state.destroyedPocketSlots[player.id] ? new Set(state.destroyedPocketSlots[player.id]) : undefined}
+            destroyAllXsAnimatingRank={state.destroyAllXsAnimatingRank}
             style={{ position: 'absolute', left: x, top: y, transform: 'translate(-50%, -50%)' }}
             />
           );

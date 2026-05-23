@@ -64,6 +64,7 @@ export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
   { addonId: 'action-reroll-common' },
   { addonId: 'action-swap-with-common' },
   { addonId: 'action-try-another-card' },
+  { addonId: 'action-destroy-all-xs' },
   { addonId: 'action-vacation' },
 ];
 
@@ -302,6 +303,13 @@ export const ADDONS: AddonDef[] = [
     id: 'action-try-another-card',
     short: "[A] Try Another Card",
     long: "Once per game, one of the players can take one card from the deck and add it to their hand. Afterward, this player must drop one of their cards. This can be the card that they have just drawn from the deck.",
+    type: 'positive',
+    hasAction: true,
+  },
+  {
+    id: 'action-destroy-all-xs',
+    short: "[A] Destroy all Xs",
+    long: "Once per game, one of the players can destroy all cards of chosen rank R. Destroying cards discards all of them whether they are in the deck, on the table or in players' hands.",
     type: 'positive',
     hasAction: true,
   },

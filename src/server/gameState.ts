@@ -75,6 +75,17 @@ interface ServerGameState {
   // they reveal after all red-chip holders have revealed.
   vacationUsed: boolean;
   vacationPlayerId: string | null;
+  // [A] Destroy all Xs addon: once a player uses the action card, the chosen rank's cards
+  // are treated as discarded everywhere — they're removed from the deck and any card slot
+  // (community/pocket) whose card has the destroyed rank renders as blank for clients.
+  destroyAllXsUsed: boolean;
+  destroyedRanks: Set<string>;
+  // Per spec: "The cards that are being destroyed by this addon are not disappearing instantly,
+  // instead an animation is played. The card disappears top to bottom with constant speed. The
+  // animation takes 5 seconds. All cards disappear at the same time."
+  // While populated, clients render every slot whose card has this rank with a 5-second wipe
+  // animation (top→bottom). Cleared by the server 5 seconds after the destroy action.
+  destroyAllXsAnimatingRank: string | null;
   blackjackPhase: boolean;
   shareInfoQueue: string[];  // ordered list of share-info addon IDs to process
   shareInfoIndex: number;    // index into shareInfoQueue of the current addon
@@ -130,6 +141,9 @@ const state: ServerGameState = {
   tryAnotherCardExtraCard: null,
   vacationUsed: false,
   vacationPlayerId: null,
+  destroyAllXsUsed: false,
+  destroyedRanks: new Set(),
+  destroyAllXsAnimatingRank: null,
   blackjackPhase: false,
   shareInfoQueue: [],
   shareInfoIndex: 0,
@@ -475,6 +489,9 @@ export function startGame(shufflePlayers = true): string | null {
   state.tryAnotherCardExtraCard = null;
   state.vacationUsed = false;
   state.vacationPlayerId = null;
+  state.destroyAllXsUsed = false;
+  state.destroyedRanks = new Set();
+  state.destroyAllXsAnimatingRank = null;
 
   // Prison addon: determine random round R and random player P
   if (state.enabledAddons.has('prison')) {
@@ -896,6 +913,9 @@ export function finishGame(keepAddons = false): void {
   state.tryAnotherCardExtraCard = null;
   state.vacationUsed = false;
   state.vacationPlayerId = null;
+  state.destroyAllXsUsed = false;
+  state.destroyedRanks = new Set();
+  state.destroyAllXsAnimatingRank = null;
   state.blackjackPhase = false;
   state.shareInfoQueue = [];
   state.shareInfoIndex = 0;
@@ -1022,6 +1042,53 @@ export function useSwapWithCommon(socketId: string, pocketIndex: 0 | 1, commonIn
 /** Clear swap-with-common animation after the 2-second flying-card animation completes. */
 export function clearSwapWithCommonAnimation(): void {
   state.swapWithCommonAnimation = null;
+}
+
+/** Set of all ranks that participate in the game given the current configuration (active addons).
+ *  Per spec ([A] Destroy all Xs): "the player sees a list of all ranks of cards that participate
+ *  in the game, given the current game configuration like active addons, regardless of whether
+ *  any card of such rank is still in the game." */
+export function getParticipatingRanks(): string[] {
+  const isShortDeck = state.enabledAddons.has('short-deck');
+  return isShortDeck
+    ? ['A', 'K', 'Q', 'J', '10']
+    : ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+}
+
+export function useDestroyAllXs(socketId: string, rank: string): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('action-destroy-all-xs')) return 'Addon not active';
+  if (state.destroyAllXsUsed) return 'Action already used this game';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  if (!getParticipatingRanks().includes(rank)) return 'Invalid rank';
+
+  // Mark the rank as destroyed (the client renders any card with this rank as a blank slot).
+  state.destroyedRanks.add(rank);
+  // Remove all cards of this rank from the deck so future draws can't produce one.
+  state.deck = state.deck.filter(c => c.rank !== rank);
+  // If the destroyed rank matches the unsuited Jack's rank (i.e. 'J'), clear its tracking
+  // (unsuited Jacks are Jacks, so they are also destroyed).
+  if (rank === 'J') {
+    state.unsuitedJacks = new Map();
+    state.unsuitedJackCommonIndex = null;
+  }
+  // Same for the unsuited X card if its rank is the one being destroyed.
+  if (state.unsuitedXRank === rank) {
+    state.unsuitedXs = new Map();
+    state.unsuitedXCommonIndex = null;
+  }
+  state.destroyAllXsUsed = true;
+  // Mark this rank as currently animating — clients will render the 5-second wipe animation
+  // on every slot whose card has this rank. Cleared by the server 5 seconds after this call.
+  state.destroyAllXsAnimatingRank = rank;
+  state.actionCardLock = null;
+  return null;
+}
+
+/** Clear the destroy-all-Xs animation flag after the 5-second wipe completes. */
+export function clearDestroyAllXsAnimation(): void {
+  state.destroyAllXsAnimatingRank = null;
 }
 
 export function useVacation(socketId: string): string | null {
@@ -1371,6 +1438,43 @@ export function buildClientState(socketId: string): ClientGameState {
     tryAnotherCardPlayerId: state.tryAnotherCardPlayerId,
     vacationUsed: state.vacationUsed,
     vacationPlayerId: state.vacationPlayerId,
+    destroyAllXsUsed: state.destroyAllXsUsed,
+    destroyedRanks: [...state.destroyedRanks],
+    destroyAllXsAnimatingRank: state.destroyAllXsAnimatingRank,
+    destroyedPocketSlots: (() => {
+      const result: Record<string, number[]> = {};
+      for (const p of state.players) {
+        const cards = state.holeCards[p.id];
+        if (!cards) { result[p.id] = []; continue; }
+        const slots: number[] = [];
+        // The unsuited Jack/X tracking is cleared by `useDestroyAllXs` when the destroyed rank
+        // matches, so checking the underlying card rank here is sufficient for normal cards.
+        // For the unsuited Jack/X that remain in a hand, their actual rank is 'J' or
+        // unsuitedXRank — those would only have been destroyed if `useDestroyAllXs` already
+        // cleared them, so we don't need a special check here.
+        for (const idx of [0, 1] as const) {
+          if (state.destroyedRanks.has(cards[idx].rank)) {
+            // But the card might be an unsuited card overlay (different effective rank). If the
+            // unsuited overlay still claims this slot, the slot's effective rank is the unsuited
+            // rank — which is also destroyed (server clears unsuited tracking only when the
+            // destroyed rank matches the unsuited rank). So if there's still an unsuited overlay
+            // and the destroyed rank doesn't match the unsuited rank, the slot is NOT destroyed
+            // by virtue of the unsuited overlay (the original card is hidden).
+            const isJackOverlay = state.unsuitedJacks.get(p.id) === idx;
+            const isXOverlay = state.unsuitedXs.get(p.id) === idx;
+            if (isJackOverlay) {
+              if (state.destroyedRanks.has('J')) slots.push(idx);
+            } else if (isXOverlay) {
+              if (state.unsuitedXRank && state.destroyedRanks.has(state.unsuitedXRank)) slots.push(idx);
+            } else {
+              slots.push(idx);
+            }
+          }
+        }
+        result[p.id] = slots;
+      }
+      return result;
+    })(),
     myTryAnotherCards: (playerId && state.tryAnotherCardPlayerId === playerId && state.holeCards[playerId] && state.tryAnotherCardExtraCard)
       ? [state.holeCards[playerId][0], state.holeCards[playerId][1], state.tryAnotherCardExtraCard]
       : null,
@@ -1394,21 +1498,25 @@ export function buildClientState(socketId: string): ClientGameState {
           // reason (for example, player takes unsuited card instead of one of their cards
           // and the addon value depended on their pocket cards), the shared value is
           // updated accordingly." Apply unsuited jack / unsuited X overrides to the
-          // effective rank used in the calculation.
+          // effective rank used in the calculation. Destroyed cards (rank in
+          // destroyedRanks) are not counted at all (the slot is blank).
           const jackIdx = state.unsuitedJacks.get(p.id);
           const xIdx = state.unsuitedXs.get(p.id);
-          const effRank = (idx: 0 | 1): string => {
-            if (jackIdx === idx) return 'J';
-            if (xIdx === idx && state.unsuitedXRank) return state.unsuitedXRank;
+          const effRank = (idx: 0 | 1): string | null => {
+            if (jackIdx === idx) return state.destroyedRanks.has('J') ? null : 'J';
+            if (xIdx === idx && state.unsuitedXRank) {
+              return state.destroyedRanks.has(state.unsuitedXRank) ? null : state.unsuitedXRank;
+            }
+            if (state.destroyedRanks.has(cards[idx].rank)) return null;
             return cards[idx].rank;
           };
           const r0 = effRank(0);
           const r1 = effRank(1);
           if (isFaces) {
-            const isFace = (r: string) => r === 'J' || r === 'Q' || r === 'K';
+            const isFace = (r: string | null) => r !== null && (r === 'J' || r === 'Q' || r === 'K');
             sums[p.id] = (isFace(r0) ? 1 : 0) + (isFace(r1) ? 1 : 0);
           } else {
-            sums[p.id] = bjValue(r0) + bjValue(r1);
+            sums[p.id] = (r0 !== null ? bjValue(r0) : 0) + (r1 !== null ? bjValue(r1) : 0);
           }
         }
       }

@@ -2,7 +2,7 @@ import React from 'react';
 import type { ClientGameState } from '@shared/types';
 import { ADDONS } from '@shared/addons';
 
-export type ActionWorkflowStep = 'idle' | 'select-card' | 'select-player' | 'select-common-card' | 'confirm-try-another' | 'confirm-vacation';
+export type ActionWorkflowStep = 'idle' | 'select-card' | 'select-player' | 'select-common-card' | 'confirm-try-another' | 'confirm-vacation' | 'confirm-destroy-all-xs';
 
 export const CARD_W = 80;
 export const CARD_H = 110;
@@ -19,6 +19,22 @@ export function PalmIcon({ size = 48 }: { size?: number }) {
       style={{ fontSize: size, lineHeight: 1, display: 'inline-block' }}
     >
       {'\u{1F334}'}
+    </span>
+  );
+}
+
+/**
+ * Skull emoji used on the [A] Destroy all Xs action card. Per spec, the action card "has
+ * big white skull (emoji) displayed in the center of it" — we render the actual U+1F480
+ * skull emoji at the requested size. The card itself has a black background.
+ */
+export function SkullIcon({ size = 48 }: { size?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{ fontSize: size, lineHeight: 1, display: 'inline-block', color: '#fff' }}
+    >
+      {'\u{1F480}'}
     </span>
   );
 }
@@ -52,6 +68,9 @@ function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
   if (addonId === 'action-reroll-common') return !state.rerollCommonUsed && state.communityCards.length > 0;
   if (addonId === 'action-swap-with-common') return !state.swapWithCommonUsed && state.communityCards.length > 0 && !!state.myHoleCards;
   if (addonId === 'action-try-another-card') return !state.tryAnotherCardUsed && !!state.myHoleCards;
+  // Destroy all Xs: always available (until used) — the rank list is determined by addons, not
+  // by what's currently in play.
+  if (addonId === 'action-destroy-all-xs') return !state.destroyAllXsUsed;
   // Vacation: cannot be used during the last round (round 4)
   if (addonId === 'action-vacation') return !state.vacationUsed && state.currentRound !== null && state.currentRound < 4;
   return false;
@@ -64,6 +83,7 @@ function isAddonUsed(addonId: string, state: ClientGameState): boolean {
   if (addonId === 'action-reroll-common') return state.rerollCommonUsed;
   if (addonId === 'action-swap-with-common') return state.swapWithCommonUsed;
   if (addonId === 'action-try-another-card') return state.tryAnotherCardUsed;
+  if (addonId === 'action-destroy-all-xs') return state.destroyAllXsUsed;
   if (addonId === 'action-vacation') return state.vacationUsed;
   return false;
 }
@@ -131,10 +151,10 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
                 borderRadius: 6,
                 border: active
                   ? '2px solid #f87171'
-                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '2px solid #8B5A1A' : addon.id === 'action-swap-with-common' ? '2px solid #1e3a8a' : addon.id === 'action-vacation' ? '2px solid #1e3a8a' : '2px solid #4a7a4a',
+                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '2px solid #8B5A1A' : addon.id === 'action-swap-with-common' ? '2px solid #1e3a8a' : addon.id === 'action-vacation' ? '2px solid #1e3a8a' : addon.id === 'action-destroy-all-xs' ? '2px solid #333' : '2px solid #4a7a4a',
                 background: active
                   ? '#3d1515'
-                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : addon.id === 'action-swap-with-common' ? '#2563eb' : addon.id === 'action-try-another-card' ? '#1a6b1a' : addon.id === 'action-vacation' ? '#2563eb' : '#1a2d1a',
+                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : addon.id === 'action-swap-with-common' ? '#2563eb' : addon.id === 'action-try-another-card' ? '#1a6b1a' : addon.id === 'action-vacation' ? '#2563eb' : addon.id === 'action-destroy-all-xs' ? '#000' : '#1a2d1a',
                 display: 'flex', flexDirection: 'column',
                 padding: '6px 6px', cursor: (locked || dimmed) ? 'default' : 'pointer',
                 userSelect: 'none',
@@ -192,7 +212,13 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
                   <PalmIcon size={48} />
                 </div>
               )}
-              {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'action-unsuited-x' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && addon.id !== 'action-swap-with-common' && addon.id !== 'action-try-another-card' && addon.id !== 'action-vacation' && (
+              {!active && addon.id === 'action-destroy-all-xs' && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {/* Spec: "big white skull (emoji) displayed in the center of it." */}
+                  <SkullIcon size={48} />
+                </div>
+              )}
+              {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'action-unsuited-x' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && addon.id !== 'action-swap-with-common' && addon.id !== 'action-try-another-card' && addon.id !== 'action-vacation' && addon.id !== 'action-destroy-all-xs' && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>
                   {addon.short}
                 </div>

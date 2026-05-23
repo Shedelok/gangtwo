@@ -130,9 +130,16 @@ interface Props {
   unsuitedJackCommonIndex?: number | null;
   unsuitedXCommonIndex?: number | null;
   unsuitedXRank?: string | null;
+  // Ranks destroyed by the [A] Destroy all Xs addon. A common card whose rank is in this set
+  // is rendered as a blank slot (spec: "If some of the common cards are discarded, the space
+  // they were taking stays blank (other cards don't change their position because of this).")
+  destroyedRanks?: Set<string>;
+  // The rank whose cards are currently playing the 5-second destroy wipe animation. While
+  // populated, common cards of this rank are rendered with the wipe instead of being blank.
+  destroyAllXsAnimatingRank?: string | null;
 }
 
-export default function CommunityCards({ cards, blackAndRed = false, shortDeck = false, onCardClick, onCardElRef, hiddenIndices, unsuitedJackCommonIndex, unsuitedXCommonIndex, unsuitedXRank }: Props) {
+export default function CommunityCards({ cards, blackAndRed = false, shortDeck = false, onCardClick, onCardElRef, hiddenIndices, unsuitedJackCommonIndex, unsuitedXCommonIndex, unsuitedXRank, destroyedRanks, destroyAllXsAnimatingRank }: Props) {
   // animateFromIndex: cards at index >= this value were newly added and should animate.
   // Initialized to cards.length so cards present on first render never animate.
   const [animateFromIndex, setAnimateFromIndex] = useState<number>(() => cards.length);
@@ -213,6 +220,29 @@ export default function CommunityCards({ cards, blackAndRed = false, shortDeck =
         // While a reroll animation is in progress for this slot, render via CommunityCard
         // (which handles the flip animation) even if the slot was previously unsuited.
         const renderAsUnsuited = (isUnsuitedJackHere || isUnsuitedXHere) && !rerollFrom;
+        // Spec ([A] Destroy all Xs): a common card with a destroyed rank renders as a blank
+        // slot. Note: the unsuited Jack/X slots also belong to the destroyed rank when J / X
+        // matches — the server clears those tracking fields on destroy, so they fall back to
+        // the underlying card rank check naturally.
+        const effectiveRank = renderAsUnsuited ? (isUnsuitedJackHere ? 'J' : (unsuitedXRank ?? null)) : card.rank;
+        const isDestroyed = !!effectiveRank && !!destroyedRanks?.has(effectiveRank);
+        // While the destroy animation is in flight for the matching rank, the card visual is
+        // rendered with a top→bottom wipe instead of being instantly blanked.
+        const isAnimating = isDestroyed && !!effectiveRank && destroyAllXsAnimatingRank === effectiveRank;
+        const normalContent = renderAsUnsuited && isUnsuitedJackHere ? (
+          <UnsuitedCommunityCard rank="J" />
+        ) : renderAsUnsuited && isUnsuitedXHere ? (
+          <UnsuitedCommunityCard rank={unsuitedXRank ?? 'X'} />
+        ) : (
+          <CommunityCard
+            card={card}
+            animate={i >= animateFromIndex}
+            blackAndRed={blackAndRed}
+            shortDeck={shortDeck}
+            rerollFrom={rerollFrom}
+            rerollFromUnsuitedRank={rerollFromUnsuitedRank}
+          />
+        );
         return (
           <div
             key={i}
@@ -221,24 +251,16 @@ export default function CommunityCards({ cards, blackAndRed = false, shortDeck =
             style={{
               cursor: onCardClick ? 'pointer' : 'default',
               borderRadius: 4,
-              boxShadow: onCardClick ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
+              boxShadow: onCardClick && !isDestroyed ? '0 0 8px 3px rgba(250,204,21,0.75)' : undefined,
               visibility: hiddenIndices?.has(i) ? 'hidden' : 'visible',
             }}
           >
-            {renderAsUnsuited && isUnsuitedJackHere ? (
-              <UnsuitedCommunityCard rank="J" />
-            ) : renderAsUnsuited && isUnsuitedXHere ? (
-              <UnsuitedCommunityCard rank={unsuitedXRank ?? 'X'} />
-            ) : (
-              <CommunityCard
-                card={card}
-                animate={i >= animateFromIndex}
-                blackAndRed={blackAndRed}
-                shortDeck={shortDeck}
-                rerollFrom={rerollFrom}
-                rerollFromUnsuitedRank={rerollFromUnsuitedRank}
-              />
-            )}
+            {isAnimating ? (
+              <div className="destroy-wipe">{normalContent}</div>
+            ) : isDestroyed ? (
+              // Blank slot — same size as a community card so other cards' positions are unaffected.
+              <div className="cc-flip-container" />
+            ) : normalContent}
           </div>
         );
       })}

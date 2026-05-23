@@ -53,3 +53,15 @@
   padding: 4px;
   user-select: none;
 }
+
+/* [A] Destroy all Xs: top→bottom wipe overlay for community cards (mirrors the rule in
+   PlayerHand.css so the class is available even if PlayerHand.css is not yet loaded). */
+@keyframes destroy-wipe-cc-top-to-bottom {
+  from { clip-path: inset(0% 0 0 0); }
+  to   { clip-path: inset(100% 0 0 0); }
+}
+
+.cc-flip-container > .destroy-wipe,
+.destroy-wipe {
+  animation: destroy-wipe-cc-top-to-bottom 5s linear forwards;
+}

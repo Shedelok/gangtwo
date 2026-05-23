@@ -31,6 +31,8 @@ import {
   clearSwapWithCommonAnimation,
   useTryAnotherCard,
   useVacation,
+  useDestroyAllXs,
+  clearDestroyAllXsAnimation,
   dropCard,
   setPassCardChoice,
   clearPassCardAnimations,
@@ -160,6 +162,12 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'USE_VACATION':
       error = useVacation(socketId);
+      break;
+    case 'USE_DESTROY_ALL_XS':
+      error = useDestroyAllXs(socketId, action.rank);
+      // Spec: "The animation takes 5 seconds. All cards disappear at the same time." — clear
+      // the animating-rank marker 5 seconds after the destroy is committed.
+      if (!error) setTimeout(() => { clearDestroyAllXsAnimation(); broadcastAll(); }, 5000);
       break;
     case 'DROP_CARD':
       error = dropCard(socketId, action.cardIndex);

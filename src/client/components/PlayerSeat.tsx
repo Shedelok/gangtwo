@@ -80,6 +80,12 @@ interface Props {
   // Pass-1-card animation: the slot whose card is currently flying (in or out). The slot
   // is hidden while the flying card overlay travels for ~2 seconds.
   passCardAnimatingSlot?: 0 | 1;
+  // [A] Destroy all Xs: ranks destroyed, plus the per-player set of pocket slot indices whose
+  // underlying card is destroyed (used to blank face-down slots too).
+  destroyedRanks?: Set<string>;
+  destroyedSlots?: Set<number>;
+  // The rank currently animating the 5-second destroy wipe (null when no animation active).
+  destroyAllXsAnimatingRank?: string | null;
   style?: React.CSSProperties;
 }
 
@@ -90,6 +96,7 @@ export default function PlayerSeat({
   blackAndRed = false, shortDeck = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
   guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, onVacation = false, vacationLines = false, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm,
   passCardPhaseActive = false, passCardChoiceIndex, onPassCardSelect, onPassCardSubmit, onPassCardCancel, passCardAnimatingSlot,
+  destroyedRanks, destroyedSlots, destroyAllXsAnimatingRank,
   style,
 }: Props) {
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
@@ -173,9 +180,9 @@ export default function PlayerSeat({
 
       {/* Cards */}
       {tryAnotherCards ? (
-        <PlayerHand cards={holeCards} faceDown={false} small blackAndRed={blackAndRed} shortDeck={shortDeck} unsuitedJackIndex={unsuitedJackIndex} unsuitedXIndex={unsuitedXIndex} unsuitedXRank={unsuitedXRank} shownCardInfo={shownCardInfo} striped={striped} tryAnotherCards={tryAnotherCards} tryAnotherDropIndex={tryAnotherDropIndex} onTryAnotherCardSelect={onTryAnotherCardSelect} />
+        <PlayerHand cards={holeCards} faceDown={false} small blackAndRed={blackAndRed} shortDeck={shortDeck} unsuitedJackIndex={unsuitedJackIndex} unsuitedXIndex={unsuitedXIndex} unsuitedXRank={unsuitedXRank} shownCardInfo={shownCardInfo} striped={striped} tryAnotherCards={tryAnotherCards} tryAnotherDropIndex={tryAnotherDropIndex} onTryAnotherCardSelect={onTryAnotherCardSelect} destroyedRanks={destroyedRanks} destroyedSlots={destroyedSlots} destroyAllXsAnimatingRank={destroyAllXsAnimatingRank} />
       ) : tryAnotherFaceDownCount ? (
-        <PlayerHand cards={null} faceDown={true} small blackAndRed={blackAndRed} shortDeck={shortDeck} tryAnotherFaceDownCount={tryAnotherFaceDownCount} />
+        <PlayerHand cards={null} faceDown={true} small blackAndRed={blackAndRed} shortDeck={shortDeck} tryAnotherFaceDownCount={tryAnotherFaceDownCount} destroyedRanks={destroyedRanks} destroyedSlots={destroyedSlots} destroyAllXsAnimatingRank={destroyAllXsAnimatingRank} />
       ) : (
         <PlayerHand
           cards={holeCards}
@@ -198,6 +205,9 @@ export default function PlayerSeat({
           striped={striped}
           passCardChoiceIndex={isMe ? passCardChoiceIndex : undefined}
           passCardAnimatingSlot={passCardAnimatingSlot}
+          destroyedRanks={destroyedRanks}
+          destroyedSlots={destroyedSlots}
+          destroyAllXsAnimatingRank={destroyAllXsAnimatingRank}
         />
       )}
 
