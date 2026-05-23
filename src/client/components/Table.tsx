@@ -883,6 +883,50 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
           );
         })}
 
+        {/* [A] Destroy all Xs dialogue cloud — rendered above the player who played the
+            action card. Spec: "as soon as the action card is played, there's a dialogue cloud
+            displayed above the player who played the card with text like 'Destroyed Queens'
+            or 'Destroyed 6s' depending on the actual choice. This cloud disappears after 10
+            seconds. This cloud has the same background color as the action card." The action
+            card has black background, so the cloud also has black background with white text. */}
+        {state.destroyAllXsCloud && (() => {
+          const cloud = state.destroyAllXsCloud;
+          const playerIdx = rotated.findIndex(p => p.id === cloud.playerId);
+          if (playerIdx < 0) return null;
+          const { x, y } = getSeatPos(playerIdx, n);
+          const isPlayerMe = cloud.playerId === state.myId;
+          const cloudBottom = isPlayerMe ? y - 92 : y - 82;
+          // Pluralization mirrors the confirm-button label in App.tsx ("Destroy Jacks",
+          // "Destroy 8s", etc.). "J" → "Jacks", "Q" → "Queens", "K" → "Kings", "A" → "Aces",
+          // numeric ranks just add 's'.
+          const rankPluralLabel = (r: string): string => {
+            switch (r) {
+              case 'A': return 'Aces';
+              case 'K': return 'Kings';
+              case 'Q': return 'Queens';
+              case 'J': return 'Jacks';
+              default: return `${r}s`;
+            }
+          };
+          return (
+            <div style={{
+              position: 'absolute', left: x, top: cloudBottom,
+              transform: 'translate(-50%, -100%)',
+              pointerEvents: 'none', zIndex: 9000,
+            }}>
+              <div style={{
+                background: '#000', color: '#fff',
+                borderRadius: 8, padding: '2px 8px',
+                fontSize: 11, fontWeight: 'bold',
+                border: '1px solid #333',
+                whiteSpace: 'nowrap',
+              }}>
+                {`Destroyed ${rankPluralLabel(cloud.rank)}`}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Cone of light for show-card addon */}
         {showCone && (() => {
           const sourceIdx = rotated.findIndex(p => p.id === showCone.sourceId);

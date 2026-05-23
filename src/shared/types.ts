@@ -95,6 +95,12 @@ export interface ClientGameState {
   // The animation takes 5 seconds. All cards disappear at the same time."). Once the server
   // clears this field, the slots transition to their final blank state.
   destroyAllXsAnimatingRank: string | null;
+  // [A] Destroy all Xs dialogue cloud: spec — "as soon as the action card is played, there's
+  // a dialogue cloud displayed above the player who played the card with text like
+  // 'Destroyed Queens' or 'Destroyed 6s' depending on the actual choice. This cloud disappears
+  // after 10 seconds. This cloud has the same background color as the action card." Cleared by
+  // the server 10 seconds after the destroy action.
+  destroyAllXsCloud: { playerId: string; rank: string } | null;
   blackjackPhase: boolean;       // true during any share-info pre-game round
   blackjackSums: Record<string, number>; // playerId → share-info value (only populated during blackjackPhase)
   shareInfoLabel: string;        // label shown on the table during the share-info phase

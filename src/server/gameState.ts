@@ -86,6 +86,12 @@ interface ServerGameState {
   // While populated, clients render every slot whose card has this rank with a 5-second wipe
   // animation (top→bottom). Cleared by the server 5 seconds after the destroy action.
   destroyAllXsAnimatingRank: string | null;
+  // Per spec: "as soon as the action card is played, there's a dialogue cloud displayed above
+  // the player who played the card with text like 'Destroyed Queens' or 'Destroyed 6s'
+  // depending on the actual choice. This cloud disappears after 10 seconds." Holds the
+  // player who played the destroy card and the chosen rank; cleared by the server 10 seconds
+  // after the destroy action.
+  destroyAllXsCloud: { playerId: string; rank: string } | null;
   blackjackPhase: boolean;
   shareInfoQueue: string[];  // ordered list of share-info addon IDs to process
   shareInfoIndex: number;    // index into shareInfoQueue of the current addon
@@ -144,6 +150,7 @@ const state: ServerGameState = {
   destroyAllXsUsed: false,
   destroyedRanks: new Set(),
   destroyAllXsAnimatingRank: null,
+  destroyAllXsCloud: null,
   blackjackPhase: false,
   shareInfoQueue: [],
   shareInfoIndex: 0,
@@ -492,6 +499,7 @@ export function startGame(shufflePlayers = true): string | null {
   state.destroyAllXsUsed = false;
   state.destroyedRanks = new Set();
   state.destroyAllXsAnimatingRank = null;
+  state.destroyAllXsCloud = null;
 
   // Prison addon: determine random round R and random player P
   if (state.enabledAddons.has('prison')) {
@@ -916,6 +924,7 @@ export function finishGame(keepAddons = false): void {
   state.destroyAllXsUsed = false;
   state.destroyedRanks = new Set();
   state.destroyAllXsAnimatingRank = null;
+  state.destroyAllXsCloud = null;
   state.blackjackPhase = false;
   state.shareInfoQueue = [];
   state.shareInfoIndex = 0;
@@ -1082,6 +1091,10 @@ export function useDestroyAllXs(socketId: string, rank: string): string | null {
   // Mark this rank as currently animating — clients will render the 5-second wipe animation
   // on every slot whose card has this rank. Cleared by the server 5 seconds after this call.
   state.destroyAllXsAnimatingRank = rank;
+  // Spec: "as soon as the action card is played, there's a dialogue cloud displayed above
+  // the player who played the card with text like 'Destroyed Queens' or 'Destroyed 6s'
+  // depending on the actual choice. This cloud disappears after 10 seconds."
+  state.destroyAllXsCloud = { playerId, rank };
   state.actionCardLock = null;
   return null;
 }
@@ -1089,6 +1102,11 @@ export function useDestroyAllXs(socketId: string, rank: string): string | null {
 /** Clear the destroy-all-Xs animation flag after the 5-second wipe completes. */
 export function clearDestroyAllXsAnimation(): void {
   state.destroyAllXsAnimatingRank = null;
+}
+
+/** Clear the destroy-all-Xs dialogue cloud 10 seconds after the action card is played. */
+export function clearDestroyAllXsCloud(): void {
+  state.destroyAllXsCloud = null;
 }
 
 export function useVacation(socketId: string): string | null {
@@ -1441,6 +1459,7 @@ export function buildClientState(socketId: string): ClientGameState {
     destroyAllXsUsed: state.destroyAllXsUsed,
     destroyedRanks: [...state.destroyedRanks],
     destroyAllXsAnimatingRank: state.destroyAllXsAnimatingRank,
+    destroyAllXsCloud: state.destroyAllXsCloud,
     destroyedPocketSlots: (() => {
       const result: Record<string, number[]> = {};
       for (const p of state.players) {

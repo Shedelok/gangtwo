@@ -33,6 +33,7 @@ import {
   useVacation,
   useDestroyAllXs,
   clearDestroyAllXsAnimation,
+  clearDestroyAllXsCloud,
   dropCard,
   setPassCardChoice,
   clearPassCardAnimations,
@@ -167,7 +168,12 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       error = useDestroyAllXs(socketId, action.rank);
       // Spec: "The animation takes 5 seconds. All cards disappear at the same time." — clear
       // the animating-rank marker 5 seconds after the destroy is committed.
-      if (!error) setTimeout(() => { clearDestroyAllXsAnimation(); broadcastAll(); }, 5000);
+      // Spec: "This cloud disappears after 10 seconds." — clear the dialogue cloud 10 seconds
+      // after the destroy is committed.
+      if (!error) {
+        setTimeout(() => { clearDestroyAllXsAnimation(); broadcastAll(); }, 5000);
+        setTimeout(() => { clearDestroyAllXsCloud(); broadcastAll(); }, 10000);
+      }
       break;
     case 'DROP_CARD':
       error = dropCard(socketId, action.cardIndex);

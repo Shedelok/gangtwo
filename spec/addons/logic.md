@@ -433,9 +433,14 @@ cards
 are discarded, the space they were taking stays blank (other cards don't change their position because of this). Same
 with pocket cards - other cards don't change their position if some other are discarded.
 
-When the action card is played, all players hear "CARD_DISCARDED" sound. The cards that are being destroyed by this addon
+When the action card is played, all players hear "CARD_DISCARDED" sound. The cards that are being destroyed by this
+addon
 are not disappearing instantly, instead an animation is played. The card disappears top to bottom with constant speed.
-The animation takes 5 seconds. All cards disappear at the same time.
+The animation takes 5 seconds. All cards disappear at the same time. Also, as soon as the action card is played, there's
+a dialogue cloud displayed above the player who played the card with text like "Destroyed Queens" or "Destroyed 6s"
+depending on the actual choice. This cloud disappears after 10 seconds. This cloud has the same background color as the
+action
+card.
 
 The action card for this addon has black background. It also has big white skull (emoji) displayed in the center of it.
 
