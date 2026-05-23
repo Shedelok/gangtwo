@@ -1,41 +1,35 @@
 import { test, expect } from '@playwright/test';
-import { completelyResetGameState, getAddonLists } from './helpers';
+import { completelyResetGameState, getAddonLists, getRequestedPositiveAddonCount, joinLobby, pressStartGameInLobby, setRequestedPositiveAddonCount } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await completelyResetGameState(page);
 });
 
-test('start game button is disabled when positive addon count exceeds enabled pool size', async ({ page, browser }) => {
-  const page2 = await browser.newPage();
+test('start game button is disabled when positive addon count exceeds enabled pool size', async ({ page: rPage, browser }) => {
+  const ccPage = await browser.newPage();
 
   try {
-    await page.getByPlaceholder('Your name...').fill('Ready player');
-    await page.getByRole('button', { name: /Join Lobby/ }).click();
-    await page.getByRole('button', { name: /Start Game/ }).waitFor();
+    await joinLobby(rPage, 'Ready player');
+    await joinLobby(ccPage, 'Configuration changer player');
 
-    await page2.goto('/');
-    await page2.getByPlaceholder('Your name...').fill('Configuration changer player');
-    await page2.getByRole('button', { name: /Join Lobby/ }).click();
-    await page2.getByRole('button', { name: /Start Game/ }).waitFor();
+    await pressStartGameInLobby(rPage);
+    await expect(rPage.getByRole('button', { name: /Waiting/ })).toBeVisible();
 
-    await page.getByRole('button', { name: /Start Game/ }).click();
-    await expect(page.getByRole('button', { name: /Waiting/ })).toBeVisible();
-
-    const { positive } = getAddonLists(page2);
-    const checkboxCount = await positive.checkboxes.count();
-    for (let i = 1; i < checkboxCount; i++) {
-      if (await positive.checkboxes.nth(i).isChecked()) {
-        await positive.checkboxes.nth(i).click();
+    const { positive } = await getAddonLists(ccPage);
+    for (const addon of positive.addons.slice(1)) {
+      if (await addon.checkbox.isChecked()) {
+        await addon.checkbox.click();
+        await expect(addon.checkbox).not.toBeChecked();
       }
     }
 
-    await positive.panel.getByRole('button', { name: '+' }).click();
-    await positive.panel.getByRole('button', { name: '+' }).click();
+    await setRequestedPositiveAddonCount(ccPage, 2);
 
-    await expect(positive.checkboxes.and(page2.locator(':checked'))).toHaveCount(1);
-    await expect(positive.panel.locator('span').filter({ hasText: /^\d+$/ })).toHaveText('2', { exact: true });
-    await expect(page2.getByRole('button', { name: /Start Game/ })).toBeDisabled();
+    const checkedCount = (await Promise.all(positive.addons.map(a => a.checkbox.isChecked()))).filter(Boolean).length;
+    expect(checkedCount).toBe(1);
+    expect(await getRequestedPositiveAddonCount(ccPage)).toBe(2);
+    await expect(ccPage.getByRole('button', { name: /Start Game/ })).toBeDisabled();
   } finally {
-    await page2.close();
+    await ccPage.close();
   }
 });
