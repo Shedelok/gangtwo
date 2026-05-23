@@ -6,8 +6,6 @@
 
 - Make sure that the deck can't run out of cards (for example, when playing with short deck, 3 additional cards and 7
   player).
-- Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
-- Add Russian language
 - Add voting for won/lost at the end (to make sure everyone agrees it's a win)
 
 
@@ -23,6 +21,8 @@
 - Make it that incompatible addons can't be rolled together. If no config is possible, the game can't start
 - Make sure multiple guesses have the same order in buttons and clouds
 - New agent is too expensive
+- Add Russian language
+- Make it easier to notice when people move around the table. Maybe add emoji based on name hash?
 
 ## Addons
 
@@ -68,7 +68,3 @@
     only swap their current chip to the one in someone's hands.
 23. One player once can secretly check the number of cards with a specific card value/suit in the deck. For example,
     they can check how many Jacks are in the deck.
-24. Once per game one of the players can once delete all cards of selected rank from the game (from the deck, hands and
-    table).
-25. Once per game one player can take a specific card which stays with them for the rest of the game. This player
-    doesn't participate in the last round. Perhaps, this card can't be taken on the last round.
