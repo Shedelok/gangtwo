@@ -34,6 +34,8 @@ import {
   useDestroyAllXs,
   clearDestroyAllXsAnimation,
   clearDestroyAllXsCloud,
+  useCheckNumberOfRanks,
+  clearCheckNumberOfRanksCloud,
   dropCard,
   setPassCardChoice,
   clearPassCardAnimations,
@@ -173,6 +175,13 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       if (!error) {
         setTimeout(() => { clearDestroyAllXsAnimation(); broadcastAll(); }, 5000);
         setTimeout(() => { clearDestroyAllXsCloud(); broadcastAll(); }, 10000);
+      }
+      break;
+    case 'USE_CHECK_NUMBER_OF_RANKS':
+      error = useCheckNumberOfRanks(socketId, action.rank);
+      // Spec: "The dialogue cloud disappears after 10 seconds."
+      if (!error) {
+        setTimeout(() => { clearCheckNumberOfRanksCloud(); broadcastAll(); }, 10000);
       }
       break;
     case 'DROP_CARD':

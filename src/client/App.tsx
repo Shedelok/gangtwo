@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useWebSocket } from './hooks/useWebSocket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
-import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H, PalmIcon, SkullIcon } from './components/ActionCardPanel';
+import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H, PalmIcon, SkullIcon, QuestionMarkIcon } from './components/ActionCardPanel';
 import type { ClientGameState } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 
@@ -254,8 +254,8 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
       pointerEvents: onClick ? 'auto' : 'none',
       cursor: onClick ? 'pointer' : 'default',
       borderRadius: 6,
-      border: isUnsuited ? '2px solid #8B5A1A' : addonId === 'action-swap-with-common' ? '2px solid #1e3a8a' : addonId === 'action-vacation' ? '2px solid #1e3a8a' : addonId === 'action-destroy-all-xs' ? '2px solid #333' : '2px solid #4a7a4a',
-      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : addonId === 'action-swap-with-common' ? '#2563eb' : addonId === 'action-try-another-card' ? '#1a6b1a' : addonId === 'action-vacation' ? '#2563eb' : addonId === 'action-destroy-all-xs' ? '#000' : '#1a2d1a',
+      border: isUnsuited ? '2px solid #8B5A1A' : addonId === 'action-swap-with-common' ? '2px solid #1e3a8a' : addonId === 'action-vacation' ? '2px solid #1e3a8a' : (addonId === 'action-destroy-all-xs' || addonId === 'action-check-number-of-ranks') ? '2px solid #333' : '2px solid #4a7a4a',
+      background: isUnsuited ? '#B87333' : addonId === 'show-1-card-to-1-player' ? '#000' : addonId === 'action-reroll-common' ? '#fff' : addonId === 'action-swap-with-common' ? '#2563eb' : addonId === 'action-try-another-card' ? '#1a6b1a' : addonId === 'action-vacation' ? '#2563eb' : (addonId === 'action-destroy-all-xs' || addonId === 'action-check-number-of-ranks') ? '#000' : '#1a2d1a',
       display: 'flex', flexDirection: 'column',
       padding: '6px 6px',
       userSelect: 'none',
@@ -305,6 +305,11 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
           {/* Spec: "big white skull (emoji) displayed in the center of it." */}
           <SkullIcon size={48} />
         </div>
+      ) : addonId === 'action-check-number-of-ranks' ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Spec: "big white question mark displayed in the center of it." */}
+          <QuestionMarkIcon size={64} />
+        </div>
       ) : (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>{label}</div>
       )}
@@ -339,6 +344,9 @@ export default function App() {
   // [A] Destroy all Xs: current rank selection in the pre-confirm modal (null = no rank chosen).
   const [destroyAllXsRank, setDestroyAllXsRank] = useState<string | null>(null);
   const [destroyAllXsPickerOpen, setDestroyAllXsPickerOpen] = useState(false);
+  // [A] Check Number of Ranks: current rank selection in the pre-confirm modal.
+  const [checkNumberRank, setCheckNumberRank] = useState<string | null>(null);
+  const [checkNumberPickerOpen, setCheckNumberPickerOpen] = useState(false);
   // Close the rank picker on outside click (spec: list closes when the player clicks outside it,
   // similar to the guess-rank dropdown).
   useEffect(() => {
@@ -347,6 +355,12 @@ export default function App() {
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, [destroyAllXsPickerOpen]);
+  useEffect(() => {
+    if (!checkNumberPickerOpen) return;
+    const handler = () => setCheckNumberPickerOpen(false);
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [checkNumberPickerOpen]);
   const cardElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const seatElsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const prevLockRef = useRef<ClientGameState['actionCardLock'] | undefined>(undefined);
@@ -438,7 +452,8 @@ export default function App() {
       (!prev.swapWithCommonUsed && state.swapWithCommonUsed) ||
       (!prev.tryAnotherCardUsed && state.tryAnotherCardUsed) ||
       (!prev.vacationUsed && state.vacationUsed) ||
-      (!prev.destroyAllXsUsed && state.destroyAllXsUsed);
+      (!prev.destroyAllXsUsed && state.destroyAllXsUsed) ||
+      (!prev.checkNumberOfRanksUsed && state.checkNumberOfRanksUsed);
     if (actionCardCommitted) {
       playSound(files.ACTION_CARD_PLAYED, vol, SOUND_VOLUME_MULTIPLIER.ACTION_CARD_PLAYED);
     }
@@ -506,6 +521,8 @@ export default function App() {
       setActiveAddonId(null);
       setDestroyAllXsRank(null);
       setDestroyAllXsPickerOpen(false);
+      setCheckNumberRank(null);
+      setCheckNumberPickerOpen(false);
     }
 
     // Lock acquired by another player — animate card to their seat
@@ -539,7 +556,8 @@ export default function App() {
         || (prev.addonId === 'action-swap-with-common' && state.swapWithCommonUsed)
         || (prev.addonId === 'action-try-another-card' && state.tryAnotherCardUsed)
         || (prev.addonId === 'action-vacation' && state.vacationUsed)
-        || (prev.addonId === 'action-destroy-all-xs' && state.destroyAllXsUsed);
+        || (prev.addonId === 'action-destroy-all-xs' && state.destroyAllXsUsed)
+        || (prev.addonId === 'action-check-number-of-ranks' && state.checkNumberOfRanksUsed);
       if (wasUsed) {
         setFlyingCard(null);
       } else {
@@ -837,6 +855,9 @@ export default function App() {
             } else if (addonId === 'action-destroy-all-xs') {
               setActionStep('confirm-destroy-all-xs');
               setDestroyAllXsRank(null);
+            } else if (addonId === 'action-check-number-of-ranks') {
+              setActionStep('confirm-check-number-of-ranks');
+              setCheckNumberRank(null);
             } else {
               setActionStep('select-card');
             }
@@ -1051,6 +1072,154 @@ export default function App() {
                     setActiveAddonId(null);
                     setDestroyAllXsRank(null);
                     setDestroyAllXsPickerOpen(false);
+                  }}
+                  style={{
+                    padding: '6px 20px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: '#7f1c1c',
+                    color: '#fca5a5',
+                    fontSize: 13,
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
+      {/* Check Number of Ranks rank-picker modal */}
+      {actionStep === 'confirm-check-number-of-ranks' && (() => {
+        const seatEl = state.myId ? seatElsRef.current.get(state.myId) : null;
+        const seatRect = seatEl?.getBoundingClientRect();
+        const modalStyle: React.CSSProperties = seatRect ? {
+          position: 'fixed',
+          left: seatRect.left + seatRect.width / 2,
+          top: seatRect.top - 10,
+          transform: 'translate(-50%, -100%)',
+          zIndex: 9999,
+        } : {
+          position: 'fixed',
+          left: '50%',
+          top: '40%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 9999,
+        };
+        // Spec: "the player sees a list of all ranks of cards that participate in the game,
+        // given the current game configuration like active addons" — Short Deck removes 2-9
+        // from the deck, so when active only 10..A are listed.
+        const isShortDeck = state.enabledAddons.includes('short-deck');
+        const ranks: string[] = isShortDeck
+          ? ['A', 'K', 'Q', 'J', '10']
+          : ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+        // Confirm button label depends on the chosen rank. Spec: "Check number of Jacks" or
+        // "Check number of 8s" or similar.
+        const rankPluralLabel = (r: string): string => {
+          switch (r) {
+            case 'A': return 'Aces';
+            case 'K': return 'Kings';
+            case 'Q': return 'Queens';
+            case 'J': return 'Jacks';
+            default: return `${r}s`;
+          }
+        };
+        const confirmLabel = checkNumberRank === null
+          ? 'Select rank to check'
+          : `Check number of ${rankPluralLabel(checkNumberRank)}`;
+        return createPortal(
+          <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              background: '#1e293b',
+              border: '1px solid #475569',
+              borderRadius: 10,
+              padding: '12px 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 10,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
+              position: 'relative',
+            }}>
+              {/* "Choose rank" / chosen-rank dropdown trigger */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCheckNumberPickerOpen(o => !o); }}
+                  style={{
+                    padding: '6px 16px',
+                    borderRadius: 6,
+                    border: '1px solid #64748b',
+                    background: '#334155',
+                    color: '#e2e8f0',
+                    fontSize: 13,
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    minWidth: 140,
+                  }}>
+                  {checkNumberRank === null ? 'Choose rank' : checkNumberRank}
+                </button>
+                {checkNumberPickerOpen && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+                      background: '#1e293b', border: '1px solid #475569', borderRadius: 8,
+                      padding: 4, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 1,
+                      marginBottom: 4, maxHeight: 8 * 28, overflowY: 'auto', minWidth: 140,
+                    }}>
+                    {ranks.map(r => (
+                      <button key={r}
+                        onClick={(e) => { e.stopPropagation(); setCheckNumberRank(r); setCheckNumberPickerOpen(false); }}
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: 4,
+                          border: 'none',
+                          background: r === checkNumberRank ? '#3b5bdb' : '#334155',
+                          color: '#e2e8f0',
+                          fontSize: 12,
+                          fontWeight: 'bold',
+                          textAlign: 'left',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                        }}>
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  disabled={checkNumberRank === null}
+                  onClick={() => {
+                    if (checkNumberRank === null) return;
+                    sendAction({ type: 'USE_CHECK_NUMBER_OF_RANKS', rank: checkNumberRank });
+                    setActionStep('idle');
+                    setActiveAddonId(null);
+                    setCheckNumberRank(null);
+                    setCheckNumberPickerOpen(false);
+                  }}
+                  style={{
+                    padding: '6px 20px',
+                    borderRadius: 6,
+                    border: 'none',
+                    background: checkNumberRank === null ? '#374151' : '#166534',
+                    color: checkNumberRank === null ? '#9ca3af' : '#bbf7d0',
+                    fontSize: 13,
+                    fontWeight: 'bold',
+                    cursor: checkNumberRank === null ? 'not-allowed' : 'pointer',
+                  }}>
+                  {confirmLabel}
+                </button>
+                <button
+                  onClick={() => {
+                    if (activeAddonId) sendAction({ type: 'UNLOCK_ACTION_CARD', addonId: activeAddonId });
+                    setActionStep('idle');
+                    setActiveAddonId(null);
+                    setCheckNumberRank(null);
+                    setCheckNumberPickerOpen(false);
                   }}
                   style={{
                     padding: '6px 20px',

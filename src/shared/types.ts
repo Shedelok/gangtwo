@@ -101,6 +101,15 @@ export interface ClientGameState {
   // after 10 seconds. This cloud has the same background color as the action card." Cleared by
   // the server 10 seconds after the destroy action.
   destroyAllXsCloud: { playerId: string; rank: string } | null;
+  // [A] Check Number of Ranks addon: once-per-game flag.
+  checkNumberOfRanksUsed: boolean;
+  // [A] Check Number of Ranks dialogue cloud: spec — "the player sees a dialogue cloud. The
+  // cloud has text like 'There are 3 Queens in the game right now (Only visible to you)'
+  // depending on the actual number and the rank the player chosen. The cloud is only visible
+  // to the player who played the card." The server only populates this for the acting player
+  // (i.e. when the recipient is the one who used the action). Cleared by the server 10
+  // seconds after the action is committed.
+  checkNumberOfRanksCloud: { playerId: string; rank: string; count: number } | null;
   blackjackPhase: boolean;       // true during any share-info pre-game round
   blackjackSums: Record<string, number>; // playerId → share-info value (only populated during blackjackPhase)
   shareInfoLabel: string;        // label shown on the table during the share-info phase
@@ -139,6 +148,7 @@ export type ClientAction =
   | { type: 'USE_TRY_ANOTHER_CARD' }
   | { type: 'USE_VACATION' }
   | { type: 'USE_DESTROY_ALL_XS'; rank: string }
+  | { type: 'USE_CHECK_NUMBER_OF_RANKS'; rank: string }
   | { type: 'DROP_CARD'; cardIndex: number }
   | { type: 'LOCK_ACTION_CARD'; addonId: string }
   | { type: 'UNLOCK_ACTION_CARD'; addonId: string }

@@ -65,6 +65,7 @@ export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
   { addonId: 'action-swap-with-common' },
   { addonId: 'action-try-another-card' },
   { addonId: 'action-destroy-all-xs' },
+  { addonId: 'action-check-number-of-ranks' },
   { addonId: 'action-vacation' },
 ];
 
@@ -308,8 +309,15 @@ export const ADDONS: AddonDef[] = [
   },
   {
     id: 'action-destroy-all-xs',
-    short: "[A] Destroy all Xs",
+    short: "[A] Destroy All Xs",
     long: "Once per game, one of the players can destroy all cards of chosen rank R. Destroying cards discards all of them whether they are in the deck, on the table or in players' hands.",
+    type: 'positive',
+    hasAction: true,
+  },
+  {
+    id: 'action-check-number-of-ranks',
+    short: "[A] Check Number of Ranks",
+    long: "Once per game, one of the players can check how many cards of chosen rank R are in play. They see the total number of cards of rank R in player hands and on the table (not including unused action cards).",
     type: 'positive',
     hasAction: true,
   },

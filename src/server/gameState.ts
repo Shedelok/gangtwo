@@ -92,6 +92,16 @@ interface ServerGameState {
   // player who played the destroy card and the chosen rank; cleared by the server 10 seconds
   // after the destroy action.
   destroyAllXsCloud: { playerId: string; rank: string } | null;
+  // [A] Check Number of Ranks addon: once-per-game flag. Spec: "Once per game, one of the
+  // players can check how many cards of chosen rank R are in play."
+  checkNumberOfRanksUsed: boolean;
+  // Per spec: "the player sees a dialogue cloud. The cloud has text like 'There are 3 Queens
+  // in the game right now (Only visible to you)' depending on the actual number and the rank
+  // the player chosen. The cloud is only visible to the player who played the card." Holds
+  // the player who played the action card, the chosen rank, and the computed count. The
+  // server only emits this cloud to that player in `buildClientState`. Cleared 10 seconds
+  // after the action is committed.
+  checkNumberOfRanksCloud: { playerId: string; rank: string; count: number } | null;
   blackjackPhase: boolean;
   shareInfoQueue: string[];  // ordered list of share-info addon IDs to process
   shareInfoIndex: number;    // index into shareInfoQueue of the current addon
@@ -151,6 +161,8 @@ const state: ServerGameState = {
   destroyedRanks: new Set(),
   destroyAllXsAnimatingRank: null,
   destroyAllXsCloud: null,
+  checkNumberOfRanksUsed: false,
+  checkNumberOfRanksCloud: null,
   blackjackPhase: false,
   shareInfoQueue: [],
   shareInfoIndex: 0,
@@ -500,6 +512,8 @@ export function startGame(shufflePlayers = true): string | null {
   state.destroyedRanks = new Set();
   state.destroyAllXsAnimatingRank = null;
   state.destroyAllXsCloud = null;
+  state.checkNumberOfRanksUsed = false;
+  state.checkNumberOfRanksCloud = null;
 
   // Prison addon: determine random round R and random player P
   if (state.enabledAddons.has('prison')) {
@@ -925,6 +939,8 @@ export function finishGame(keepAddons = false): void {
   state.destroyedRanks = new Set();
   state.destroyAllXsAnimatingRank = null;
   state.destroyAllXsCloud = null;
+  state.checkNumberOfRanksUsed = false;
+  state.checkNumberOfRanksCloud = null;
   state.blackjackPhase = false;
   state.shareInfoQueue = [];
   state.shareInfoIndex = 0;
@@ -1107,6 +1123,64 @@ export function clearDestroyAllXsAnimation(): void {
 /** Clear the destroy-all-Xs dialogue cloud 10 seconds after the action card is played. */
 export function clearDestroyAllXsCloud(): void {
   state.destroyAllXsCloud = null;
+}
+
+/** [A] Check Number of Ranks: count how many cards of the chosen rank are currently in play,
+ *  considering player hands and the community/table cards. Per spec: "When computing the
+ *  number of cards, cards in player hands (any player) are counted and common cards are
+ *  counted." Unused action cards (e.g. [A] Unsuited Jack still on the action table) are not
+ *  counted. Cards already destroyed by [A] Destroy All Xs are not counted (they are no
+ *  longer in play). Unsuited Jack / X in hand or in a common slot is counted by its effective
+ *  (overlay) rank, not by the original card's rank — the player sees the visible identity. */
+function countCardsOfRank(rank: string): number {
+  let count = 0;
+  // Community cards: count by effective rank — apply unsuited overlays, skip if destroyed.
+  for (let i = 0; i < state.communityCards.length; i++) {
+    const isJackOverlay = state.unsuitedJackCommonIndex === i;
+    const isXOverlay = state.unsuitedXCommonIndex === i;
+    let effRank: string;
+    if (isJackOverlay) effRank = 'J';
+    else if (isXOverlay && state.unsuitedXRank) effRank = state.unsuitedXRank;
+    else effRank = state.communityCards[i].rank;
+    if (state.destroyedRanks.has(effRank)) continue;
+    if (effRank === rank) count++;
+  }
+  // Pocket cards for every player.
+  for (const p of state.players) {
+    const cards = state.holeCards[p.id];
+    if (!cards) continue;
+    const jackIdx = state.unsuitedJacks.get(p.id);
+    const xIdx = state.unsuitedXs.get(p.id);
+    for (const idx of [0, 1] as const) {
+      let effRank: string;
+      if (jackIdx === idx) effRank = 'J';
+      else if (xIdx === idx && state.unsuitedXRank) effRank = state.unsuitedXRank;
+      else effRank = cards[idx].rank;
+      if (state.destroyedRanks.has(effRank)) continue;
+      if (effRank === rank) count++;
+    }
+  }
+  return count;
+}
+
+export function useCheckNumberOfRanks(socketId: string, rank: string): string | null {
+  if (state.phase !== 'game') return 'Not in game';
+  if (!state.enabledAddons.has('action-check-number-of-ranks')) return 'Addon not active';
+  if (state.checkNumberOfRanksUsed) return 'Action already used this game';
+  const playerId = state.socketToPlayerId.get(socketId);
+  if (!playerId) return 'Player not found';
+  if (!getParticipatingRanks().includes(rank)) return 'Invalid rank';
+
+  const count = countCardsOfRank(rank);
+  state.checkNumberOfRanksUsed = true;
+  state.checkNumberOfRanksCloud = { playerId, rank, count };
+  state.actionCardLock = null;
+  return null;
+}
+
+/** Clear the check-number-of-ranks dialogue cloud 10 seconds after the action card is played. */
+export function clearCheckNumberOfRanksCloud(): void {
+  state.checkNumberOfRanksCloud = null;
 }
 
 export function useVacation(socketId: string): string | null {
@@ -1460,6 +1534,12 @@ export function buildClientState(socketId: string): ClientGameState {
     destroyedRanks: [...state.destroyedRanks],
     destroyAllXsAnimatingRank: state.destroyAllXsAnimatingRank,
     destroyAllXsCloud: state.destroyAllXsCloud,
+    checkNumberOfRanksUsed: state.checkNumberOfRanksUsed,
+    // Spec: "The cloud is only visible to the player who played the card." — only include
+    // the cloud in the snapshot for that player; everyone else sees null.
+    checkNumberOfRanksCloud: (state.checkNumberOfRanksCloud && playerId === state.checkNumberOfRanksCloud.playerId)
+      ? state.checkNumberOfRanksCloud
+      : null,
     destroyedPocketSlots: (() => {
       const result: Record<string, number[]> = {};
       for (const p of state.players) {

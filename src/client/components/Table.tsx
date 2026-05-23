@@ -927,6 +927,66 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
           );
         })()}
 
+        {/* [A] Check Number of Ranks dialogue cloud — only visible to the player who played
+            the action card (the server only emits this cloud to that player). Spec: "The cloud
+            has text like 'There are 3 Queens in the game right now (Only visible to you)'
+            depending on the actual number and the rank the player chosen. The cloud is only
+            visible to the player who played the card. '(Only visible to you)' text goes on a
+            separate line and is italic." Action card has black background → cloud has black
+            background with white text. */}
+        {state.checkNumberOfRanksCloud && (() => {
+          const cloud = state.checkNumberOfRanksCloud;
+          const playerIdx = rotated.findIndex(p => p.id === cloud.playerId);
+          if (playerIdx < 0) return null;
+          const { x, y } = getSeatPos(playerIdx, n);
+          const isPlayerMe = cloud.playerId === state.myId;
+          const cloudBottom = isPlayerMe ? y - 92 : y - 82;
+          // Pluralization mirrors the picker labels ("J" → "Jacks", "Q" → "Queens", "K" →
+          // "Kings", "A" → "Aces", numeric ranks add 's'). Singular form (count == 1) drops
+          // the trailing 's' (e.g. "There is 1 Queen", "There is 1 8").
+          const rankPluralLabel = (r: string): string => {
+            switch (r) {
+              case 'A': return 'Aces';
+              case 'K': return 'Kings';
+              case 'Q': return 'Queens';
+              case 'J': return 'Jacks';
+              default: return `${r}s`;
+            }
+          };
+          const rankSingularLabel = (r: string): string => {
+            switch (r) {
+              case 'A': return 'Ace';
+              case 'K': return 'King';
+              case 'Q': return 'Queen';
+              case 'J': return 'Jack';
+              default: return r;
+            }
+          };
+          const isOne = cloud.count === 1;
+          const mainText = isOne
+            ? `There is ${cloud.count} ${rankSingularLabel(cloud.rank)} in the game right now`
+            : `There are ${cloud.count} ${rankPluralLabel(cloud.rank)} in the game right now`;
+          return (
+            <div style={{
+              position: 'absolute', left: x, top: cloudBottom,
+              transform: 'translate(-50%, -100%)',
+              pointerEvents: 'none', zIndex: 9000,
+            }}>
+              <div style={{
+                background: '#000', color: '#fff',
+                borderRadius: 8, padding: '2px 8px',
+                fontSize: 11, fontWeight: 'bold',
+                border: '1px solid #333',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+              }}>
+                <div>{mainText}</div>
+                <div style={{ fontStyle: 'italic' }}>{'(Only visible to you)'}</div>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Cone of light for show-card addon */}
         {showCone && (() => {
           const sourceIdx = rotated.findIndex(p => p.id === showCone.sourceId);

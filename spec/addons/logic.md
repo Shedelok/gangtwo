@@ -409,9 +409,9 @@ spec/base/resources/sounds/moving-plant.mp3.
 The action card for this addon has green background. It has 3 vertical rectangles (like bars) displayed on it: first two
 are black and third one is yellow.
 
-## Addon: [A] Destroy all Xs
+## Addon: [A] Destroy All Xs
 
-Short description: "[A] Destroy all Xs"
+Short description: "[A] Destroy All Xs"
 
 Long description: Once per game, one of the players can destroy all cards of chosen rank R. Destroying cards discards
 all of them whether they are in the deck, on the table or in players' hands.
@@ -443,6 +443,35 @@ action
 card.
 
 The action card for this addon has black background. It also has big white skull (emoji) displayed in the center of it.
+
+## Addon: [A] Check Number of Ranks
+
+Short description: "[A] Check Number of Ranks"
+
+Long description: Once per game, one of the players can check how many cards of chosen rank R are in play. They see
+the total number of cards of rank R in player hands and on the table (not including unused action cards).
+
+Functionality: This addon adds an action card. When using this card, the player sees a list of all ranks of cards that
+participate in the game, given the current game configuration like active addons, regardless of whether any card of
+such rank is still in the game. The list is hidden behind the "Choose rank" button that, when pressed, displays a
+pop-up list. If player selects one of the ranks, the pop-up list closes and that rank is shown instead of "Choose rank".
+The player can change their selection. If the player selects one of the ranks and
+presses the confirmation button, the action card is played
+and the player sees a dialogue cloud. The cloud has text like "There are 3 Queens in the game right now (Only visible to
+you)" depending on the actual number and the rank the player chosen. The cloud is only visible to the player who
+played the card. "(Only visible to you)" text goes on a separate line and is italic. When computing the number of cards,
+cards in
+player hands (any player) are counted and common cards are counted. The confirmation button reads "Select rank to
+check" (and is inactive) when no
+rank
+is selected and
+"Check number of Jacks" or "Check number of 8s" or similar with the corresponding rank when a rank is selected. The list
+of ranks
+displays maximum 8 elements and is scrollable to navigate to more, similar to "guess rank" functionality.
+
+The dialogue cloud disappears after 10 seconds. This cloud has the same background color as the action card.
+
+The action card for this addon has black background. It also has big white question mark displayed in the center of it.
 
 ## Addon: [A] Vacation
 
@@ -527,5 +556,6 @@ addon names mean leaf nodes with that addon.
 5. [A] Reroll Common
 6. [A] Swap With Common
 7. [A] Try Another Card
-8. [A] Destroy all Xs
-9. [A] Vacation
+8. [A] Destroy All Xs
+9. [A] Check Number of Ranks
+10. [A] Vacation

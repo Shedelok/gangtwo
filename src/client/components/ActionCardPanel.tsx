@@ -2,7 +2,7 @@ import React from 'react';
 import type { ClientGameState } from '@shared/types';
 import { ADDONS } from '@shared/addons';
 
-export type ActionWorkflowStep = 'idle' | 'select-card' | 'select-player' | 'select-common-card' | 'confirm-try-another' | 'confirm-vacation' | 'confirm-destroy-all-xs';
+export type ActionWorkflowStep = 'idle' | 'select-card' | 'select-player' | 'select-common-card' | 'confirm-try-another' | 'confirm-vacation' | 'confirm-destroy-all-xs' | 'confirm-check-number-of-ranks';
 
 export const CARD_W = 80;
 export const CARD_H = 110;
@@ -39,6 +39,22 @@ export function SkullIcon({ size = 48 }: { size?: number }) {
   );
 }
 
+/**
+ * Big white question mark used on the [A] Check Number of Ranks action card. Per spec, the
+ * action card "has big white question mark displayed in the center of it". The card itself
+ * has a black background.
+ */
+export function QuestionMarkIcon({ size = 48 }: { size?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      style={{ fontSize: size, lineHeight: 1, display: 'inline-block', color: '#fff', fontWeight: 'bold' }}
+    >
+      ?
+    </span>
+  );
+}
+
 interface Props {
   state: ClientGameState;
   step: ActionWorkflowStep;
@@ -71,6 +87,9 @@ function isAddonAvailable(addonId: string, state: ClientGameState): boolean {
   // Destroy all Xs: always available (until used) — the rank list is determined by addons, not
   // by what's currently in play.
   if (addonId === 'action-destroy-all-xs') return !state.destroyAllXsUsed;
+  // Check Number of Ranks: always available (until used) — the rank list is determined by
+  // addons, not by what's currently in play.
+  if (addonId === 'action-check-number-of-ranks') return !state.checkNumberOfRanksUsed;
   // Vacation: cannot be used during the last round (round 4)
   if (addonId === 'action-vacation') return !state.vacationUsed && state.currentRound !== null && state.currentRound < 4;
   return false;
@@ -84,6 +103,7 @@ function isAddonUsed(addonId: string, state: ClientGameState): boolean {
   if (addonId === 'action-swap-with-common') return state.swapWithCommonUsed;
   if (addonId === 'action-try-another-card') return state.tryAnotherCardUsed;
   if (addonId === 'action-destroy-all-xs') return state.destroyAllXsUsed;
+  if (addonId === 'action-check-number-of-ranks') return state.checkNumberOfRanksUsed;
   if (addonId === 'action-vacation') return state.vacationUsed;
   return false;
 }
@@ -151,10 +171,10 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
                 borderRadius: 6,
                 border: active
                   ? '2px solid #f87171'
-                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '2px solid #8B5A1A' : addon.id === 'action-swap-with-common' ? '2px solid #1e3a8a' : addon.id === 'action-vacation' ? '2px solid #1e3a8a' : addon.id === 'action-destroy-all-xs' ? '2px solid #333' : '2px solid #4a7a4a',
+                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '2px solid #8B5A1A' : addon.id === 'action-swap-with-common' ? '2px solid #1e3a8a' : addon.id === 'action-vacation' ? '2px solid #1e3a8a' : (addon.id === 'action-destroy-all-xs' || addon.id === 'action-check-number-of-ranks') ? '2px solid #333' : '2px solid #4a7a4a',
                 background: active
                   ? '#3d1515'
-                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : addon.id === 'action-swap-with-common' ? '#2563eb' : addon.id === 'action-try-another-card' ? '#1a6b1a' : addon.id === 'action-vacation' ? '#2563eb' : addon.id === 'action-destroy-all-xs' ? '#000' : '#1a2d1a',
+                  : (addon.id === 'action-unsuited-jack' || addon.id === 'action-unsuited-x') ? '#B87333' : addon.id === 'show-1-card-to-1-player' ? '#000' : addon.id === 'action-reroll-common' ? '#fff' : addon.id === 'action-swap-with-common' ? '#2563eb' : addon.id === 'action-try-another-card' ? '#1a6b1a' : addon.id === 'action-vacation' ? '#2563eb' : (addon.id === 'action-destroy-all-xs' || addon.id === 'action-check-number-of-ranks') ? '#000' : '#1a2d1a',
                 display: 'flex', flexDirection: 'column',
                 padding: '6px 6px', cursor: (locked || dimmed) ? 'default' : 'pointer',
                 userSelect: 'none',
@@ -218,7 +238,13 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
                   <SkullIcon size={48} />
                 </div>
               )}
-              {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'action-unsuited-x' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && addon.id !== 'action-swap-with-common' && addon.id !== 'action-try-another-card' && addon.id !== 'action-vacation' && addon.id !== 'action-destroy-all-xs' && (
+              {!active && addon.id === 'action-check-number-of-ranks' && (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {/* Spec: "big white question mark displayed in the center of it." */}
+                  <QuestionMarkIcon size={64} />
+                </div>
+              )}
+              {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'action-unsuited-x' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && addon.id !== 'action-swap-with-common' && addon.id !== 'action-try-another-card' && addon.id !== 'action-vacation' && addon.id !== 'action-destroy-all-xs' && addon.id !== 'action-check-number-of-ranks' && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>
                   {addon.short}
                 </div>
