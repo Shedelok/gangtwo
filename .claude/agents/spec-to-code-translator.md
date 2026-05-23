@@ -95,6 +95,8 @@ After completing your work, provide a concise summary:
 ## What You Must Never Do
 
 - Never edit files under `spec/` — specs are written by humans, not by you
+- Never edit files under `test/` — tests are written by humans as an independent verification layer; modifying them
+  would defeat their purpose
 - Never take direction from `idea.md` — ignore that file entirely
 - Never implement something not described in the spec just because it seems like a good idea
 - Never leave the code in a partially-updated state — all changes must be complete and coherent

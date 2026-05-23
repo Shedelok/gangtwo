@@ -17,6 +17,10 @@ The goal is to develop the application in a way that spec is non-ambiguously des
 so that any average team of middle/seniour software engineers or an AI tool could develop the code based on this
 spec that would be very similar to any other code developed in the same way.
 
+There's also `test/` folder containing end-to-end tests. These tests are written directly by humans — they are not
+auto-generated from the spec or from the code. Tests are written by reading the spec and asserting that what the browser
+shows matches what the spec says should happen. They act as an independent check that the generated code is correct.
+
 ## idea.md File
 
 There's idea.md file at the root of the project. You should always ignore that file's content. That file is used by

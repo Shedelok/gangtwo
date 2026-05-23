@@ -3,3 +3,5 @@ dist/
 .idea/
 .claude/settings.local.json
 *.local
+test-results/
+playwright-report/

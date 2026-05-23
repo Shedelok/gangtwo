@@ -1,0 +1,47 @@
+import type { Page } from '@playwright/test';
+
+async function setAddonCountToZero(page: Page, minusBtnIndex: number): Promise<void> {
+  const initialCount = await page.getByRole('button', { name: '−' }).nth(minusBtnIndex).evaluate(
+    el => parseInt((el.nextElementSibling as HTMLElement)?.textContent?.trim() || '0', 10)
+  );
+  for (let target = initialCount - 1; target >= 0; target--) {
+    await page.getByRole('button', { name: '−' }).nth(minusBtnIndex).click();
+    await page.waitForFunction(
+      ([idx, expected]: number[]) => {
+        const btns = Array.from(document.querySelectorAll('button')).filter(b => b.textContent?.trim() === '−');
+        const span = btns[idx]?.nextElementSibling;
+        return span ? parseInt(span.textContent?.trim() || '0', 10) === expected : false;
+      },
+      [minusBtnIndex, target]
+    );
+  }
+}
+
+async function setNegativeAddonCountToZero(page: Page): Promise<void> {
+  await setAddonCountToZero(page, 0);
+}
+
+async function setPositiveAddonCountToZero(page: Page): Promise<void> {
+  await setAddonCountToZero(page, 1);
+}
+
+export async function completelyResetGameState(page: Page): Promise<void> {
+  await page.goto('/');
+
+  const stopButton = page.getByRole('button', { name: 'Stop the game' });
+  await stopButton.waitFor({ timeout: 10000 });
+  await stopButton.click();
+
+  const nameInput = page.getByPlaceholder('Your name...');
+  await nameInput.waitFor({ timeout: 10000 });
+  await nameInput.fill('');
+
+  await setNegativeAddonCountToZero(page);
+  await setPositiveAddonCountToZero(page);
+
+  const addonPanel = page.locator('div').filter({ has: page.locator('span', { hasText: 'Addons' }) });
+  const unchecked = addonPanel.locator('input[type="checkbox"]:not(:checked)');
+  while ((await unchecked.count()) > 0) {
+    await unchecked.first().click();
+  }
+}
