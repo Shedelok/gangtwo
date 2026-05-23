@@ -1,4 +1,24 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
+
+export interface AddonList {
+  panel: Locator;
+  checkboxes: Locator;
+}
+
+export function getAddonLists(page: Page): { negative: AddonList; positive: AddonList } {
+  const make = (label: string, otherLabel: string): AddonList => {
+    const panel = page.locator('div').filter({
+      has: page.locator('span', { hasText: label }),
+    }).filter({
+      hasNot: page.locator('span', { hasText: otherLabel }),
+    });
+    return { panel, checkboxes: panel.locator('input[type="checkbox"]') };
+  };
+  return {
+    negative: make('Negative', 'Positive'),
+    positive: make('Positive', 'Negative'),
+  };
+}
 
 async function setAddonCountToZero(page: Page, minusBtnIndex: number): Promise<void> {
   const initialCount = await page.getByRole('button', { name: '−' }).nth(minusBtnIndex).evaluate(
@@ -39,9 +59,11 @@ export async function completelyResetGameState(page: Page): Promise<void> {
   await setNegativeAddonCountToZero(page);
   await setPositiveAddonCountToZero(page);
 
-  const addonPanel = page.locator('div').filter({ has: page.locator('span', { hasText: 'Addons' }) });
-  const unchecked = addonPanel.locator('input[type="checkbox"]:not(:checked)');
-  while ((await unchecked.count()) > 0) {
-    await unchecked.first().click();
+  const { negative, positive } = getAddonLists(page);
+  for (const list of [negative, positive]) {
+    const unchecked = list.checkboxes.and(page.locator(':not(:checked)'));
+    while ((await unchecked.count()) > 0) {
+      await unchecked.first().click();
+    }
   }
 }
