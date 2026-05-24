@@ -1,6 +1,10 @@
 import { expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 
+export function getRankPluralLabel(rank: string): string {
+  return ({ A: 'Aces', K: 'Kings', Q: 'Queens', J: 'Jacks' } as Record<string, string>)[rank] ?? `${rank}s`;
+}
+
 export interface AddonItem {
   name: string;
   checkbox: Locator;
@@ -124,28 +128,55 @@ export interface PocketCard {
 }
 
 export async function getOwnPocketCards(page: Page): Promise<PocketCard[]> {
-  const rankPattern = /^(A|K|Q|J|10|[2-9])$/;
-  const rankSpans = page
+  const container = page
     .locator('div')
     .filter({ has: page.getByText('(you)') })
-    .getByText(rankPattern);
-  await rankSpans.first().waitFor();
-  const count = await rankSpans.count();
+    .filter({ hasNot: page.locator('.cc-flip-container') });
+  await container.getByText(/^(A|K|Q|J|10|[2-9])$/).first().waitFor();
+  return container.first().evaluate((el: HTMLElement) => {
+    const rankRe = /^(A|K|Q|J|10|[2-9])$/;
+    const suitSymbols = new Set(['♠', '♥', '♦', '♣']);
+    const result: { rank: string; suit: string }[] = [];
+    for (const span of el.querySelectorAll('span')) {
+      const text = span.textContent?.trim() ?? '';
+      if (!rankRe.test(text)) continue;
+      // Require an adjacent suit symbol to distinguish card ranks from chip numbers
+      let sym = (span.nextElementSibling as HTMLElement | null)?.textContent?.trim() ?? '';
+      if (!suitSymbols.has(sym)) {
+        sym = (span.parentElement?.nextElementSibling?.querySelector('span') as HTMLElement | null)?.textContent?.trim() ?? '';
+      }
+      if (suitSymbols.has(sym)) result.push({ rank: text, suit: sym });
+    }
+    return result;
+  });
+}
+
+export async function takeAnyChip(page: Page): Promise<void> {
+  await page.locator('button:visible', { hasText: 'Take' }).first().click();
+}
+
+export async function pressReadyForNextRound(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Move to next round' }).click();
+}
+
+export async function getCommonCards(page: Page): Promise<PocketCard[]> {
+  const cards = page.locator('.cc-flip-container');
+  await cards.first().waitFor();
+  const count = await cards.count();
   return Promise.all(
     Array.from({ length: count }, async (_, i) => {
-      const span = rankSpans.nth(i);
-      const rank = (await span.textContent())!.trim();
-      const suit = await span.evaluate((el: HTMLElement) => {
+      return cards.nth(i).evaluate((el: HTMLElement) => {
+        const rankRe = /^(A|K|Q|J|10|[2-9])$/;
         const suitSymbols = new Set(['♠', '♥', '♦', '♣']);
-        // Normal layout: next sibling span holds the small suit symbol
-        let sym = (el.nextElementSibling as HTMLElement | null)?.textContent?.trim() ?? '';
-        if (!suitSymbols.has(sym)) {
-          // Short deck layout: suit span is in the parent div's next sibling div
-          sym = (el.parentElement?.nextElementSibling?.querySelector('span') as HTMLElement | null)?.textContent?.trim() ?? '';
+        let rank = '';
+        let suit = '';
+        for (const span of el.querySelectorAll('span')) {
+          const text = span.textContent?.trim() ?? '';
+          if (!rank && rankRe.test(text)) rank = text;
+          else if (!suit && suitSymbols.has(text)) suit = text;
         }
-        return suitSymbols.has(sym) ? sym : '';
+        return { rank, suit };
       });
-      return { rank, suit };
     })
   );
 }
