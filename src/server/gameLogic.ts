@@ -57,3 +57,49 @@ export function drawCards(deck: Card[], count: number): [Card[], Card[]] {
   const remaining = deck.slice(count);
   return [drawn, remaining];
 }
+
+const RANK_BY_TOKEN: Record<string, Rank> = {
+  '2': '2', '3': '3', '4': '4', '5': '5', '6': '6', '7': '7', '8': '8', '9': '9',
+  '10': '10', 'J': 'J', 'Q': 'Q', 'K': 'K', 'A': 'A',
+};
+const SUIT_BY_LETTER: Record<string, Suit> = {
+  's': 'spades', 'h': 'hearts', 'd': 'diamonds', 'c': 'clubs',
+};
+
+/**
+ * Parse a single card token like "As", "10d", "7h" into a Card. The rank is case-insensitive
+ * (e.g. "as" or "AS" both parse), the suit letter is case-insensitive. Returns null if the
+ * token cannot be parsed.
+ */
+export function parseCardToken(token: string): Card | null {
+  const t = token.trim();
+  if (t.length < 2) return null;
+  const suitLetter = t.slice(-1).toLowerCase();
+  const suit = SUIT_BY_LETTER[suitLetter];
+  if (!suit) return null;
+  const rankPart = t.slice(0, -1).toUpperCase();
+  const rank = RANK_BY_TOKEN[rankPart];
+  if (!rank) return null;
+  return { suit, rank };
+}
+
+/**
+ * Parse a comma-separated card list like "As, 10d, 7h" into an array of Cards. Empty/whitespace
+ * input yields an empty array. Returns null if any non-empty token fails to parse.
+ */
+export function parseCardList(text: string): Card[] | null {
+  const trimmed = text.trim();
+  if (trimmed === '') return [];
+  const tokens = trimmed.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+  const cards: Card[] = [];
+  for (const tok of tokens) {
+    const card = parseCardToken(tok);
+    if (!card) return null;
+    cards.push(card);
+  }
+  return cards;
+}
+
+export function cardKey(card: Card): string {
+  return `${card.rank}-${card.suit}`;
+}

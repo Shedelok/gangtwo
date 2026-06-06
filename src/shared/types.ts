@@ -33,6 +33,11 @@ export interface ClientGameState {
   startGameVotes: number;     // how many players have pressed Start Game
   startGameVoterIds: string[]; // IDs of players who have pressed Start Game
   myStartGameVote: boolean;   // whether the current player has pressed Start Game
+  // Test Mode (lobby only): when enabled, players can set specific cards to be dealt to each
+  // player and to the common-card slots instead of random deck cards.
+  testMode: boolean;                        // whether the 'Test Mode' checkbox is checked
+  testModePlayerCards: Record<string, string>; // playerId → raw card-list text for that player
+  testModeCommonCards: string;              // raw card-list text for the common cards
   restartVotes: number;       // how many players have voted to restart
   restartVoterIds: string[];  // IDs of players who have voted to restart
   myRestartVote: boolean;     // whether the current player has voted to restart
@@ -132,6 +137,9 @@ export type ClientAction =
   | { type: 'START_GAME' }
   | { type: 'TOGGLE_ADDON'; addonId: string }
   | { type: 'SET_ADDON_COUNT'; addonType: 'negative' | 'positive'; count: number }
+  | { type: 'SET_TEST_MODE'; enabled: boolean }
+  | { type: 'SET_TEST_MODE_PLAYER_CARDS'; playerId: string; cards: string }
+  | { type: 'SET_TEST_MODE_COMMON_CARDS'; cards: string }
   | { type: 'DISCARD_CHIP'; chipNumber: number }
   | { type: 'TAKE_FROM_MIDDLE'; chipNumber: number }
   | { type: 'STEAL_CHIP'; fromPlayerId: string; chipNumber: number }

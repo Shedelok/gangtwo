@@ -5,6 +5,8 @@ import {
   createChipsForRound,
   isRoundComplete,
   drawCards,
+  parseCardList,
+  cardKey,
 } from './gameLogic';
 import { ADDONS, NEGATIVE_ADDON_TREE, POSITIVE_ADDON_TREE, pickAddonsFromTree, countAvailableInTree } from '../shared/addons';
 import { randomUUID } from 'crypto';
@@ -29,6 +31,11 @@ interface ServerGameState {
   socketToSessionId: Map<string, string>;
   startGameVoters: Set<string>;
   restartVoters: Set<string>;
+  // Test Mode (lobby only). When enabled, players can set specific cards for each player and
+  // for the common cards. Stored as raw text; parsed/validated lazily.
+  testMode: boolean;
+  testModePlayerCards: Map<string, string>; // playerId → raw card-list text
+  testModeCommonCards: string;              // raw card-list text for common cards
   noOldChipsHidden: Map<string, Chip[]>; // playerId → chips hidden by no-old-chips addon
   rankGuesses: Map<string, Map<string, string>>; // addonId → (voterId → rank)
   winningGuessRanks: Map<string, string>; // addonId → winning rank (set when voting locks)
@@ -136,6 +143,9 @@ const state: ServerGameState = {
   socketToSessionId: new Map(),
   startGameVoters: new Set(),
   restartVoters: new Set(),
+  testMode: false,
+  testModePlayerCards: new Map(),
+  testModeCommonCards: '',
   noOldChipsHidden: new Map(),
   rankGuesses: new Map(),
   winningGuessRanks: new Map(),
@@ -424,6 +434,9 @@ export function startGame(shufflePlayers = true): string | null {
   if (state.positiveAddonCount > positiveAvailable)
     return 'Not enough positive addons in pool';
 
+  const testModeError = validateTestModeConfig();
+  if (testModeError) return testModeError;
+
   state.enabledAddons = new Set([
     ...pickAddonsFromTree(NEGATIVE_ADDON_TREE, state.addonPool, state.negativeAddonCount),
     ...pickAddonsFromTree(POSITIVE_ADDON_TREE, state.addonPool, state.positiveAddonCount),
@@ -446,10 +459,20 @@ export function startGame(shufflePlayers = true): string | null {
   const isShortDeck = state.enabledAddons.has('short-deck');
   const deck = createShuffledDeck(isShortDeck);
   const playerIds = state.players.map((p) => p.id);
-  const { assignments, remainingDeck } = dealHoleCards(deck, playerIds);
 
-  state.holeCards = assignments;
-  state.deck = remainingDeck;
+  if (state.testMode) {
+    const dealt = applyTestModeDeal(deck, playerIds);
+    if (typeof dealt === 'string') {
+      // Phase is still 'lobby' at this point — the game simply does not start.
+      return dealt;
+    }
+    state.holeCards = dealt.holeCards;
+    state.deck = dealt.deck;
+  } else {
+    const { assignments, remainingDeck } = dealHoleCards(deck, playerIds);
+    state.holeCards = assignments;
+    state.deck = remainingDeck;
+  }
 
   state.communityCards = [];
   const SHARE_INFO_ADDON_IDS = ['share-blackjack-sum', 'share-number-of-faces'];
@@ -888,6 +911,140 @@ export function setAddonCount(addonType: 'negative' | 'positive', count: number)
   return null;
 }
 
+/**
+ * Validate the current Test Mode configuration. Returns an error string if the configuration
+ * is invalid (cannot be parsed, too many cards for a player, or duplicate cards across all
+ * inputs), or null if it is valid or Test Mode is disabled.
+ *
+ * Note: short-deck conflicts (cards 2-9 when Short Deck is randomly selected) cannot be
+ * validated in the lobby because addon selection happens at game start; such conflicts are
+ * validated when the game actually starts (see `applyTestModeDeal`).
+ */
+/**
+ * Apply the Test Mode configuration to produce hole cards and a deck ordering for the given
+ * shuffled deck. Specified cards are removed from the random pool: each player receives their
+ * specified cards (in order) followed by random cards from the remaining deck, and the remaining
+ * deck is ordered so that the specified common cards come out first (in order), with random
+ * cards drawn after them.
+ *
+ * Returns an error string if a specified card is not present in the deck for the current
+ * configuration (e.g. duplicate, or a 2-9 card while Short Deck is active), or if a player has
+ * more than 2 specified cards.
+ */
+function applyTestModeDeal(
+  deck: Card[],
+  playerIds: string[]
+): { holeCards: Record<string, [Card, Card]>; deck: Card[] } | string {
+  // Pool of available cards keyed by card identity; we remove cards as they are claimed.
+  const available = new Map<string, Card>();
+  for (const c of deck) available.set(cardKey(c), c);
+
+  const claim = (card: Card): string | null => {
+    const key = cardKey(card);
+    if (!available.has(key)) {
+      // Either the card doesn't exist in the current deck (e.g. Short Deck excludes 2-9) or
+      // it was already claimed by another input (duplicate).
+      return `Card ${card.rank}${card.suit[0]} cannot be dealt with the current configuration`;
+    }
+    available.delete(key);
+    return null;
+  };
+
+  // Parse and claim player-specified cards first.
+  const playerSpecified: Record<string, Card[]> = {};
+  for (const pid of playerIds) {
+    const raw = state.testModePlayerCards.get(pid) ?? '';
+    const cards = parseCardList(raw);
+    if (cards === null) return 'Invalid cards in Test Mode configuration';
+    if (cards.length > 2) return 'A player cannot have more than 2 cards';
+    for (const c of cards) {
+      const err = claim(c);
+      if (err) return err;
+    }
+    playerSpecified[pid] = cards;
+  }
+
+  // Parse and claim common-specified cards.
+  const commonSpecified = parseCardList(state.testModeCommonCards);
+  if (commonSpecified === null) return 'Invalid common cards in Test Mode configuration';
+  for (const c of commonSpecified) {
+    const err = claim(c);
+    if (err) return err;
+  }
+
+  // Remaining (unclaimed) cards, preserving the original shuffled order.
+  const remaining = deck.filter((c) => available.has(cardKey(c)));
+  let cursor = 0;
+  const takeRandom = (): Card => remaining[cursor++];
+
+  // Build hole cards: specified cards first (in order), random fill for the rest.
+  const holeCards: Record<string, [Card, Card]> = {};
+  for (const pid of playerIds) {
+    const spec = playerSpecified[pid];
+    const c0 = spec[0] ?? takeRandom();
+    const c1 = spec[1] ?? takeRandom();
+    holeCards[pid] = [c0, c1];
+  }
+
+  // Order the deck so specified common cards come out first (in order), then the rest of the
+  // remaining random cards.
+  const finalDeck: Card[] = [...commonSpecified, ...remaining.slice(cursor)];
+  return { holeCards, deck: finalDeck };
+}
+
+/**
+ * Validate the current Test Mode configuration. Returns an error string if the configuration
+ * is invalid (cannot be parsed, too many cards for a player, or duplicate cards across all
+ * inputs), or null if it is valid or Test Mode is disabled.
+ *
+ * Note: short-deck conflicts (cards 2-9 when Short Deck is randomly selected) cannot be
+ * validated in the lobby because addon selection happens at game start; such conflicts are
+ * validated when the game actually starts (see `applyTestModeDeal`).
+ */
+export function validateTestModeConfig(): string | null {
+  if (!state.testMode) return null;
+  const seen = new Map<string, true>();
+  const checkAndCollect = (cards: ReturnType<typeof parseCardList>, label: string): string | null => {
+    if (cards === null) return `Invalid cards for ${label}`;
+    for (const card of cards) {
+      const key = cardKey(card);
+      if (seen.has(key)) return 'Duplicate card in Test Mode configuration';
+      seen.set(key, true);
+    }
+    return null;
+  };
+  for (const player of state.players) {
+    const raw = state.testModePlayerCards.get(player.id) ?? '';
+    const cards = parseCardList(raw);
+    if (cards !== null && cards.length > 2) return `Too many cards for ${player.name}`;
+    const err = checkAndCollect(cards, player.name);
+    if (err) return err;
+  }
+  const commonCards = parseCardList(state.testModeCommonCards);
+  const err = checkAndCollect(commonCards, 'common cards');
+  if (err) return err;
+  return null;
+}
+
+export function setTestMode(enabled: boolean): string | null {
+  if (state.phase !== 'lobby') return 'Cannot change test mode after game started';
+  state.testMode = enabled;
+  return null;
+}
+
+export function setTestModePlayerCards(socketId: string, playerId: string, cards: string): string | null {
+  if (state.phase !== 'lobby') return 'Cannot change test mode after game started';
+  if (!state.players.some((p) => p.id === playerId)) return 'Player not found';
+  state.testModePlayerCards.set(playerId, cards);
+  return null;
+}
+
+export function setTestModeCommonCards(cards: string): string | null {
+  if (state.phase !== 'lobby') return 'Cannot change test mode after game started';
+  state.testModeCommonCards = cards;
+  return null;
+}
+
 export function toggleRestartVote(socketId: string): string | null {
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
@@ -956,6 +1113,9 @@ export function finishGame(keepAddons = false): void {
   state.positiveAddonCount = savedPositiveCount;
   state.startGameVoters = new Set();
   state.restartVoters = new Set();
+  state.testMode = false;
+  state.testModePlayerCards = new Map();
+  state.testModeCommonCards = '';
   state.sessionIdToPlayerId = new Map();
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
@@ -1501,6 +1661,9 @@ export function buildClientState(socketId: string): ClientGameState {
     startGameVotes: state.startGameVoters.size,
     startGameVoterIds: [...state.startGameVoters],
     myStartGameVote: playerId ? state.startGameVoters.has(playerId) : false,
+    testMode: state.testMode,
+    testModePlayerCards: Object.fromEntries(state.testModePlayerCards),
+    testModeCommonCards: state.testModeCommonCards,
     restartVotes: state.restartVoters.size,
     restartVoterIds: [...state.restartVoters],
     myRestartVote: playerId ? state.restartVoters.has(playerId) : false,

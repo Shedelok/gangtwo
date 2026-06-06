@@ -20,6 +20,9 @@ import {
   finishGame,
   toggleAddon,
   setAddonCount,
+  setTestMode,
+  setTestModePlayerCards,
+  setTestModeCommonCards,
   lockActionCard,
   unlockActionCard,
   useShowCard,
@@ -106,6 +109,15 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'SET_ADDON_COUNT':
       error = setAddonCount(action.addonType, action.count);
+      break;
+    case 'SET_TEST_MODE':
+      error = setTestMode(action.enabled);
+      break;
+    case 'SET_TEST_MODE_PLAYER_CARDS':
+      error = setTestModePlayerCards(socketId, action.playerId, action.cards);
+      break;
+    case 'SET_TEST_MODE_COMMON_CARDS':
+      error = setTestModeCommonCards(action.cards);
       break;
     case 'DISCARD_CHIP':
       error = discardChip(socketId, action.chipNumber);

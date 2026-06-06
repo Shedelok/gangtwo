@@ -1,6 +1,11 @@
 import { expect } from '@playwright/test';
 import type { Locator, Page } from '@playwright/test';
 
+export const SPADES_SYMBOL   = '♠';
+export const HEARTS_SYMBOL   = '♥';
+export const DIAMONDS_SYMBOL = '♦';
+export const CLUBS_SYMBOL    = '♣';
+
 export function getRankPluralLabel(rank: string): string {
   return ({ A: 'Aces', K: 'Kings', Q: 'Queens', J: 'Jacks' } as Record<string, string>)[rank] ?? `${rank}s`;
 }
@@ -211,6 +216,18 @@ export async function getCommonCards(page: Page): Promise<PocketCard[]> {
       return { rank, suit, click: () => card.click() };
     })
   );
+}
+
+export async function setTestModeCommonCards(page: Page, cards: string): Promise<void> {
+  await page.getByPlaceholder('e.g. 2h, Ah, Ks, 8d').fill(cards);
+}
+
+export async function setTestModePlayerCards(page: Page, playerName: string, cards: string): Promise<void> {
+  await page.locator('li').filter({ hasText: playerName }).locator('input[placeholder="e.g. As, 10d"]').fill(cards);
+}
+
+export async function clickTestModeCheckbox(page: Page): Promise<void> {
+  await page.getByLabel('Test Mode').click();
 }
 
 export async function pressStartGameInLobby(page: Page): Promise<void> {

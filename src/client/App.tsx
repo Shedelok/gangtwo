@@ -707,6 +707,17 @@ export default function App() {
               document.body
             )}
           </div>
+          {isLobby && (
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#aaa', fontSize: 11, cursor: 'pointer', userSelect: 'none' }}>
+              <input
+                type="checkbox"
+                checked={state.testMode}
+                onChange={(e) => sendAction({ type: 'SET_TEST_MODE', enabled: e.target.checked })}
+                style={{ cursor: 'pointer' }}
+              />
+              Test Mode
+            </label>
+          )}
         </div>
         {soundPanelOpen && (
           <div style={styles.soundPanel}>
