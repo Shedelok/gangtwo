@@ -319,6 +319,12 @@ normal card would have its suit.
 Same as "Addon: [A] Unsuited Jack", but instead of Jack a random card Rank (from 2 to A) is determined at the beginning
 of the game and an unsuited card with rank X is available to be taken. X stays the same through all rounds.
 
+When Test Mode is enabled, an additional text input appears to the right of the checkbox and text for this addon in the
+addons list.
+It accepts a single rank token (2–9, 10, J, Q, K, A). If left
+empty, X is chosen randomly at game start as usual. If a rank is specified, it is used as X. If the specified rank is
+invalid or conflicts with the current game configuration the game cannot start. By default, this text input is empty.
+
 ### General Details
 
 When multiple unsuited action cards are put on the action cards table, they are sorted by rank (top to bottom A, K, Q,

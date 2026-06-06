@@ -676,6 +676,19 @@ export default function App() {
           >?</span>
           {hovered && <div style={styles.addonTooltip} onMouseEnter={() => setHoveredAddon(null)}>{addon.long}</div>}
         </div>
+        {isLobby && state.testMode && addon.id === 'action-unsuited-x' && (
+          // Spec ([A] Unsuited X): "When Test Mode is enabled, an additional text input appears
+          // to the right of the checkbox and text for this addon in the addons list. It accepts a
+          // single rank token (2–9, 10, J, Q, K, A)." Empty means X is chosen randomly at game start.
+          <input
+            type="text"
+            value={state.testModeUnsuitedXRank}
+            onChange={(e) => sendAction({ type: 'SET_TEST_MODE_UNSUITED_X_RANK', rank: e.target.value })}
+            placeholder="X"
+            spellCheck={false}
+            style={{ width: 36, flexShrink: 0, padding: '2px 6px', borderRadius: 4, border: '1px solid #333', background: '#0a2540', color: 'white', fontSize: 12, outline: 'none', textAlign: 'center' }}
+          />
+        )}
       </div>
     );
   };

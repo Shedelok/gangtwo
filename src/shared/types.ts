@@ -38,6 +38,9 @@ export interface ClientGameState {
   testMode: boolean;                        // whether the 'Test Mode' checkbox is checked
   testModePlayerCards: Record<string, string>; // playerId → raw card-list text for that player
   testModeCommonCards: string;              // raw card-list text for the common cards
+  // Raw rank-token text for the [A] Unsuited X addon. When Test Mode is enabled, a single rank
+  // token (2–9, 10, J, Q, K, A) can be specified to force X; empty means X is chosen randomly.
+  testModeUnsuitedXRank: string;
   restartVotes: number;       // how many players have voted to restart
   restartVoterIds: string[];  // IDs of players who have voted to restart
   myRestartVote: boolean;     // whether the current player has voted to restart
@@ -140,6 +143,7 @@ export type ClientAction =
   | { type: 'SET_TEST_MODE'; enabled: boolean }
   | { type: 'SET_TEST_MODE_PLAYER_CARDS'; playerId: string; cards: string }
   | { type: 'SET_TEST_MODE_COMMON_CARDS'; cards: string }
+  | { type: 'SET_TEST_MODE_UNSUITED_X_RANK'; rank: string }
   | { type: 'DISCARD_CHIP'; chipNumber: number }
   | { type: 'TAKE_FROM_MIDDLE'; chipNumber: number }
   | { type: 'STEAL_CHIP'; fromPlayerId: string; chipNumber: number }

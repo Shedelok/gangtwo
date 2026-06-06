@@ -170,7 +170,14 @@ function validateTestMode(state: ClientGameState): string | null {
     const err = collect(cards, p.name);
     if (err) return err;
   }
-  return collect(parseCardList(state.testModeCommonCards), 'common cards');
+  const commonErr = collect(parseCardList(state.testModeCommonCards), 'common cards');
+  if (commonErr) return commonErr;
+  // [A] Unsuited X rank input: a single rank token, or empty (random). Conflicts that depend on
+  // the randomly-picked addon set (e.g. a 2-9 rank under Short Deck) cannot be validated here and
+  // are enforced by the server at game start; this only catches obviously invalid tokens.
+  const rankRaw = state.testModeUnsuitedXRank.trim().toUpperCase();
+  if (rankRaw !== '' && !RANK_TOKENS.has(rankRaw)) return 'Invalid rank for Unsuited X';
+  return null;
 }
 
 export default function Lobby({ state, sendAction }: Props) {

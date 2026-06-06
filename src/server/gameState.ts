@@ -36,6 +36,9 @@ interface ServerGameState {
   testMode: boolean;
   testModePlayerCards: Map<string, string>; // playerId → raw card-list text
   testModeCommonCards: string;              // raw card-list text for common cards
+  // Raw rank-token text for the [A] Unsuited X addon (Test Mode only). A single rank token
+  // (2–9, 10, J, Q, K, A) forces X; empty means X is chosen randomly at game start.
+  testModeUnsuitedXRank: string;
   noOldChipsHidden: Map<string, Chip[]>; // playerId → chips hidden by no-old-chips addon
   rankGuesses: Map<string, Map<string, string>>; // addonId → (voterId → rank)
   winningGuessRanks: Map<string, string>; // addonId → winning rank (set when voting locks)
@@ -146,6 +149,7 @@ const state: ServerGameState = {
   testMode: false,
   testModePlayerCards: new Map(),
   testModeCommonCards: '',
+  testModeUnsuitedXRank: '',
   noOldChipsHidden: new Map(),
   rankGuesses: new Map(),
   winningGuessRanks: new Map(),
@@ -510,9 +514,24 @@ export function startGame(shufflePlayers = true): string | null {
   const ALL_RANKS: string[] = isShortDeck
     ? ['10','J','Q','K','A']
     : ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-  state.unsuitedXRank = state.enabledAddons.has('action-unsuited-x')
-    ? ALL_RANKS[Math.floor(Math.random() * ALL_RANKS.length)]
-    : null;
+  if (state.enabledAddons.has('action-unsuited-x')) {
+    // Test Mode may force X to a specific rank; otherwise it is chosen randomly. An empty input
+    // (or Test Mode disabled) falls back to a random rank.
+    const specified = state.testMode ? state.testModeUnsuitedXRank.trim().toUpperCase() : '';
+    if (specified !== '') {
+      // Spec: "If the specified rank is invalid or conflicts with the current game configuration
+      // the game cannot start." A rank not present in ALL_RANKS (e.g. 2-9 under Short Deck, or an
+      // unparseable token) is rejected. Phase is still 'lobby', so the game simply does not start.
+      if (!ALL_RANKS.includes(specified)) {
+        return `Unsuited X rank "${state.testModeUnsuitedXRank.trim()}" is invalid for the current configuration`;
+      }
+      state.unsuitedXRank = specified;
+    } else {
+      state.unsuitedXRank = ALL_RANKS[Math.floor(Math.random() * ALL_RANKS.length)];
+    }
+  } else {
+    state.unsuitedXRank = null;
+  }
 
   state.showCardUsed = false;
   state.showCardData = null;
@@ -1045,6 +1064,12 @@ export function setTestModeCommonCards(cards: string): string | null {
   return null;
 }
 
+export function setTestModeUnsuitedXRank(rank: string): string | null {
+  if (state.phase !== 'lobby') return 'Cannot change test mode after game started';
+  state.testModeUnsuitedXRank = rank;
+  return null;
+}
+
 export function toggleRestartVote(socketId: string): string | null {
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
@@ -1116,6 +1141,7 @@ export function finishGame(keepAddons = false): void {
   state.testMode = false;
   state.testModePlayerCards = new Map();
   state.testModeCommonCards = '';
+  state.testModeUnsuitedXRank = '';
   state.sessionIdToPlayerId = new Map();
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
@@ -1664,6 +1690,7 @@ export function buildClientState(socketId: string): ClientGameState {
     testMode: state.testMode,
     testModePlayerCards: Object.fromEntries(state.testModePlayerCards),
     testModeCommonCards: state.testModeCommonCards,
+    testModeUnsuitedXRank: state.testModeUnsuitedXRank,
     restartVotes: state.restartVoters.size,
     restartVoterIds: [...state.restartVoters],
     myRestartVote: playerId ? state.restartVoters.has(playerId) : false,

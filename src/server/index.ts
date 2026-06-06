@@ -23,6 +23,7 @@ import {
   setTestMode,
   setTestModePlayerCards,
   setTestModeCommonCards,
+  setTestModeUnsuitedXRank,
   lockActionCard,
   unlockActionCard,
   useShowCard,
@@ -118,6 +119,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'SET_TEST_MODE_COMMON_CARDS':
       error = setTestModeCommonCards(action.cards);
+      break;
+    case 'SET_TEST_MODE_UNSUITED_X_RANK':
+      error = setTestModeUnsuitedXRank(action.rank);
       break;
     case 'DISCARD_CHIP':
       error = discardChip(socketId, action.chipNumber);
