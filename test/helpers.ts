@@ -105,6 +105,7 @@ async function setEnabledAddons(list: AddonList, names: string[]): Promise<void>
 
 export interface ActionCard {
   name: string;
+  locator: Locator;
   click: () => Promise<void>;
 }
 
@@ -117,7 +118,7 @@ export async function getActionCards(page: Page): Promise<ActionCard[]> {
     Array.from({ length: count }, async (_, i) => {
       const name = (await allCards.nth(i).getAttribute('title'))!;
       const locator = panel.locator(`div[title="${name}"]`);
-      return { name, click: () => locator.click() };
+      return { name, locator, click: () => locator.click() };
     })
   );
 }
@@ -125,18 +126,21 @@ export async function getActionCards(page: Page): Promise<ActionCard[]> {
 export interface PocketCard {
   rank: string;
   suit: string;
+  click: () => Promise<void>;
 }
 
 export async function getOwnPocketCards(page: Page): Promise<PocketCard[]> {
   const container = page
     .locator('div')
     .filter({ has: page.getByText('(you)') })
-    .filter({ hasNot: page.locator('.cc-flip-container') });
+    .filter({ hasNot: page.locator('.cc-flip-container') })
+    .first();
   await container.getByText(/^(A|K|Q|J|10|[2-9])$/).first().waitFor();
-  return container.first().evaluate((el: HTMLElement) => {
+  const rawCards = await container.evaluate((el: HTMLElement) => {
     const rankRe = /^(A|K|Q|J|10|[2-9])$/;
     const suitSymbols = new Set(['♠', '♥', '♦', '♣']);
     const result: { rank: string; suit: string }[] = [];
+    const seenUnsuitedCards = new Set<Element>();
     for (const span of el.querySelectorAll('span')) {
       const text = span.textContent?.trim() ?? '';
       if (!rankRe.test(text)) continue;
@@ -145,9 +149,35 @@ export async function getOwnPocketCards(page: Page): Promise<PocketCard[]> {
       if (!suitSymbols.has(sym)) {
         sym = (span.parentElement?.nextElementSibling?.querySelector('span') as HTMLElement | null)?.textContent?.trim() ?? '';
       }
-      if (suitSymbols.has(sym)) result.push({ rank: text, suit: sym });
+      if (suitSymbols.has(sym)) {
+        result.push({ rank: text, suit: sym });
+      } else {
+        // Unsuited cards have orange background (#B87333) and no suit symbol
+        let ancestor: Element | null = span.parentElement;
+        let cardEl: Element | null = null;
+        while (ancestor && ancestor !== el) {
+          const bg = getComputedStyle(ancestor).backgroundColor;
+          if (bg === 'rgb(184, 115, 51)' || bg === 'rgba(184, 115, 51, 1)') {
+            cardEl = ancestor;
+            break;
+          }
+          ancestor = ancestor.parentElement;
+        }
+        if (cardEl && !cardEl.hasAttribute('title') && !seenUnsuitedCards.has(cardEl)) {
+          seenUnsuitedCards.add(cardEl);
+          result.push({ rank: text, suit: '' });
+        }
+      }
     }
     return result;
+  });
+  return rawCards.map(({ rank, suit }) => {
+    const clickable = container.locator('[style*="cursor: pointer"]')
+      .filter({ has: page.locator('span', { hasText: new RegExp(`^${rank}$`) }) });
+    const locator = suit !== ''
+      ? clickable.filter({ has: page.locator('span', { hasText: suit }) }).first()
+      : clickable.first();
+    return { rank, suit, click: () => locator.click() };
   });
 }
 
@@ -165,7 +195,8 @@ export async function getCommonCards(page: Page): Promise<PocketCard[]> {
   const count = await cards.count();
   return Promise.all(
     Array.from({ length: count }, async (_, i) => {
-      return cards.nth(i).evaluate((el: HTMLElement) => {
+      const card = cards.nth(i);
+      const { rank, suit } = await card.evaluate((el: HTMLElement) => {
         const rankRe = /^(A|K|Q|J|10|[2-9])$/;
         const suitSymbols = new Set(['♠', '♥', '♦', '♣']);
         let rank = '';
@@ -177,6 +208,7 @@ export async function getCommonCards(page: Page): Promise<PocketCard[]> {
         }
         return { rank, suit };
       });
+      return { rank, suit, click: () => card.click() };
     })
   );
 }
@@ -200,6 +232,46 @@ export async function setEnabledPositiveAddons(page: Page, names: string[]): Pro
 export async function setEnabledNegativeAddons(page: Page, names: string[]): Promise<void> {
   const { negative } = await getAddonLists(page);
   await setEnabledAddons(negative, names);
+}
+
+export async function getUnsuitedXRank(card: ActionCard): Promise<string> {
+  return (await card.locator.locator('span').first().textContent())!.trim();
+}
+
+
+export async function useCheckNumberOfRanksActionCard(page: Page, rank: string): Promise<number> {
+  const actionCards = await getActionCards(page);
+  const cnrCard = actionCards.find(c => c.name === '[A] Check Number of Ranks')!;
+  await cnrCard.click();
+  await page.getByRole('button', { name: 'Choose rank' }).click();
+  await page.getByRole('button', { name: rank, exact: true }).click();
+  await page.getByRole('button', { name: `Check number of ${getRankPluralLabel(rank)}` }).click();
+  return page.evaluate((): Promise<number> => new Promise((resolve, reject) => {
+    const scan = (): number | null => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      let node: Node | null;
+      while ((node = walker.nextNode())) {
+        const text = node.textContent ?? '';
+        if (text.includes('in the game right now')) {
+          const m = text.match(/\d+/);
+          if (m) return parseInt(m[0], 10);
+        }
+      }
+      return null;
+    };
+    const count = scan();
+    if (count !== null) { resolve(count); return; }
+    let tid: ReturnType<typeof setTimeout>;
+    const mo = new MutationObserver(() => {
+      const c = scan();
+      if (c === null) return;
+      clearTimeout(tid);
+      mo.disconnect();
+      resolve(c);
+    });
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true });
+    tid = setTimeout(() => { mo.disconnect(); reject(new Error('Cloud never appeared')); }, 25000);
+  }));
 }
 
 export async function completelyResetGameState(page: Page): Promise<void> {

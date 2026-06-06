@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { completelyResetGameState, getActionCards, getCommonCards, getOwnPocketCards, joinLobby, pressReadyForNextRound, pressStartGameInLobby, getRankPluralLabel, setEnabledPositiveAddons, takeAnyChip } from '../helpers';
+import { completelyResetGameState, getActionCards, getCommonCards, getOwnPocketCards, getUnsuitedXRank, joinLobby, pressReadyForNextRound, pressStartGameInLobby, setEnabledPositiveAddons, takeAnyChip, useCheckNumberOfRanksActionCard } from '../helpers';
 
 test.beforeEach(async ({ page }) => {
   await completelyResetGameState(page);
@@ -13,7 +13,6 @@ for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 10 : 1); i++) {
 
       await joinLobby(checkerPage, 'Checking player');
       await joinLobby(afkPage, 'Afk player');
-
       await pressStartGameInLobby(checkerPage);
       await pressStartGameInLobby(afkPage);
 
@@ -21,19 +20,8 @@ for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 10 : 1); i++) {
       const checkerCount = (await getOwnPocketCards(checkerPage)).filter(c => c.rank === cardToCheck.rank).length;
       const afkCount = (await getOwnPocketCards(afkPage)).filter(c => c.rank === cardToCheck.rank).length;
 
-      const actionCards = await getActionCards(checkerPage);
-      expect(actionCards).toHaveLength(1);
-      const cnrCard = actionCards[0];
-      await cnrCard.click();
-      await checkerPage.getByRole('button', { name: 'Choose rank' }).click();
-      await checkerPage.getByRole('button', { name: cardToCheck.rank, exact: true }).click();
-      await checkerPage.getByRole('button', { name: `Check number of ${getRankPluralLabel(cardToCheck.rank)}` }).click();
-
-      await checkerPage.getByText('in the game right now').waitFor();
-      const cloudCount = parseInt(
-        (await checkerPage.getByText(/There (is|are) \d+ .+ in the game right now/).textContent())!.match(/\d+/)![0],
-        10,
-      );
+      expect(await getActionCards(checkerPage)).toHaveLength(1);
+      const cloudCount = await useCheckNumberOfRanksActionCard(checkerPage, cardToCheck.rank);
 
       expect(cloudCount).toBe(checkerCount + afkCount);
     } finally {
@@ -50,7 +38,6 @@ for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 10 : 1); i++) {
 
       await joinLobby(checkerPage, 'Checking player');
       await joinLobby(afkPage, 'Afk player');
-
       await pressStartGameInLobby(checkerPage);
       await pressStartGameInLobby(afkPage);
 
@@ -67,21 +54,106 @@ for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 10 : 1); i++) {
       const checkerCount = (await getOwnPocketCards(checkerPage)).filter(c => c.rank === cardToCheck.rank).length;
       const afkCount = (await getOwnPocketCards(afkPage)).filter(c => c.rank === cardToCheck.rank).length;
 
-      const actionCards = await getActionCards(checkerPage);
-      expect(actionCards).toHaveLength(1);
-      const cnrCard = actionCards[0];
-      await cnrCard.click();
-      await checkerPage.getByRole('button', { name: 'Choose rank' }).click();
-      await checkerPage.getByRole('button', { name: cardToCheck.rank, exact: true }).click();
-      await checkerPage.getByRole('button', { name: `Check number of ${getRankPluralLabel(cardToCheck.rank)}` }).click();
-
-      await checkerPage.getByText('in the game right now').waitFor();
-      const cloudCount = parseInt(
-        (await checkerPage.getByText(/There (is|are) \d+ .+ in the game right now/).textContent())!.match(/\d+/)![0],
-        10,
-      );
+      expect(await getActionCards(checkerPage)).toHaveLength(1);
+      const cloudCount = await useCheckNumberOfRanksActionCard(checkerPage, cardToCheck.rank);
 
       expect(cloudCount).toBe(checkerCount + afkCount + commonCount);
+    } finally {
+      await afkPage.close();
+    }
+  });
+}
+
+for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 3 : 1); i++) {
+  test(`unsuited X sitting in action cards is not counted (run ${i + 1})`, async ({ page: checkerPage, browser }) => {
+    const afkPage = await browser.newPage();
+    try {
+      await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
+
+      await joinLobby(checkerPage, 'Checking player');
+      await joinLobby(afkPage, 'Afk player');
+      await pressStartGameInLobby(checkerPage);
+      await pressStartGameInLobby(afkPage);
+
+      const rankX = await getUnsuitedXRank((await getActionCards(checkerPage)).find(c => c.name === '[A] Unsuited X')!);
+      const checkerCount = (await getOwnPocketCards(checkerPage)).filter(c => c.rank === rankX).length;
+      const afkCount = (await getOwnPocketCards(afkPage)).filter(c => c.rank === rankX).length;
+
+      const cloudCount = await useCheckNumberOfRanksActionCard(checkerPage, rankX);
+
+      expect(cloudCount).toBe(checkerCount + afkCount);
+    } finally {
+      await afkPage.close();
+    }
+  });
+}
+
+for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 3 : 1); i++) {
+  test(`unsuited X taken by checker is counted (run ${i + 1})`, async ({ page: checkerPage, browser }) => {
+    const afkPage = await browser.newPage();
+    try {
+      await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
+
+      await joinLobby(checkerPage, 'Checking player');
+      await joinLobby(afkPage, 'Afk player');
+      await pressStartGameInLobby(checkerPage);
+      await pressStartGameInLobby(afkPage);
+
+      const unsuitedXCard = (await getActionCards(checkerPage)).find(c => c.name === '[A] Unsuited X')!;
+      const rankX = await getUnsuitedXRank(unsuitedXCard);
+      const checkerCardsBefore = await getOwnPocketCards(checkerPage);
+      const checkerCountBefore = checkerCardsBefore.filter(c => c.rank === rankX).length;
+      const afkCount = (await getOwnPocketCards(afkPage)).filter(c => c.rank === rankX).length;
+
+      await unsuitedXCard.click();
+      const replacedRank = checkerCardsBefore[0].rank;
+      await checkerCardsBefore[0].click();
+      await expect(async () => {
+        expect((await getOwnPocketCards(checkerPage)).some(c => c.suit === '')).toBe(true);
+      }).toPass({ timeout: 5000 });
+
+      const checkerCount = checkerCountBefore + (replacedRank === rankX ? 0 : 1);
+
+      const cloudCount = await useCheckNumberOfRanksActionCard(checkerPage, rankX);
+
+      expect(cloudCount).toBe(checkerCount + afkCount);
+      expect(cloudCount).toBeGreaterThan(0);
+    } finally {
+      await afkPage.close();
+    }
+  });
+}
+
+for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 3 : 1); i++) {
+  test(`unsuited X taken by other player is counted (run ${i + 1})`, async ({ page: checkerPage, browser }) => {
+    const afkPage = await browser.newPage();
+    try {
+      await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
+
+      await joinLobby(checkerPage, 'Checking player');
+      await joinLobby(afkPage, 'Afk player');
+      await pressStartGameInLobby(checkerPage);
+      await pressStartGameInLobby(afkPage);
+
+      const unsuitedXCard = (await getActionCards(afkPage)).find(c => c.name === '[A] Unsuited X')!;
+      const rankX = await getUnsuitedXRank(unsuitedXCard);
+      const checkerCount = (await getOwnPocketCards(checkerPage)).filter(c => c.rank === rankX).length;
+      const afkCardsBefore = await getOwnPocketCards(afkPage);
+      const afkCountBefore = afkCardsBefore.filter(c => c.rank === rankX).length;
+
+      await unsuitedXCard.click();
+      const replacedRank = afkCardsBefore[0].rank;
+      await afkCardsBefore[0].click();
+      await expect(async () => {
+        expect((await getOwnPocketCards(afkPage)).some(c => c.suit === '')).toBe(true);
+      }).toPass({ timeout: 5000 });
+
+      const afkCount = afkCountBefore + (replacedRank === rankX ? 0 : 1);
+
+      const cloudCount = await useCheckNumberOfRanksActionCard(checkerPage, rankX);
+
+      expect(cloudCount).toBe(checkerCount + afkCount);
+      expect(cloudCount).toBeGreaterThan(0);
     } finally {
       await afkPage.close();
     }
