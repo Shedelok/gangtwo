@@ -415,9 +415,9 @@ spec/base/resources/sounds/moving-plant.mp3.
 The action card for this addon has green background. It has 3 vertical rectangles (like bars) displayed on it: first two
 are black and third one is yellow.
 
-## Addon: [A] Destroy All Xs
+## Addon: [A] Destroy All Rs
 
-Short description: "[A] Destroy All Xs"
+Short description: "[A] Destroy All Rs"
 
 Long description: Once per game, one of the players can destroy all cards of chosen rank R. Destroying cards discards
 all of them whether they are in the deck, on the table or in players' hands.

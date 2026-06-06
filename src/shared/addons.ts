@@ -309,7 +309,7 @@ export const ADDONS: AddonDef[] = [
   },
   {
     id: 'action-destroy-all-xs',
-    short: "[A] Destroy All Xs",
+    short: "[A] Destroy All Rs",
     long: "Once per game, one of the players can destroy all cards of chosen rank R. Destroying cards discards all of them whether they are in the deck, on the table or in players' hands.",
     type: 'positive',
     hasAction: true,
