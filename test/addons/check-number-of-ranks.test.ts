@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { clickTestModeCheckbox, completelyResetGameState, getActionCards, getOwnPocketCards, getUnsuitedXRank, joinLobby, pressReadyForNextRound, pressStartGameInLobby, setEnabledPositiveAddons, setTestModeCommonCards, setTestModePlayerCards, takeAnyChip, useCheckNumberOfRanksActionCard } from '../helpers';
+import { clickTestModeCheckbox, completelyResetGameState, getActionCards, getOwnPocketCards, joinLobby, pressReadyForNextRound, pressStartGameInLobby, setEnabledPositiveAddons, setTestModeCommonCards, setTestModePlayerCards, setTestModeUnsuitedXRank, takeAnyChip, useCheckNumberOfRanksActionCard } from '../helpers';
 
 test.beforeEach(async ({ page }) => {
   await completelyResetGameState(page);
@@ -82,94 +82,82 @@ for (const { name, checkerCards, afkCards, commonCards, roundsToReveal, checkRan
   });
 }
 
-for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 3 : 1); i++) {
-  test(`unsuited X sitting in action cards is not counted (run ${i + 1})`, async ({ page: checkerPage, browser }) => {
-    const afkPage = await browser.newPage();
-    try {
-      await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
+test('unsuited X sitting in action cards is not counted', async ({ page: checkerPage, browser }) => {
+  const afkPage = await browser.newPage();
+  try {
+    await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
 
-      await joinLobby(checkerPage, 'Checking player');
-      await joinLobby(afkPage, 'Afk player');
+    await joinLobby(checkerPage, 'Checking player');
+    await joinLobby(afkPage, 'Afk player');
 
-      await clickTestModeCheckbox(checkerPage);
-      await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
-      await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
+    await clickTestModeCheckbox(checkerPage);
+    await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
+    await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
+    await setTestModeUnsuitedXRank(checkerPage, 'K');
 
-      await pressStartGameInLobby(checkerPage);
-      await pressStartGameInLobby(afkPage);
+    await pressStartGameInLobby(checkerPage);
+    await pressStartGameInLobby(afkPage);
 
-      const rankX = await getUnsuitedXRank((await getActionCards(checkerPage)).find(c => c.name === '[A] Unsuited X')!);
-      const naturalCount = ['A', 'Q', 'J', '10'].filter(r => r === rankX).length;
+    expect(await useCheckNumberOfRanksActionCard(checkerPage, 'K')).toBe(0);
+  } finally {
+    await afkPage.close();
+  }
+});
 
-      expect(await useCheckNumberOfRanksActionCard(checkerPage, rankX)).toBe(naturalCount);
-    } finally {
-      await afkPage.close();
-    }
-  });
-}
+test('unsuited X taken by checker hand is counted', async ({ page: checkerPage, browser }) => {
+  const afkPage = await browser.newPage();
+  try {
+    await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
 
-for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 3 : 1); i++) {
-  test(`unsuited X taken by in checker hand is counted (run ${i + 1})`, async ({ page: checkerPage, browser }) => {
-    const afkPage = await browser.newPage();
-    try {
-      await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
+    await joinLobby(checkerPage, 'Checking player');
+    await joinLobby(afkPage, 'Afk player');
 
-      await joinLobby(checkerPage, 'Checking player');
-      await joinLobby(afkPage, 'Afk player');
+    await clickTestModeCheckbox(checkerPage);
+    await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
+    await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
+    await setTestModeUnsuitedXRank(checkerPage, 'K');
 
-      await clickTestModeCheckbox(checkerPage);
-      await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
-      await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
+    await pressStartGameInLobby(checkerPage);
+    await pressStartGameInLobby(afkPage);
 
-      await pressStartGameInLobby(checkerPage);
-      await pressStartGameInLobby(afkPage);
+    const unsuitedXCard = (await getActionCards(checkerPage)).find(c => c.name === '[A] Unsuited X')!;
+    await unsuitedXCard.click();
+    await (await getOwnPocketCards(checkerPage))[0].click();
+    await expect(async () => {
+      expect((await getOwnPocketCards(checkerPage)).some(c => c.suit === '')).toBe(true);
+    }).toPass({ timeout: 5000 });
 
-      const unsuitedXCard = (await getActionCards(checkerPage)).find(c => c.name === '[A] Unsuited X')!;
-      const rankX = await getUnsuitedXRank(unsuitedXCard);
+    expect(await useCheckNumberOfRanksActionCard(checkerPage, 'K')).toBe(1);
+  } finally {
+    await afkPage.close();
+  }
+});
 
-      await unsuitedXCard.click();
-      await (await getOwnPocketCards(checkerPage))[0].click(); // replace Ace of spades
-      await expect(async () => {
-        expect((await getOwnPocketCards(checkerPage)).some(c => c.suit === '')).toBe(true);
-      }).toPass({ timeout: 5000 });
+test('unsuited card in other player hand is counted', async ({ page: checkerPage, browser }) => {
+  const afkPage = await browser.newPage();
+  try {
+    await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
 
-      const naturalCountAfterReplace = ['Q', 'J', '10'].filter(r => r === rankX).length;
-      expect(await useCheckNumberOfRanksActionCard(checkerPage, rankX)).toBe(naturalCountAfterReplace + 1);
-    } finally {
-      await afkPage.close();
-    }
-  });
-}
+    await joinLobby(checkerPage, 'Checking player');
+    await joinLobby(afkPage, 'Afk player');
 
-for (let i = 0; i < (process.env.TEST_FULL === 'true' ? 3 : 1); i++) {
-  test(`unsuited card in other player hand is counted (run ${i + 1})`, async ({ page: checkerPage, browser }) => {
-    const afkPage = await browser.newPage();
-    try {
-      await setEnabledPositiveAddons(checkerPage, ['[A] Check Number of Ranks', '[A] Unsuited X']);
+    await clickTestModeCheckbox(checkerPage);
+    await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
+    await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
+    await setTestModeUnsuitedXRank(checkerPage, 'K');
 
-      await joinLobby(checkerPage, 'Checking player');
-      await joinLobby(afkPage, 'Afk player');
+    await pressStartGameInLobby(checkerPage);
+    await pressStartGameInLobby(afkPage);
 
-      await clickTestModeCheckbox(checkerPage);
-      await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
-      await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
+    const unsuitedXCard = (await getActionCards(afkPage)).find(c => c.name === '[A] Unsuited X')!;
+    await unsuitedXCard.click();
+    await (await getOwnPocketCards(afkPage))[0].click();
+    await expect(async () => {
+      expect((await getOwnPocketCards(afkPage)).some(c => c.suit === '')).toBe(true);
+    }).toPass({ timeout: 5000 });
 
-      await pressStartGameInLobby(checkerPage);
-      await pressStartGameInLobby(afkPage);
-
-      const unsuitedXCard = (await getActionCards(afkPage)).find(c => c.name === '[A] Unsuited X')!;
-      const rankX = await getUnsuitedXRank(unsuitedXCard);
-
-      await unsuitedXCard.click();
-      await (await getOwnPocketCards(afkPage))[0].click(); // replace J of hearths
-      await expect(async () => {
-        expect((await getOwnPocketCards(afkPage)).some(c => c.suit === '')).toBe(true);
-      }).toPass({ timeout: 5000 });
-
-      const naturalCountAfterReplace = ['A', 'Q', '10'].filter(r => r === rankX).length;
-      expect(await useCheckNumberOfRanksActionCard(checkerPage, rankX)).toBe(naturalCountAfterReplace + 1);
-    } finally {
-      await afkPage.close();
-    }
-  });
-}
+    expect(await useCheckNumberOfRanksActionCard(checkerPage, 'K')).toBe(1);
+  } finally {
+    await afkPage.close();
+  }
+});

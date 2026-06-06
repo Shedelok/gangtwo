@@ -230,6 +230,10 @@ export async function clickTestModeCheckbox(page: Page): Promise<void> {
   await page.getByLabel('Test Mode').click();
 }
 
+export async function setTestModeUnsuitedXRank(page: Page, rank: string): Promise<void> {
+  await page.getByPlaceholder('X').fill(rank);
+}
+
 export async function pressStartGameInLobby(page: Page): Promise<void> {
   await page.getByRole('button', { name: /Start Game/ }).click();
 }
@@ -301,6 +305,12 @@ export async function completelyResetGameState(page: Page): Promise<void> {
   const nameInput = page.getByPlaceholder('Your name...');
   await nameInput.waitFor({ timeout: 10000 });
   await nameInput.fill('');
+
+  const testModeCheckbox = page.getByLabel('Test Mode');
+  if (await testModeCheckbox.isChecked()) {
+    await testModeCheckbox.click();
+    await expect(testModeCheckbox).not.toBeChecked();
+  }
 
   await setRequestedNegativeAddonCount(page, 0);
   await setRequestedPositiveAddonCount(page, 0);
