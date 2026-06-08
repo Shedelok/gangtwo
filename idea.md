@@ -71,3 +71,4 @@
 25. Share info round: each player reveals absolute value of differences of their cards (i.e. distance between their
     ranks).
 26. [A] drop 1 card
+27. [A] Discard both cards, but get a picked one from the deck. If the card you wanted (picked) is already taken, nothing happens (but the action card is gone)
