@@ -106,7 +106,8 @@ Long description: Instead of 4 logical suits, there are only 2: black (represent
 represented by diamonds and hearths).
 
 Functionality: All cards revert their colors, meaning the following: cards have the background of their suit color
-(red or black) and card's rank and suit symbols become white.
+(red or black) and card's rank and suit symbols become white. For hand resolution, all red cards are considered the
+same suit and all black cards are considered the same suit. So there are 2 suits instead of normal 4.
 
 ## Addon: Short Deck
 
@@ -119,6 +120,9 @@ cards are removed at the very beginning, so neither pocket cards nor common card
 is active, the cards are styled differently: each card has it's value and suit stacked vertically at the middle of the
 card. Both value and rank should take 50% of the height of the card. Both value and suit text should take about 50% of
 the width of the card (the font should be chosen accordingly).
+
+For hand resolution, this addon doesn't change anything. For clarification, the only possible straight with it is 10 to
+Ace.
 
 ## Addon: Additional Card Flop
 
@@ -300,6 +304,9 @@ This Jack is always unsuited (orange) even if it becomes a common card. If unsui
 the game, it's just normally discarded, the action card doesn't return to the table. If unsuited Jack moves to table or
 to another player, it moves normally as any other card. When unsuited Jack is flipped (animation), it flips just as a
 normal card.
+
+For hand resolution, an unsuited card is considered to have no suit (in other words it is not the same suit as any other
+card, including other unsuited cards).
 
 Both action card and the actual card in hand from this addon look the same: they have orange (#B87333) background and
 similarly to other playing cards have "J" symbol in the top left corner, but also in the center in the card where a
