@@ -6,7 +6,6 @@
     "build": "vite build && tsc -p tsconfig.server.json",
     "start": "node dist/server/index.js",
     "test": "playwright test",
-    "test-full": "TEST_FULL=true playwright test",
     "test-with-ui": "playwright test --ui"
   },
   "dependencies": {
