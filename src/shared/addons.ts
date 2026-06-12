@@ -23,7 +23,6 @@ export const NEGATIVE_ADDON_TREE: AddonGroupNode[] = [
     { addonId: 'guess-lowest-red-chip-hand-rank' },
     { addonId: 'guess-highest-red-chip-card-value' },
   ]},
-  { addonId: 'only-neighbors-steal' },
   { children: [
     { addonId: 'clubs-spades-diamonds-hearth' },
     { addonId: 'short-deck' },
@@ -161,12 +160,6 @@ export const ADDONS: AddonDef[] = [
     id: 'guess-highest-red-chip-card-value',
     short: "Guess Card Highest",
     long: "Before the player with the highest value red chip reveals their cards, other players must collectively agree on a card value that player has (ace/queen/seven/etc.).",
-    type: 'negative',
-  },
-  {
-    id: 'only-neighbors-steal',
-    short: "Only Neighbors Steal",
-    long: "You can only steal chips from players sitting next to your left and right (neighbors).",
     type: 'negative',
   },
   {

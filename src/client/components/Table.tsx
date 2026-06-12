@@ -262,7 +262,6 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
   if (state.enabledAddons.includes('ones-are-black')) blackNumbers.push(1);
   if (state.enabledAddons.includes('ns-are-black')) blackNumbers.push(n);
   if (state.enabledAddons.includes('xs-are-black') && state.blackXValue !== null) blackNumbers.push(state.blackXValue);
-  const onlyNeighborsSteal = state.enabledAddons.includes('only-neighbors-steal');
   const blackAndRed = state.enabledAddons.includes('clubs-spades-diamonds-hearth');
   const shortDeck = state.enabledAddons.includes('short-deck');
 
@@ -797,7 +796,6 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               guessRankUIs={guessRankUIs}
               dialogueClouds={dialogueClouds}
               blackNumbers={blackNumbers}
-              canStealFrom={!onlyNeighborsSteal || i === 1 || i === n - 1}
               blackAndRed={blackAndRed}
               shortDeck={shortDeck}
               showRestartTick={showRestartTick}

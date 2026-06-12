@@ -39,7 +39,6 @@ interface Props {
   myCardsRevealed: boolean;
   canReveal?: boolean;
   blackNumbers?: number[];
-  canStealFrom?: boolean;
   blackAndRed?: boolean;
   shortDeck?: boolean;
   showRestartTick?: boolean;
@@ -92,7 +91,7 @@ interface Props {
 export default function PlayerSeat({
   player, isMe, holeCards, showFaceDown,
   currentRound, iHaveCurrentRoundChip,
-  sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [], canStealFrom = true,
+  sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [],
   blackAndRed = false, shortDeck = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
   guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, onVacation = false, vacationLines = false, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm,
   passCardPhaseActive = false, passCardChoiceIndex, onPassCardSelect, onPassCardSubmit, onPassCardCancel, passCardAnimatingSlot,
@@ -225,7 +224,7 @@ export default function PlayerSeat({
                     Return
                   </button>
                 )}
-                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && canStealFrom && !actionInProgress && (
+                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && !actionInProgress && (
                   <button style={{ ...btn, background: '#5b21b6', color: '#ddd6fe' }}
                     onClick={() => sendAction({ type: 'STEAL_CHIP', fromPlayerId: player.id, chipNumber: chip.number })}>
                     Steal

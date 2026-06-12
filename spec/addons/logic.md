@@ -98,15 +98,6 @@ the sign). This
 question mark is visible on a red chip all the time: when it's on the table, when it's moving, when it's in a player's
 hand, etc.
 
-## Addon: Only Neighbors Steal
-
-Short description: "Only Neighbors Steal"
-
-Long description: You can only steal chips from players sitting next to your left and right (neighbors).
-
-Functionality: The "Steal" option is not available for the chips that are currently at players that are not neighbors
-of the current player.
-
 ## Addon: Black & Red
 
 Short description: "Black & Red"
@@ -529,11 +520,10 @@ addon names mean leaf nodes with that addon.
     2. Guess Hand 2nd Highest
     3. Guess Hand Lowest
     4. Guess Card Highest
-2. Only Neighbors Steal
-3.
+2.
     1. Black & Red
     2. Short Deck
-4.
+3.
     1.
         1. Additional Card Flop
         2. Additional Card Turn
@@ -542,12 +532,12 @@ addon names mean leaf nodes with that addon.
         1. No White Chips
         2. No Yellow Chips
         3. No Orange Chips
-5.
+4.
     1. Black 1s
     2. Black Ns
     3. Black Xs
-6. No Old Chips
-7. Prison
+5. No Old Chips
+6. Prison
 
 ## Positive Addons
 
