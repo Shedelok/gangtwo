@@ -194,6 +194,10 @@ export async function pressReadyForNextRound(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Move to next round' }).click();
 }
 
+export async function waitForNthCommonCardToAppear(page: Page, count: number): Promise<void> {
+  await page.locator('.cc-flip-container').nth(count - 1).waitFor();
+}
+
 export async function getCommonCards(page: Page): Promise<PocketCard[]> {
   const cards = page.locator('.cc-flip-container');
   await cards.first().waitFor();
@@ -255,6 +259,19 @@ export async function setEnabledNegativeAddons(page: Page, names: string[]): Pro
   await setEnabledAddons(negative, names);
 }
 
+export async function getCurrentHandHintText(page: Page): Promise<string> {
+  const trigger = page.getByText('My Current Hand', { exact: true });
+  await trigger.hover();
+  let result = '';
+  await expect(async () => {
+    result = await trigger.evaluate((el: HTMLElement) => {
+      return el.parentElement?.querySelector('div')?.textContent?.trim() ?? '';
+    });
+    expect(result).toBeTruthy();
+  }).toPass({ timeout: 3000 });
+  return result;
+}
+
 export async function getUnsuitedXRank(card: ActionCard): Promise<string> {
   return (await card.locator.locator('span').first().textContent())!.trim();
 }
@@ -293,6 +310,14 @@ export async function useCheckNumberOfRanksActionCard(page: Page, rank: string):
     mo.observe(document.body, { childList: true, subtree: true, characterData: true });
     tid = setTimeout(() => { mo.disconnect(); reject(new Error('Cloud never appeared')); }, 25000);
   }));
+}
+
+export async function useDestroyAllRsActionCard(page: Page, rank: string): Promise<void> {
+  const destroyCard = (await getActionCards(page)).find(c => c.name === '[A] Destroy All Rs')!;
+  await destroyCard.click();
+  await page.getByRole('button', { name: 'Choose rank' }).click();
+  await page.getByRole('button', { name: rank, exact: true }).click();
+  await page.getByRole('button', { name: `Destroy ${getRankPluralLabel(rank)}` }).click();
 }
 
 export async function completelyResetGameState(page: Page): Promise<void> {

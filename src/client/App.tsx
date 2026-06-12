@@ -4,7 +4,7 @@ import { useWebSocket } from './hooks/useWebSocket';
 import Lobby from './components/Lobby';
 import Game from './components/Game';
 import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H, PalmIcon, SkullIcon, QuestionMarkIcon } from './components/ActionCardPanel';
-import type { ClientGameState } from '@shared/types';
+import type { ClientGameState, Rank } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 
 const AVAILABLE_MP3S = ['airbus-cabin-beep.mp3', 'bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'moving-plant.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3'];
@@ -61,6 +61,138 @@ function playSound(file: string, masterVolume: number, multiplier: number): void
     audio.volume = Math.min(1, masterVolume * multiplier);
     audio.play().catch(() => {});
   } catch { /* audio not supported */ }
+}
+
+// Names the best poker hand formed from the given cards (2 hole cards plus any common cards).
+// Names follow the game's own hand-ranking chart (spec/base/resources/images/hand-ranking.png)
+// and the exact spec wording (spec/base/ui/in_game.md "Current Hand Hint"):
+// Royal Flush, Straight Flush, Four of a Kind, Full House, Flush, Straight, Three of a Kind,
+// Two Pair, One Pair, High Card. The best 5-card hand is chosen out of all available cards; when
+// fewer than 5 cards are available (early in the game), the best hand among the available cards
+// is named (e.g. two cards of the same rank are "One Pair").
+//
+// Hand evaluation accounts for addons that change how a hand is determined
+// (spec/addons/logic.md "Hand Evaluation"):
+//   - Black & Red: red cards (hearts/diamonds) are one suit, black cards (clubs/spades) another.
+//   - Unsuited Jack / Unsuited X: an unsuited card has no suit and is not the same suit as any
+//     other card (including other unsuited cards), so it can never contribute to a flush.
+// Each card carries a pre-resolved `effectiveSuit` token (or null when unsuited) so that flush
+// detection groups by these logical suits rather than the raw card suit.
+const RANK_ORDER: Record<Rank, number> = {
+  '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14,
+};
+
+interface HandCard { value: number; effectiveSuit: string | null }
+
+function hasStraight(values: number[]): { straight: boolean; high: number } {
+  // values: distinct rank values present. Ace can be high (14) or low (1).
+  const set = new Set(values);
+  if (set.has(14)) set.add(1); // Ace low for A-2-3-4-5
+  const sorted = Array.from(set).sort((a, b) => a - b);
+  let best = 0;
+  let run = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === sorted[i - 1] + 1) {
+      run++;
+      if (run >= 5) best = sorted[i];
+    } else {
+      run = 1;
+    }
+  }
+  return { straight: best >= 5, high: best };
+}
+
+function evaluateHandName(cards: HandCard[]): string {
+  if (cards.length === 0) return 'High Card';
+
+  const values = cards.map(c => c.value);
+
+  // Count by rank.
+  const rankCounts = new Map<number, number>();
+  for (const v of values) rankCounts.set(v, (rankCounts.get(v) ?? 0) + 1);
+  const counts = Array.from(rankCounts.values()).sort((a, b) => b - a);
+
+  // Count by effective suit; a flush needs 5 cards of one suit. Unsuited cards
+  // (effectiveSuit === null) never group together and never form a flush.
+  const suitGroups = new Map<string, number[]>();
+  for (const c of cards) {
+    if (c.effectiveSuit === null) continue;
+    const arr = suitGroups.get(c.effectiveSuit) ?? [];
+    arr.push(c.value);
+    suitGroups.set(c.effectiveSuit, arr);
+  }
+  let flushSuitValues: number[] | null = null;
+  for (const arr of suitGroups.values()) {
+    if (arr.length >= 5) flushSuitValues = arr;
+  }
+
+  const distinctValues = Array.from(new Set(values));
+  const straightInfo = hasStraight(distinctValues);
+
+  // Straight flush / royal flush: the straight must be formed within a single flush suit.
+  if (flushSuitValues) {
+    const sfInfo = hasStraight(Array.from(new Set(flushSuitValues)));
+    if (sfInfo.straight) {
+      return sfInfo.high === 14 ? 'Royal Flush' : 'Straight Flush';
+    }
+  }
+
+  if (counts[0] >= 4) return 'Four of a Kind';
+  if (counts[0] >= 3 && counts.length >= 2 && counts[1] >= 2) return 'Full House';
+  if (flushSuitValues) return 'Flush';
+  if (straightInfo.straight) return 'Straight';
+  if (counts[0] >= 3) return 'Three of a Kind';
+  if (counts[0] >= 2 && counts.length >= 2 && counts[1] >= 2) return 'Two Pair';
+  if (counts[0] >= 2) return 'One Pair';
+  return 'High Card';
+}
+
+// Builds the list of effective cards for the current player's hand (own pocket cards + common
+// cards), resolving each card's effective suit and rank according to the active addons and
+// excluding cards that have been destroyed (spec/addons/logic.md "Hand Evaluation").
+function buildMyHandCards(state: ClientGameState): HandCard[] {
+  const blackRed = state.enabledAddons.includes('clubs-spades-diamonds-hearth');
+  const destroyed = new Set(state.destroyedRanks);
+  const effectiveSuit = (suit: string): string =>
+    blackRed ? ((suit === 'hearts' || suit === 'diamonds') ? 'red' : 'black') : suit;
+
+  const result: HandCard[] = [];
+
+  // Own pocket cards. An unsuited overlay replaces the card's rank and removes its suit.
+  const hole = state.myHoleCards ?? [];
+  const myJackIdx = state.myId ? state.unsuitedJacks[state.myId] : undefined;
+  const myXIdx = state.myId ? state.unsuitedXs[state.myId] : undefined;
+  const myDestroyedSlots = new Set(state.myId ? (state.destroyedPocketSlots[state.myId] ?? []) : []);
+  hole.forEach((card, idx) => {
+    if (myDestroyedSlots.has(idx)) return; // destroyed pocket slot — discarded
+    let value = RANK_ORDER[card.rank];
+    let suit: string | null = effectiveSuit(card.suit);
+    if (myJackIdx === idx) { value = RANK_ORDER['J']; suit = null; }
+    else if (myXIdx === idx && state.unsuitedXRank) { value = RANK_ORDER[state.unsuitedXRank as Rank]; suit = null; }
+    if (suit === null) {
+      result.push({ value, effectiveSuit: null });
+      return;
+    }
+    // Skip a pocket card whose effective rank has been destroyed.
+    const effRank = (myJackIdx === idx) ? 'J' : (myXIdx === idx ? state.unsuitedXRank : card.rank);
+    if (effRank && destroyed.has(effRank)) return;
+    result.push({ value, effectiveSuit: suit });
+  });
+
+  // Common cards.
+  state.communityCards.forEach((card, idx) => {
+    const isJackOverlay = state.unsuitedJackCommonIndex === idx;
+    const isXOverlay = state.unsuitedXCommonIndex === idx;
+    let value = RANK_ORDER[card.rank];
+    let suit: string | null = effectiveSuit(card.suit);
+    let effRank: string = card.rank;
+    if (isJackOverlay) { value = RANK_ORDER['J']; suit = null; effRank = 'J'; }
+    else if (isXOverlay && state.unsuitedXRank) { value = RANK_ORDER[state.unsuitedXRank as Rank]; suit = null; effRank = state.unsuitedXRank; }
+    if (destroyed.has(effRank)) return; // destroyed common card — discarded
+    result.push({ value, effectiveSuit: suit });
+  });
+
+  return result;
 }
 
 const ADDON_COUNT_BITS = 4; // covers 0–15 negative addons
@@ -330,6 +462,7 @@ export default function App() {
 
   const [soundPanelOpen, setSoundPanelOpen] = useState(false);
   const [handHintVisible, setHandHintVisible] = useState(false);
+  const [currentHandHintVisible, setCurrentHandHintVisible] = useState(false);
   const [hoveredAddon, setHoveredAddon] = useState<string | null>(null);
   const [hoveredAddonRow, setHoveredAddonRow] = useState<string | null>(null);
   const [codeInput, setCodeInput] = useState('');
@@ -720,6 +853,18 @@ export default function App() {
               document.body
             )}
           </div>
+          {state.phase === 'game' && (
+            <div style={{ display: 'inline-block', position: 'relative' }}
+              onMouseEnter={() => setCurrentHandHintVisible(true)}
+              onMouseLeave={() => setCurrentHandHintVisible(false)}>
+              <span style={{ color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none', textDecoration: 'underline dotted' }}>My Current Hand</span>
+              {currentHandHintVisible && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, background: '#1a2030', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '4px 8px', fontSize: 12, whiteSpace: 'nowrap', boxShadow: '0 4px 16px rgba(0,0,0,0.6)', zIndex: 20000 }}>
+                  {evaluateHandName(buildMyHandCards(state))}
+                </div>
+              )}
+            </div>
+          )}
           {isLobby && (
             <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: '#aaa', fontSize: 11, cursor: 'pointer', userSelect: 'none' }}>
               <input

@@ -12,6 +12,11 @@ Once the game starts (or restarts) the specified number of addons are randomly c
 groupings. Addon groups are arranged as a tree. Every time a new random addon needs to be chosen, a descent from the
 root tree is performed every time uniformly choosing a random child node, until a leaf (a specific addon) is determined.
 
+# Hand Evaluation
+
+Some addons change the logic of how a player's hand is determined. Any logic evaluation a player's hand should account
+for that.
+
 # Addon Descriptions
 
 This section describes all the details of each addon.

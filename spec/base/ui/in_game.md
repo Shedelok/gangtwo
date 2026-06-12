@@ -110,3 +110,10 @@ are not ready have a red cross (U+2715) next to their name instead. The tick sho
 should appear to the right from the name, but the name should still be centered as if there was no tick. If any chip
 moves (taken, stolen, returned) while the ticks are shown or before the 5 seconds have elapsed, the
 5-second timer resets and the ticks/crosses are hidden until the condition is met again.
+
+# Current Hand Hint
+
+When in the game phase, each player sees "My Current Hand" hoverable text at the top left, right next to "Hand Rankings
+Hint". When hovering over "My Current Hand", a text with the name of the current hand is shown. The text is one
+of "Royal Flush", "Straight Flush", "Four of a Kind", "Full House", "Flush", "Straight", "Three of a Kind", "Two
+Pair", "One Pair", "High Card".
