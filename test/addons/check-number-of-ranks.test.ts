@@ -65,14 +65,12 @@ for (const { name, checkerCards, afkCards, commonCards, roundsToReveal, checkRan
       await setTestModePlayerCards(checkerPage, 'Afk', afkCards);
       await setTestModeCommonCards(checkerPage, commonCards);
 
-      await pressStartGameInLobby(checkerPage);
-      await pressStartGameInLobby(afkPage);
+      await pressStartGameInLobby([checkerPage, afkPage]);
 
       for (let round = 1; round <= roundsToReveal; round++) {
         await takeAnyChip(checkerPage);
         await takeAnyChip(afkPage);
-        await pressReadyForNextRound(checkerPage);
-        await pressReadyForNextRound(afkPage);
+        await pressReadyForNextRound([checkerPage, afkPage]);
       }
 
       expect(await useCheckNumberOfRanksActionCard(checkerPage, checkRank)).toBe(expectedCount);
@@ -95,8 +93,7 @@ test('unsuited X sitting in action cards is not counted', async ({ page: checker
     await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
     await setTestModeUnsuitedXRank(checkerPage, 'K');
 
-    await pressStartGameInLobby(checkerPage);
-    await pressStartGameInLobby(afkPage);
+    await pressStartGameInLobby([checkerPage, afkPage]);
 
     expect(await useCheckNumberOfRanksActionCard(checkerPage, 'K')).toBe(0);
   } finally {
@@ -117,8 +114,7 @@ test('unsuited X taken by checker hand is counted', async ({ page: checkerPage, 
     await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
     await setTestModeUnsuitedXRank(checkerPage, 'K');
 
-    await pressStartGameInLobby(checkerPage);
-    await pressStartGameInLobby(afkPage);
+    await pressStartGameInLobby([checkerPage, afkPage]);
 
     const unsuitedXCard = (await getActionCards(checkerPage)).find(c => c.name === '[A] Unsuited X')!;
     await unsuitedXCard.click();
@@ -146,8 +142,7 @@ test('unsuited card in other player hand is counted', async ({ page: checkerPage
     await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
     await setTestModeUnsuitedXRank(checkerPage, 'K');
 
-    await pressStartGameInLobby(checkerPage);
-    await pressStartGameInLobby(afkPage);
+    await pressStartGameInLobby([checkerPage, afkPage]);
 
     const unsuitedXCard = (await getActionCards(afkPage)).find(c => c.name === '[A] Unsuited X')!;
     await unsuitedXCard.click();

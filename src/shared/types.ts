@@ -131,6 +131,10 @@ export interface ClientGameState {
   // seat/slot for ~2 seconds, and the destination slot is hidden in place during the animation.
   // Cleared by the server 2 seconds after the swap.
   passCardAnimations: Array<{ fromPlayerId: string; fromSlot: 0 | 1; toPlayerId: string; toSlot: 0 | 1 }>;
+  // Win/loss outcome of the game, computed once every player has revealed their cards
+  // (spec/base/logic.md win condition + spec/addons/logic.md "Win Condition" / guess addons).
+  // 'win' or 'loss' when the game is completely over, null otherwise.
+  gameResult: 'win' | 'loss' | null;
 }
 
 // Client → Server actions

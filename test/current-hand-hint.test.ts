@@ -152,14 +152,12 @@ for (const {
       await setTestModePlayerCards(checkerPage, 'Checker', checkerCards);
       await setTestModeCommonCards(checkerPage, commonCards);
 
-      await pressStartGameInLobby(checkerPage);
-      await pressStartGameInLobby(afkPage);
+      await pressStartGameInLobby([checkerPage, afkPage]);
 
       for (let round = 1; round <= roundsToReveal; round++) {
         await takeAnyChip(checkerPage);
         await takeAnyChip(afkPage);
-        await pressReadyForNextRound(checkerPage);
-        await pressReadyForNextRound(afkPage);
+        await pressReadyForNextRound([checkerPage, afkPage]);
       }
 
       expect(await getCurrentHandHintText(checkerPage)).toBe(expectedHand);
@@ -181,29 +179,25 @@ test('hand hint updates each round & includes additional cards', async ({ page: 
     await setTestModePlayerCards(checkerPage, 'Checker', '2h, 7d');
     await setTestModeCommonCards(checkerPage, '5c, 9s, Kh, 2s, 3d, 7s, 2c, 4d');
 
-    await pressStartGameInLobby(checkerPage);
-    await pressStartGameInLobby(afkPage);
+    await pressStartGameInLobby([checkerPage, afkPage]);
 
     expect(await getCurrentHandHintText(checkerPage)).toBe('High Card');
 
     await takeAnyChip(checkerPage);
     await takeAnyChip(afkPage);
-    await pressReadyForNextRound(checkerPage);
-    await pressReadyForNextRound(afkPage);
+    await pressReadyForNextRound([checkerPage, afkPage]);
     await waitForNthCommonCardToAppear(checkerPage, 4);
     expect(await getCurrentHandHintText(checkerPage)).toBe('One Pair');
 
     await takeAnyChip(checkerPage);
     await takeAnyChip(afkPage);
-    await pressReadyForNextRound(checkerPage);
-    await pressReadyForNextRound(afkPage);
+    await pressReadyForNextRound([checkerPage, afkPage]);
     await waitForNthCommonCardToAppear(checkerPage, 6);
     expect(await getCurrentHandHintText(checkerPage)).toBe('Two Pair');
 
     await takeAnyChip(checkerPage);
     await takeAnyChip(afkPage);
-    await pressReadyForNextRound(checkerPage);
-    await pressReadyForNextRound(afkPage);
+    await pressReadyForNextRound([checkerPage, afkPage]);
     await waitForNthCommonCardToAppear(checkerPage, 8);
     expect(await getCurrentHandHintText(checkerPage)).toBe('Full House');
   } finally {
@@ -261,14 +255,12 @@ for (const {
       await setTestModeUnsuitedXRank(checkerPage, unsuitedXRank);
       await setTestModeCommonCards(checkerPage, commonCards);
 
-      await pressStartGameInLobby(checkerPage);
-      await pressStartGameInLobby(afkPage);
+      await pressStartGameInLobby([checkerPage, afkPage]);
 
       for (let round = 1; round <= roundsToReveal; round++) {
         await takeAnyChip(checkerPage);
         await takeAnyChip(afkPage);
-        await pressReadyForNextRound(checkerPage);
-        await pressReadyForNextRound(afkPage);
+        await pressReadyForNextRound([checkerPage, afkPage]);
       }
 
       const unsuitedXCard = (await getActionCards(checkerPage)).find(c => c.name === '[A] Unsuited X')!;
@@ -297,14 +289,12 @@ test('hand is determined correctly when fewer than 5 cards remain', async ({ pag
     await setTestModePlayerCards(checkerPage, 'Checker', 'As, Ah');
     await setTestModeCommonCards(checkerPage, 'Ac, Kc, 2s, Kh, 3d');
 
-    await pressStartGameInLobby(checkerPage);
-    await pressStartGameInLobby(afkPage);
+    await pressStartGameInLobby([checkerPage, afkPage]);
 
     for (let round = 1; round <= 3; round++) {
       await takeAnyChip(checkerPage);
       await takeAnyChip(afkPage);
-      await pressReadyForNextRound(checkerPage);
-      await pressReadyForNextRound(afkPage);
+      await pressReadyForNextRound([checkerPage, afkPage]);
     }
 
     expect(await getCurrentHandHintText(checkerPage)).toBe('Full House');

@@ -43,6 +43,13 @@ Once the 4th round is over, each player gets a button "reveal cards" which, when
 A player can only reveal their cards once everyone with a smaller value last round chip have done so.
 Players can still see the chips, cards, etc. but can't interact with any of them anymore.
 
+Once everyone revealed their cards, the win/loss is determined the following way: players have collectively won the
+round if the order of last round chips corresponds to the order of strengths of players' hands. The smallest value
+last round chip should be owned by the player with the weakest hand. The biggest value last round chip should be owned
+by the player with the strongest hand. Hands are normal poker hands. Hands are compared as normal poker hands (for
+example, straight is stronger than 2 pairs, a pair of kings is stronger than a pair of queens). If 2 players have hands
+of absolutely the same strength, the order of last round chips between them doesn't matter.
+
 # Disconnection and Reconnection
 
 If a player disconnects while in the lobby, they are removed from it immediately. They can rejoin at any time by

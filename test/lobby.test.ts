@@ -18,18 +18,14 @@ test('test mode deals specified pocket cards and all 5 common cards correctly', 
     await setTestModePlayerCards(zeroCardsSpecifiedPage, 'TwoCardsSpecified', '7d, 7h');
     await setTestModeCommonCards(zeroCardsSpecifiedPage, '5c, 9s, Jh, 4d, 6c');
 
-    await pressStartGameInLobby(zeroCardsSpecifiedPage);
-    await pressStartGameInLobby(oneCardSpecifiedPage);
-    await pressStartGameInLobby(twoCardsSpecifiedPage);
+    await pressStartGameInLobby([zeroCardsSpecifiedPage, oneCardSpecifiedPage, twoCardsSpecifiedPage]);
 
     // Reveal all 5 common cards
     for (let round = 1; round <= 3; round++) {
       await takeAnyChip(zeroCardsSpecifiedPage);
       await takeAnyChip(oneCardSpecifiedPage);
       await takeAnyChip(twoCardsSpecifiedPage);
-      await pressReadyForNextRound(zeroCardsSpecifiedPage);
-      await pressReadyForNextRound(oneCardSpecifiedPage);
-      await pressReadyForNextRound(twoCardsSpecifiedPage);
+      await pressReadyForNextRound([zeroCardsSpecifiedPage, oneCardSpecifiedPage, twoCardsSpecifiedPage]);
     }
 
     const commonCards = await getCommonCards(zeroCardsSpecifiedPage);
@@ -62,15 +58,13 @@ test('test mode specified common cards appear first with all additional card add
     await clickTestModeCheckbox(player1Page);
     await setTestModeCommonCards(player1Page, '2c, 3d, 4h, 5s, 6c, 7d');
 
-    await pressStartGameInLobby(player1Page);
-    await pressStartGameInLobby(player2Page);
+    await pressStartGameInLobby([player1Page, player2Page]);
 
     // Reveal all 8 common cards (4 flop + 2 turn + 2 river)
     for (let round = 1; round <= 3; round++) {
       await takeAnyChip(player1Page);
       await takeAnyChip(player2Page);
-      await pressReadyForNextRound(player1Page);
-      await pressReadyForNextRound(player2Page);
+      await pressReadyForNextRound([player1Page, player2Page]);
     }
 
     const commonCards = await getCommonCards(player1Page);
@@ -93,7 +87,7 @@ test('start game button is disabled when positive addon count exceeds enabled po
     await joinLobby(readyPage, 'Ready player');
     await joinLobby(changerPage, 'Configuration changer player');
 
-    await pressStartGameInLobby(readyPage);
+    await pressStartGameInLobby([readyPage]);
     await expect(readyPage.getByRole('button', { name: /Waiting/ })).toBeVisible();
 
     const { positive } = await getAddonLists(changerPage);

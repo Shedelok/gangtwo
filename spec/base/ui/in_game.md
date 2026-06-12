@@ -8,6 +8,12 @@ At the beginning of the game, all players hear "GAME_START" sound which defaults
 spec/base/resources/sounds/car-engine-start.mp3. This sound is also played after a restart, even if a restart happens
 immediately after the game starts (on the first round).
 
+# Game End
+
+Once the game is completely over and there are no actions left for any of the players (after everyone revealed their
+hands), the text on the table either says "WIN" in green or "LOSS" in red depending on whether the players won the game.
+No other text is displayed on the table at this time.
+
 # General Layout
 
 The table is displayed as a green oval in the center of the screen. Each player sees themself at the bottom and all

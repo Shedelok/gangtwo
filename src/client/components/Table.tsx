@@ -634,10 +634,26 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
         }}>
           <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
 
-            {/* Round / Game Over badge — hidden during blackjack / pass-1-card phases (only their dedicated label is shown) */}
-            {!state.blackjackPhase && !state.passCardPhase && (
+            {/* Round / Game Over badge — hidden during blackjack / pass-1-card phases (only their
+                dedicated label is shown), and hidden once the game is completely over and the
+                WIN/LOSS text is displayed (spec/base/ui/in_game.md "Game End": no other text is
+                displayed on the table at this time). */}
+            {!state.blackjackPhase && !state.passCardPhase && !state.gameResult && (
               <div style={{ background: 'rgba(0,0,0,0.45)', color: '#f0c040', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
                 {readOnly ? 'GAME OVER' : `ROUND ${currentRound} / 4`}
+              </div>
+            )}
+
+            {/* Game end WIN/LOSS text — shown once the game is completely over (everyone has
+                revealed their hands). Spec/base/ui/in_game.md "Game End": the text on the table
+                either says "WIN" in green or "LOSS" in red depending on whether the players won. */}
+            {state.gameResult && (
+              <div style={{
+                color: state.gameResult === 'win' ? '#22c55e' : '#ef4444',
+                fontSize: 28, fontWeight: 'bold', letterSpacing: 2,
+                textShadow: '0 2px 6px rgba(0,0,0,0.6)',
+              }}>
+                {state.gameResult === 'win' ? 'WIN' : 'LOSS'}
               </div>
             )}
 

@@ -17,6 +17,10 @@ root tree is performed every time uniformly choosing a random child node, until 
 Some addons change the logic of how a player's hand is determined. Any logic evaluation a player's hand should account
 for that.
 
+# Win Condition
+
+Some addons change the logic of how the win/loss is determined. Any logic determining win/loss should account for that.
+
 # Addon Descriptions
 
 This section describes all the details of each addon.
@@ -28,8 +32,8 @@ This section describes all the details of each addon.
 Short description: "Guess Hand Highest"
 
 Long description: Before the player with the highest value red chip reveals their cards, other players must collectively
-agree on what hand rank that player has (pair/two pairs/straight/etc.).
-
+agree on what hand rank that player has (pair/two pairs/straight/etc.). If the guess is wrong, you lose.
+ 
 Functionality: The functionality is as described in General Details below. The player that needs to be guessed is
 the player with the highest value red chip. The feature needed to be guessed is their hand rank. The guess button says
 "Guess Hand". The guess options are, top-to-down: Royal Flush, Straight Flush, Four of a Kind, Full House, Flush,
@@ -77,6 +81,9 @@ made a guess, the guesses are fixed and P can reveal their cards as normal. When
 guess is determined. If there are multiple guesses with maximum number of votes, a pure random chooses one of them.
 Guesses of the players who voted for that chosen option get yellow background, other guesses get more subtle more gray
 background and text. 10 seconds after P reveals their cards, all the guesses disappear.
+
+If players made a wrong guess (only the guess of the majority is considered the players guess), they lose the game even
+if the order of last round chips is correct.
 
 When the same player is under multiple "guess" addons that require guessing the same feature, it is logically and
 visually equal to them being under just one. There's no point in having players to guess the same thing twice.

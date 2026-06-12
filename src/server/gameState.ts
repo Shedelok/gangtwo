@@ -7,6 +7,9 @@ import {
   drawCards,
   parseCardList,
   cardKey,
+  evaluateHandStrength,
+  compareHandStrength,
+  type RankedCard,
 } from './gameLogic';
 import { ADDONS, NEGATIVE_ADDON_TREE, POSITIVE_ADDON_TREE, pickAddonsFromTree, countAvailableInTree } from '../shared/addons';
 import { randomUUID } from 'crypto';
@@ -1641,6 +1644,148 @@ function bjValue(rank: string): number {
   return parseInt(rank, 10);
 }
 
+const SERVER_RANK_ORDER: Record<string, number> = {
+  '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14,
+};
+
+/**
+ * Builds the list of effective (resolved) cards for a player's hand — their pocket cards plus the
+ * common cards — applying the active addons that change hand evaluation
+ * (spec/addons/logic.md "Hand Evaluation"): Black & Red collapses suits to red/black; unsuited
+ * Jack / unsuited X overlays replace the card's rank and remove its suit; destroyed-rank cards
+ * are excluded entirely.
+ */
+function buildPlayerHandCards(playerId: string): RankedCard[] {
+  const blackRed = state.enabledAddons.has('clubs-spades-diamonds-hearth');
+  const effectiveSuit = (suit: string): string =>
+    blackRed ? ((suit === 'hearts' || suit === 'diamonds') ? 'red' : 'black') : suit;
+
+  const result: RankedCard[] = [];
+
+  const hole = state.holeCards[playerId];
+  if (hole) {
+    const jackIdx = state.unsuitedJacks.get(playerId);
+    const xIdx = state.unsuitedXs.get(playerId);
+    for (const idx of [0, 1] as const) {
+      const card = hole[idx];
+      if (jackIdx === idx) {
+        if (state.destroyedRanks.has('J')) continue;
+        result.push({ value: SERVER_RANK_ORDER['J'], effectiveSuit: null });
+      } else if (xIdx === idx && state.unsuitedXRank) {
+        if (state.destroyedRanks.has(state.unsuitedXRank)) continue;
+        result.push({ value: SERVER_RANK_ORDER[state.unsuitedXRank], effectiveSuit: null });
+      } else {
+        if (state.destroyedRanks.has(card.rank)) continue;
+        result.push({ value: SERVER_RANK_ORDER[card.rank], effectiveSuit: effectiveSuit(card.suit) });
+      }
+    }
+  }
+
+  state.communityCards.forEach((card, idx) => {
+    if (state.unsuitedJackCommonIndex === idx) {
+      if (state.destroyedRanks.has('J')) return;
+      result.push({ value: SERVER_RANK_ORDER['J'], effectiveSuit: null });
+    } else if (state.unsuitedXCommonIndex === idx && state.unsuitedXRank) {
+      if (state.destroyedRanks.has(state.unsuitedXRank)) return;
+      result.push({ value: SERVER_RANK_ORDER[state.unsuitedXRank], effectiveSuit: null });
+    } else {
+      if (state.destroyedRanks.has(card.rank)) return;
+      result.push({ value: SERVER_RANK_ORDER[card.rank], effectiveSuit: effectiveSuit(card.suit) });
+    }
+  });
+
+  return result;
+}
+
+/**
+ * Maps a guess card-value option string (e.g. "(A) Ace", "(10) Ten") to the underlying rank token.
+ */
+function cardValueToRank(value: string): string | null {
+  const m = value.match(/^\(([^)]+)\)/);
+  return m ? m[1] : null;
+}
+
+/**
+ * Maps a hand-rank category index (HAND_CATEGORY) to the guess hand-rank option string.
+ */
+const HAND_CATEGORY_TO_GUESS_LABEL: Record<number, string> = {
+  0: 'High Card',
+  1: 'One Pair',
+  2: 'Two Pair',
+  3: 'Three of a Kind',
+  4: 'Straight',
+  5: 'Flush',
+  6: 'Full House',
+  7: 'Four of a Kind',
+  8: 'Straight Flush', // refined to Royal Flush below when the high card is an Ace
+};
+
+/**
+ * Returns the guess hand-rank label for a player's best hand (distinguishing Royal Flush from
+ * Straight Flush). Used to check whether the players' majority guess was correct.
+ */
+function playerHandRankLabel(playerId: string): string {
+  const strength = evaluateHandStrength(buildPlayerHandCards(playerId));
+  const category = strength[0];
+  if (category === 8 && strength[1] === 14) return 'Royal Flush';
+  return HAND_CATEGORY_TO_GUESS_LABEL[category] ?? 'High Card';
+}
+
+/**
+ * Determines the win/loss outcome once every player has revealed their cards. Returns 'win' or
+ * 'loss'. Spec/base/logic.md: players win the round if the order of last-round chips corresponds
+ * to the order of hand strengths (smallest chip = weakest hand, biggest chip = strongest hand);
+ * hands of equal strength may be in any chip order. Spec/addons/logic.md "Win Condition" / Guess
+ * addons: a wrong majority guess is a loss even if the chip order is correct. The vacation player
+ * is excluded from win/lose determination.
+ */
+function computeGameResult(): 'win' | 'loss' {
+  // Guess addons: if the majority guess (winningGuessRanks) is wrong, the players lose.
+  for (const addonId of GUESS_ADDON_IDS) {
+    if (!state.enabledAddons.has(addonId)) continue;
+    const targetId = findGuessTargetId(addonId, state.players);
+    if (!targetId) continue;
+    const winningGuess = state.winningGuessRanks.get(addonId);
+    if (winningGuess === undefined) continue; // no guess locked (e.g. only the target remained)
+    const feature = guessAddonFeature(addonId);
+    if (feature === 'hand-rank') {
+      if (winningGuess !== playerHandRankLabel(targetId)) return 'loss';
+    } else {
+      // card-value: the target must actually hold a card of the guessed value among their
+      // (effective) pocket cards.
+      const guessedRank = cardValueToRank(winningGuess);
+      const cards = state.holeCards[targetId];
+      if (!cards || !guessedRank) return 'loss';
+      const jackIdx = state.unsuitedJacks.get(targetId);
+      const xIdx = state.unsuitedXs.get(targetId);
+      const effRank = (idx: 0 | 1): string => {
+        if (jackIdx === idx) return 'J';
+        if (xIdx === idx && state.unsuitedXRank) return state.unsuitedXRank;
+        return cards[idx].rank;
+      };
+      if (effRank(0) !== guessedRank && effRank(1) !== guessedRank) return 'loss';
+    }
+  }
+
+  // Chip order vs hand strength. Exclude the vacation player (not counted in win/lose).
+  const ranked = state.players
+    .filter((p) => !(state.enabledAddons.has('action-vacation') && state.vacationPlayerId === p.id))
+    .map((p) => ({
+      chip: p.chips.find((c) => c.round === 4)?.number ?? -1,
+      strength: evaluateHandStrength(buildPlayerHandCards(p.id)),
+    }))
+    .filter((x) => x.chip >= 0)
+    .sort((a, b) => a.chip - b.chip);
+
+  // Sorted by ascending chip number, hand strengths must be non-decreasing.
+  for (let i = 1; i < ranked.length; i++) {
+    if (compareHandStrength(ranked[i - 1].strength, ranked[i].strength) > 0) {
+      return 'loss';
+    }
+  }
+  return 'win';
+}
+
 export function buildClientState(socketId: string): ClientGameState {
   const playerId = state.socketToPlayerId.get(socketId) ?? '';
   const myHoleCards = playerId && state.holeCards[playerId] ? state.holeCards[playerId] : null;
@@ -1812,5 +1957,6 @@ export function buildClientState(socketId: string): ClientGameState {
     passCardPhase: state.passCardPhase,
     passCardChoices: state.passCardPhase ? Object.fromEntries(state.passCardChoices) : {},
     passCardAnimations: [...state.passCardAnimations],
+    gameResult: allRevealed ? computeGameResult() : null,
   };
 }

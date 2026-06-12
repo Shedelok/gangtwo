@@ -190,8 +190,36 @@ export async function takeAnyChip(page: Page): Promise<void> {
   await page.locator('button:visible', { hasText: 'Take' }).first().click();
 }
 
-export async function pressReadyForNextRound(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Move to next round' }).click();
+export async function takeChip(page: Page, value: number): Promise<void> {
+  const takeButtons = page.locator('button:visible', { hasText: 'Take' });
+  await takeButtons.first().waitFor();
+  const count = await takeButtons.count();
+  for (let i = 0; i < count; i++) {
+    const button = takeButtons.nth(i);
+    const stars = await button.evaluate(
+      (el: HTMLElement) => el.parentElement?.querySelectorAll('svg polygon').length ?? 0
+    );
+    if (stars === value) {
+      await button.click();
+      return;
+    }
+  }
+  throw new Error(`No takeable chip with value ${value} found`);
+}
+
+export async function pressReadyForNextRound(pages: Page[]): Promise<void> {
+  for (const page of pages) {
+    await page.getByRole('button', { name: 'Move to next round' }).click();
+  }
+}
+
+export async function pressRevealCards(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Reveal cards' }).click();
+}
+
+export async function submitHandGuess(page: Page, rank: string): Promise<void> {
+  await page.getByRole('button', { name: 'Guess Hand' }).click();
+  await page.getByRole('button', { name: rank, exact: true }).click();
 }
 
 export async function waitForNthCommonCardToAppear(page: Page, count: number): Promise<void> {
@@ -238,8 +266,10 @@ export async function setTestModeUnsuitedXRank(page: Page, rank: string): Promis
   await page.getByPlaceholder('X').fill(rank);
 }
 
-export async function pressStartGameInLobby(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /Start Game/ }).click();
+export async function pressStartGameInLobby(pages: Page[]): Promise<void> {
+  for (const page of pages) {
+    await page.getByRole('button', { name: /Start Game/ }).click();
+  }
 }
 
 export async function joinLobby(page: Page, username: string): Promise<void> {
