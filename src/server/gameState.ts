@@ -42,6 +42,9 @@ interface ServerGameState {
   // Raw rank-token text for the [A] Unsuited X addon (Test Mode only). A single rank token
   // (2–9, 10, J, Q, K, A) forces X; empty means X is chosen randomly at game start.
   testModeUnsuitedXRank: string;
+  // Raw number text for the Green X addon (Test Mode only). A single number forces the green chip
+  // number X; empty means X is chosen randomly as usual.
+  testModeGreenX: string;
   noOldChipsHidden: Map<string, Chip[]>; // playerId → chips hidden by no-old-chips addon
   rankGuesses: Map<string, Map<string, string>>; // addonId → (voterId → rank)
   winningGuessRanks: Map<string, string>; // addonId → winning rank (set when voting locks)
@@ -126,6 +129,14 @@ interface ServerGameState {
   passCardAnimations: Array<{ fromPlayerId: string; fromSlot: 0 | 1; toPlayerId: string; toSlot: 0 | 1 }>;
   prisonRound: number | null;    // the round where prison takes effect
   prisonPlayerId: string | null; // the player who is imprisoned
+  // [A] Green X addon: on the last round (round 4) one chip number is green instead of red.
+  // greenXValue holds that chip number (null when the addon is inactive or has no effect).
+  // When the green chip is taken from the middle, the server secretly checks whether the taker
+  // could actually be at the X-th hand-strength position in a winning configuration. If so the
+  // chip is locked (immovable, stays green); otherwise it becomes a normal red chip.
+  greenXValue: number | null;
+  greenXLocked: boolean;        // true once the green chip is held by a "correct" player (immovable)
+  greenXBecameNormal: boolean;  // true once the green chip was taken by a "wrong" player (now a normal red chip)
   gameId: string;
 }
 
@@ -153,6 +164,7 @@ const state: ServerGameState = {
   testModePlayerCards: new Map(),
   testModeCommonCards: '',
   testModeUnsuitedXRank: '',
+  testModeGreenX: '',
   noOldChipsHidden: new Map(),
   rankGuesses: new Map(),
   winningGuessRanks: new Map(),
@@ -188,6 +200,9 @@ const state: ServerGameState = {
   passCardAnimations: [],
   prisonRound: null,
   prisonPlayerId: null,
+  greenXValue: null,
+  greenXLocked: false,
+  greenXBecameNormal: false,
   gameId: '',
 };
 
@@ -269,7 +284,44 @@ function getBlackChipNumbers(): Set<number> {
   if (state.enabledAddons.has('ones-are-black')) black.add(1);
   if (state.enabledAddons.has('ns-are-black')) black.add(state.players.length);
   if (state.enabledAddons.has('xs-are-black') && state.blackXValue !== null) black.add(state.blackXValue);
+  // Green X takes precedence over black for the green chip during the last round: "If that chip X
+  // is black due to other addons, green takes precedence and chip is not black for this last round."
+  if (isGreenChipActive() && state.greenXValue !== null) black.delete(state.greenXValue);
   return black;
+}
+
+/**
+ * Returns true if the Green X addon is currently shaping the green chip (last round, addon active,
+ * a green chip number chosen). The green chip stays green while on the table and while locked; it
+ * stops being green only once it became a normal red chip (taken by a wrong player).
+ */
+function isGreenChipActive(): boolean {
+  return state.enabledAddons.has('green-x') &&
+         state.currentRound === 4 &&
+         state.greenXValue !== null &&
+         !state.greenXBecameNormal;
+}
+
+/**
+ * Green X addon: when the last round (round 4) chips are placed on the table, pick a random chip
+ * number to be green. Spec: "on the last round one of the chips (randomly determined X) has green
+ * background". Must be called every time the round-4 middle chips are (re)created at the start of
+ * the last round, including when the last round is the only round (all previous skipped) and when
+ * chip distribution is deferred by a pre-round phase (pass-1-card / share-info).
+ */
+function maybeSelectGreenChip(): void {
+  if (state.currentRound === 4 && state.enabledAddons.has('green-x') && state.middleChips.length > 0) {
+    const numbers = state.middleChips.map((c) => c.number);
+    // Test Mode may force the green chip number X; otherwise it is chosen randomly. An empty input
+    // (or Test Mode disabled), or a forced number that is not actually on the table this round,
+    // falls back to a random chip number.
+    const forced = state.testMode ? parseInt(state.testModeGreenX.trim(), 10) : NaN;
+    state.greenXValue = (!Number.isNaN(forced) && numbers.includes(forced))
+      ? forced
+      : numbers[Math.floor(Math.random() * numbers.length)];
+    state.greenXLocked = false;
+    state.greenXBecameNormal = false;
+  }
 }
 
 function roundCommunityCardCount(round: number): number {
@@ -312,6 +364,7 @@ function advanceRound(): void {
     if (isPrisonRound) chipCount -= 1;
     if (isLastRoundWithVacation) chipCount -= 1;
     state.middleChips = createChipsForRound(nextRound as RoundNumber, chipCount);
+    maybeSelectGreenChip();
     for (const player of state.players) {
       // Imprisoned player is automatically ready during their prison round
       if (isPrisonRound && player.id === state.prisonPlayerId) {
@@ -536,6 +589,21 @@ export function startGame(shufflePlayers = true): string | null {
     state.unsuitedXRank = null;
   }
 
+  if (state.enabledAddons.has('green-x') && state.testMode) {
+    // Test Mode may force the green chip number X. The exact valid range depends on the round-4
+    // chip count (which is not known until the last round begins and can be reduced by Vacation),
+    // so only an obviously invalid token (not a positive integer) is rejected here; an in-range
+    // mismatch falls back to a random chip when the green chip is selected. Phase is still 'lobby',
+    // so the game simply does not start.
+    const raw = state.testModeGreenX.trim();
+    if (raw !== '') {
+      const num = parseInt(raw, 10);
+      if (Number.isNaN(num) || !/^\d+$/.test(raw) || num < 1) {
+        return `Green X value "${raw}" is invalid`;
+      }
+    }
+  }
+
   state.showCardUsed = false;
   state.showCardData = null;
   state.actionCardLock = null;
@@ -559,6 +627,15 @@ export function startGame(shufflePlayers = true): string | null {
   state.destroyAllXsCloud = null;
   state.checkNumberOfRanksUsed = false;
   state.checkNumberOfRanksCloud = null;
+  // Green X addon: the green chip number is chosen when the last round actually begins (its
+  // value depends on the round-4 chip count, which can be reduced by Vacation). Reset here.
+  state.greenXValue = null;
+  state.greenXLocked = false;
+  state.greenXBecameNormal = false;
+  // If the game starts directly on the last round (all previous rounds skipped) and chip
+  // distribution is not deferred by a pre-round phase, the green chip is selected now. Deferred
+  // phases (pass-1-card / share-info) select it when they place the round-4 chips.
+  maybeSelectGreenChip();
 
   // Prison addon: determine random round R and random player P
   if (state.enabledAddons.has('prison')) {
@@ -616,6 +693,11 @@ export function discardChip(socketId: string, chipNumber: number): string | null
   // Black chips cannot be returned after being taken from the middle
   if (getBlackChipNumbers().has(chipNumber)) return 'Black chips cannot be returned';
 
+  // A locked green chip (held by the "correct" player) cannot be dropped.
+  if (isGreenChipActive() && state.greenXLocked && chipNumber === state.greenXValue) {
+    return 'Green chips cannot be returned';
+  }
+
   const [chip] = player.chips.splice(idx, 1);
   state.middleChips.push(chip);
   player.readyForNextRound = false;
@@ -643,6 +725,17 @@ export function takeFromMiddle(socketId: string, chipNumber: number): string | n
 
   const [chip] = state.middleChips.splice(idx, 1);
   player.chips.push(chip);
+
+  // Green X: when the green chip is taken from the middle, secretly check whether this player
+  // could be at the X-th position in a winning configuration. If so, lock it (immovable, stays
+  // green); otherwise it becomes a normal red chip.
+  if (isGreenChipActive() && chipNumber === state.greenXValue && !state.greenXLocked) {
+    if (canHoldGreenChip(player.id, chipNumber)) {
+      state.greenXLocked = true;
+    } else {
+      state.greenXBecameNormal = true;
+    }
+  }
 
   checkAndAdvance();
   return null;
@@ -677,6 +770,11 @@ export function stealChip(
 
   // Black chips cannot be stolen
   if (getBlackChipNumbers().has(chipNumber)) return 'Black chips cannot be stolen';
+
+  // A locked green chip (held by the "correct" player) cannot be stolen.
+  if (isGreenChipActive() && state.greenXLocked && chipNumber === state.greenXValue) {
+    return 'Green chips cannot be stolen';
+  }
 
   const [chip] = victim.chips.splice(idx, 1);
   victim.readyForNextRound = false;
@@ -727,6 +825,7 @@ export function setReady(socketId: string, ready: boolean): string | null {
         if (isPrisonRoundAfterBJ) chipCountAfterBJ -= 1;
         if (isLastRoundWithVacationBJ) chipCountAfterBJ -= 1;
         state.middleChips = createChipsForRound(state.currentRound, chipCountAfterBJ);
+        maybeSelectGreenChip();
         // Auto-ready imprisoned player after blackjack phase ends
         if (isPrisonRoundAfterBJ && state.prisonPlayerId) {
           const prisonPlayer = state.players.find(p => p.id === state.prisonPlayerId);
@@ -1063,6 +1162,12 @@ export function setTestModeUnsuitedXRank(rank: string): string | null {
   return null;
 }
 
+export function setTestModeGreenX(value: string): string | null {
+  if (state.phase !== 'lobby') return 'Cannot change test mode after game started';
+  state.testModeGreenX = value;
+  return null;
+}
+
 export function toggleRestartVote(socketId: string): string | null {
   const playerId = state.socketToPlayerId.get(socketId);
   if (!playerId) return 'Player not found';
@@ -1124,6 +1229,9 @@ export function finishGame(keepAddons = false): void {
   state.passCardAnimations = [];
   state.prisonRound = null;
   state.prisonPlayerId = null;
+  state.greenXValue = null;
+  state.greenXLocked = false;
+  state.greenXBecameNormal = false;
   state.enabledAddons = new Set();
   state.blackXValue = null;
   state.addonPool = savedAddonPool ?? new Set(ADDONS.map((a) => a.id));
@@ -1135,6 +1243,7 @@ export function finishGame(keepAddons = false): void {
   state.testModePlayerCards = new Map();
   state.testModeCommonCards = '';
   state.testModeUnsuitedXRank = '';
+  state.testModeGreenX = '';
   state.sessionIdToPlayerId = new Map();
   // Keep socket mappings but clear player associations
   for (const [socketId] of state.socketToPlayerId) {
@@ -1615,6 +1724,7 @@ function maybeFinishPassCardPhase(): boolean {
     if (isPrisonRound) chipCount -= 1;
     if (isLastRoundWithVacation) chipCount -= 1;
     state.middleChips = createChipsForRound(state.currentRound, chipCount);
+    maybeSelectGreenChip();
     if (isPrisonRound && state.prisonPlayerId) {
       const prisonPlayer = state.players.find((p) => p.id === state.prisonPlayerId);
       if (prisonPlayer) prisonPlayer.readyForNextRound = true;
@@ -1741,31 +1851,7 @@ function playerHandRankLabel(playerId: string): string {
  */
 function computeGameResult(): 'win' | 'loss' {
   // Guess addons: if the majority guess (winningGuessRanks) is wrong, the players lose.
-  for (const addonId of GUESS_ADDON_IDS) {
-    if (!state.enabledAddons.has(addonId)) continue;
-    const targetId = findGuessTargetId(addonId, state.players);
-    if (!targetId) continue;
-    const winningGuess = state.winningGuessRanks.get(addonId);
-    if (winningGuess === undefined) continue; // no guess locked (e.g. only the target remained)
-    const feature = guessAddonFeature(addonId);
-    if (feature === 'hand-rank') {
-      if (winningGuess !== playerHandRankLabel(targetId)) return 'loss';
-    } else {
-      // card-value: the target must actually hold a card of the guessed value among their
-      // (effective) pocket cards.
-      const guessedRank = cardValueToRank(winningGuess);
-      const cards = state.holeCards[targetId];
-      if (!cards || !guessedRank) return 'loss';
-      const jackIdx = state.unsuitedJacks.get(targetId);
-      const xIdx = state.unsuitedXs.get(targetId);
-      const effRank = (idx: 0 | 1): string => {
-        if (jackIdx === idx) return 'J';
-        if (xIdx === idx && state.unsuitedXRank) return state.unsuitedXRank;
-        return cards[idx].rank;
-      };
-      if (effRank(0) !== guessedRank && effRank(1) !== guessedRank) return 'loss';
-    }
-  }
+  if (computeGuessLoss()) return 'loss';
 
   // Chip order vs hand strength. Exclude the vacation player (not counted in win/lose).
   const ranked = state.players
@@ -1784,6 +1870,89 @@ function computeGameResult(): 'win' | 'loss' {
     }
   }
   return 'win';
+}
+
+/**
+ * Green X addon: secretly checks whether the player who just took the green chip X could
+ * actually end up at the X-th hand-strength position in a winning configuration.
+ *
+ * Spec: "the server secretly checks if the player is actually at X's position (i.e. if there's a
+ * situation in which this player holds X at the end and players win), the green chip stays with
+ * them and can't be stolen nor dropped. If the player is actually not at X's position (not
+ * possible to win with them having X), the chip becomes normal (red) chip."
+ *
+ * Players win iff, when round-4 chips are ordered ascending, hand strengths are non-decreasing
+ * (ties may go in any order), and no guess addon's majority guess is wrong. We fix the taker at
+ * chip X and ask whether the remaining chips can be assigned to the remaining round-4 participants
+ * such that the win condition holds.
+ */
+function canHoldGreenChip(takerId: string, chipNumber: number): boolean {
+  // A wrong majority guess is a loss regardless of chip assignment, so green can never lock then.
+  // computeGuessLoss mirrors the guess portion of computeGameResult.
+  if (computeGuessLoss()) return false;
+
+  // Round-4 participants exclude the vacation player (not counted in win/lose).
+  const participants = state.players.filter(
+    (p) => !(state.enabledAddons.has('action-vacation') && state.vacationPlayerId === p.id)
+  );
+  if (!participants.some((p) => p.id === takerId)) return false;
+
+  // The set of round-4 chip numbers currently in play (middle + held by participants).
+  const chipNumbers = new Set<number>();
+  for (const c of state.middleChips) if (c.round === 4) chipNumbers.add(c.number);
+  for (const p of participants) {
+    for (const c of p.chips) if (c.round === 4) chipNumbers.add(c.number);
+  }
+  if (!chipNumbers.has(chipNumber)) return false;
+
+  // r = 0-based rank position of chip X among ascending chip numbers.
+  const r = Array.from(chipNumbers).filter((n) => n < chipNumber).length;
+  const M = participants.length;
+
+  const takerStrength = evaluateHandStrength(buildPlayerHandCards(takerId));
+  let weaker = 0; // participants strictly weaker than the taker
+  let stronger = 0; // participants strictly stronger than the taker
+  for (const p of participants) {
+    if (p.id === takerId) continue;
+    const cmp = compareHandStrength(evaluateHandStrength(buildPlayerHandCards(p.id)), takerStrength);
+    if (cmp < 0) weaker++;
+    else if (cmp > 0) stronger++;
+  }
+
+  // The taker can occupy position r iff all strictly-weaker players fit before it and all
+  // strictly-stronger players fit after it (equal-strength players can go on either side).
+  return weaker <= r && stronger <= M - 1 - r;
+}
+
+/**
+ * Returns true if any active guess addon's locked majority guess is wrong (a guaranteed loss).
+ * Extracted from computeGameResult so the Green X feasibility check can reuse it.
+ */
+function computeGuessLoss(): boolean {
+  for (const addonId of GUESS_ADDON_IDS) {
+    if (!state.enabledAddons.has(addonId)) continue;
+    const targetId = findGuessTargetId(addonId, state.players);
+    if (!targetId) continue;
+    const winningGuess = state.winningGuessRanks.get(addonId);
+    if (winningGuess === undefined) continue;
+    const feature = guessAddonFeature(addonId);
+    if (feature === 'hand-rank') {
+      if (winningGuess !== playerHandRankLabel(targetId)) return true;
+    } else {
+      const guessedRank = cardValueToRank(winningGuess);
+      const cards = state.holeCards[targetId];
+      if (!cards || !guessedRank) return true;
+      const jackIdx = state.unsuitedJacks.get(targetId);
+      const xIdx = state.unsuitedXs.get(targetId);
+      const effRank = (idx: 0 | 1): string => {
+        if (jackIdx === idx) return 'J';
+        if (xIdx === idx && state.unsuitedXRank) return state.unsuitedXRank;
+        return cards[idx].rank;
+      };
+      if (effRank(0) !== guessedRank && effRank(1) !== guessedRank) return true;
+    }
+  }
+  return false;
 }
 
 export function buildClientState(socketId: string): ClientGameState {
@@ -1826,6 +1995,7 @@ export function buildClientState(socketId: string): ClientGameState {
     testModePlayerCards: Object.fromEntries(state.testModePlayerCards),
     testModeCommonCards: state.testModeCommonCards,
     testModeUnsuitedXRank: state.testModeUnsuitedXRank,
+    testModeGreenX: state.testModeGreenX,
     restartVotes: state.restartVoters.size,
     restartVoterIds: [...state.restartVoters],
     myRestartVote: playerId ? state.restartVoters.has(playerId) : false,
@@ -1953,6 +2123,8 @@ export function buildClientState(socketId: string): ClientGameState {
       ? state.prisonPlayerId
       : null,
     prisonRound: state.enabledAddons.has('prison') ? state.prisonRound : null,
+    greenChipNumber: isGreenChipActive() ? state.greenXValue : null,
+    greenChipLocked: state.greenXLocked,
     showCardCone: state.showCardData ? { sourceId: state.showCardData.sourceId, targetId: state.showCardData.targetId } : null,
     passCardPhase: state.passCardPhase,
     passCardChoices: state.passCardPhase ? Object.fromEntries(state.passCardChoices) : {},

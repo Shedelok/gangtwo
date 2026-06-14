@@ -67,9 +67,14 @@ interface Props {
   size?: number;
   blackInside?: boolean;
   guessTarget?: boolean;
+  green?: boolean;
 }
 
-export default function ChipCircle({ chip, dim = false, size = 32, blackInside = false, guessTarget = false }: Props) {
+// Green X addon: a green chip has a green background (instead of red) but "still has red border"
+// (spec/addons/logic.md "Addon: Green X"), i.e. it keeps the round-4 red chip border color.
+const GREEN_COLOR = { bg: '#2ecc71', border: COLORS[4].border };
+
+export default function ChipCircle({ chip, dim = false, size = 32, blackInside = false, guessTarget = false, green = false }: Props) {
   const { register, hiding } = useContext(ChipAnimContext);
   const key = `${chip.round}-${chip.number}`;
 
@@ -77,7 +82,7 @@ export default function ChipCircle({ chip, dim = false, size = 32, blackInside =
     register(key, el);
   }, [register, key]);
 
-  const c = dim ? { bg: '#333', border: '#555' } : COLORS[chip.round];
+  const c = dim ? { bg: '#333', border: '#555' } : (green ? GREEN_COLOR : COLORS[chip.round]);
   const bg = blackInside ? '#000' : c.bg;
   const starFill = blackInside ? 'white' : 'black';
 

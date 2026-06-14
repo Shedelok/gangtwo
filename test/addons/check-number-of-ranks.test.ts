@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { clickTestModeCheckbox, completelyResetGameState, getActionCards, getOwnPocketCards, joinLobby, pressReadyForNextRound, pressStartGameInLobby, setEnabledPositiveAddons, setTestModeCommonCards, setTestModePlayerCards, setTestModeUnsuitedXRank, takeAnyChip, useCheckNumberOfRanksActionCard } from '../helpers';
+import { clickTestModeCheckbox, completelyResetGameState, getActionCards, getOwnPocketCards, joinLobby, pressReadyForNextRound, pressStartGameInLobby, setEnabledPositiveAddons, setTestModeAddonInput, setTestModeCommonCards, setTestModePlayerCards, takeAnyChip, useCheckNumberOfRanksActionCard } from '../helpers';
 
 test.beforeEach(async ({ page }) => {
   await completelyResetGameState(page);
@@ -91,7 +91,7 @@ test('unsuited X sitting in action cards is not counted', async ({ page: checker
     await clickTestModeCheckbox(checkerPage);
     await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
     await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
-    await setTestModeUnsuitedXRank(checkerPage, 'K');
+    await setTestModeAddonInput(checkerPage, '[A] Unsuited X', 'K');
 
     await pressStartGameInLobby([checkerPage, afkPage]);
 
@@ -112,7 +112,7 @@ test('unsuited X taken by checker hand is counted', async ({ page: checkerPage, 
     await clickTestModeCheckbox(checkerPage);
     await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
     await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
-    await setTestModeUnsuitedXRank(checkerPage, 'K');
+    await setTestModeAddonInput(checkerPage, '[A] Unsuited X', 'K');
 
     await pressStartGameInLobby([checkerPage, afkPage]);
 
@@ -140,7 +140,7 @@ test('unsuited card in other player hand is counted', async ({ page: checkerPage
     await clickTestModeCheckbox(checkerPage);
     await setTestModePlayerCards(checkerPage, 'Checking player', 'As, Qd');
     await setTestModePlayerCards(checkerPage, 'Afk player', 'Jh, 10c');
-    await setTestModeUnsuitedXRank(checkerPage, 'K');
+    await setTestModeAddonInput(checkerPage, '[A] Unsuited X', 'K');
 
     await pressStartGameInLobby([checkerPage, afkPage]);
 

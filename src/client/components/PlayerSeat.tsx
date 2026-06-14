@@ -59,6 +59,10 @@ interface Props {
   striped?: boolean;
   imprisoned?: boolean;
   guessTargetedRedChipNumbers?: Set<number>;
+  // Green X addon: the round-4 chip number rendered green (null/undefined when not applicable).
+  greenChipNumber?: number | null;
+  // Green X addon: whether the green chip is locked to its holder (cannot be stolen or dropped).
+  greenChipLocked?: boolean;
   // Vacation addon: player is holding the vacation card (palm emojis around name).
   onVacation?: boolean;
   // Vacation addon: during the last round (round 4), the vacation player has thick horizontal
@@ -93,7 +97,7 @@ export default function PlayerSeat({
   currentRound, iHaveCurrentRoundChip,
   sendAction, readOnly, myCardsRevealed, canReveal = true, blackNumbers = [],
   blackAndRed = false, shortDeck = false, showRestartTick = false, hasRestartVoted = false, showShareInfoTick = false, showReadinessTick = false,
-  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, onVacation = false, vacationLines = false, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm,
+  guessRankUIs = [], dialogueClouds = [], onCardSelect, onPlayerSelect, actionInProgress = false, onSeatElRef, unsuitedJackIndex, unsuitedXIndex, unsuitedXRank, shownCardInfo, striped = false, imprisoned = false, guessTargetedRedChipNumbers, greenChipNumber = null, greenChipLocked = false, onVacation = false, vacationLines = false, tryAnotherCards, tryAnotherFaceDownCount, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm,
   passCardPhaseActive = false, passCardChoiceIndex, onPassCardSelect, onPassCardSubmit, onPassCardCancel, passCardAnimatingSlot,
   destroyedRanks, destroyedSlots, destroyAllXsAnimatingRank,
   style,
@@ -214,17 +218,21 @@ export default function PlayerSeat({
       <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, justifyContent: 'center', minHeight: 54 }}>
         {sortedChips.map(chip => {
             const isCurrent = chip.round === currentRound;
-            const isBlack = blackNumbers.includes(chip.number);
+            const isGreen = greenChipNumber !== null && chip.round === 4 && chip.number === greenChipNumber;
+            // Green takes precedence over black for the green chip.
+            const isBlack = blackNumbers.includes(chip.number) && !isGreen;
+            // A locked green chip cannot be returned or stolen, like a black chip.
+            const isImmovable = isBlack || (isGreen && greenChipLocked);
             return (
               <div key={`${chip.round}-${chip.number}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <ChipCircle chip={chip} blackInside={isBlack} guessTarget={chip.round === 4 && !!guessTargetedRedChipNumbers?.has(chip.number)} />
-                {!readOnly && isCurrent && isMe && !isBlack && !actionInProgress && (
+                <ChipCircle chip={chip} blackInside={isBlack} green={isGreen} guessTarget={chip.round === 4 && !!guessTargetedRedChipNumbers?.has(chip.number)} />
+                {!readOnly && isCurrent && isMe && !isImmovable && !actionInProgress && (
                   <button style={{ ...btn, background: '#7f1c1c', color: '#fca5a5' }}
                     onClick={() => sendAction({ type: 'DISCARD_CHIP', chipNumber: chip.number })}>
                     Return
                   </button>
                 )}
-                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isBlack && !actionInProgress && (
+                {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isImmovable && !actionInProgress && (
                   <button style={{ ...btn, background: '#5b21b6', color: '#ddd6fe' }}
                     onClick={() => sendAction({ type: 'STEAL_CHIP', fromPlayerId: player.id, chipNumber: chip.number })}>
                     Steal

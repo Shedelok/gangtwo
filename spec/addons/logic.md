@@ -33,7 +33,7 @@ Short description: "Guess Hand Highest"
 
 Long description: Before the player with the highest value red chip reveals their cards, other players must collectively
 agree on what hand rank that player has (pair/two pairs/straight/etc.). If the guess is wrong, you lose.
- 
+
 Functionality: The functionality is as described in General Details below. The player that needs to be guessed is
 the player with the highest value red chip. The feature needed to be guessed is their hand rank. The guess button says
 "Guess Hand". The guess options are, top-to-down: Royal Flush, Straight Flush, Four of a Kind, Full House, Flush,
@@ -520,6 +520,31 @@ chip have revealed their cards.
 The action card for this addon has blue background. It also has big palm (palm tree emoji) displayed in the center of
 it.
 
+## Addon: Green X
+
+Short description: "Green X"
+
+Long description: At the last round a random chip X is green. A green chip, when taken by the correct player (the player
+who actually has Xth hand by strength), can't be stolen or dropped. If green chip is taken by a wrong player, it becomes
+a normal chip.
+
+Functionality: on the last round one of the chips (randomly determined X) has green background, instead of red, but
+still has red border. If that
+chip X is black due to other addons, green takes precedence and chip is not black for this last round. While on the
+table, green chip is just like others. Once taken by the player, the server secretly checks if the player is actually at
+Xs position (i.e. if there's a situation in which this player holds X at the end and players win), the green
+chip stays with them and can't be stolen nor dropped. If the player is actually not at Xs position (not possible to win
+with them having X), the chip becomes normal (red) chip.
+
+The green chip is determined and works correctly even if the last round is the only round in the game (all previous are
+skipped).
+
+When Test Mode is enabled, an additional text input appears to the right of the checkbox and text for this addon in the
+addons list.
+It accepts a single number. If left
+empty, X is chosen randomly as usual. If a number is specified, it is used as X. If the specified number is
+invalid. By default, this text input is empty.
+
 # Addon Groupings
 
 This section describes which addons are actually present in the game and how they are grouped. Some addons are grouped
@@ -564,13 +589,14 @@ addon names mean leaf nodes with that addon.
 2.
     1. Share Blackjack Sum
     2. Share Number of Faces
-3. [A] Show 1 Card to 1 Player
-4.
+3. Green X
+4. [A] Show 1 Card to 1 Player
+5.
     1. [A] Unsuited Jack
     2. [A] Unsuited X
-5. [A] Reroll Common
-6. [A] Swap With Common
-7. [A] Try Another Card
-8. [A] Destroy All Xs
-9. [A] Check Number of Ranks
-10. [A] Vacation
+6. [A] Reroll Common
+7. [A] Swap With Common
+8. [A] Try Another Card
+9. [A] Destroy All Xs
+10. [A] Check Number of Ranks
+11. [A] Vacation

@@ -24,6 +24,7 @@ import {
   setTestModePlayerCards,
   setTestModeCommonCards,
   setTestModeUnsuitedXRank,
+  setTestModeGreenX,
   lockActionCard,
   unlockActionCard,
   useShowCard,
@@ -122,6 +123,9 @@ function handleAction(ws: WebSocket, socketId: string, action: ClientAction): vo
       break;
     case 'SET_TEST_MODE_UNSUITED_X_RANK':
       error = setTestModeUnsuitedXRank(action.rank);
+      break;
+    case 'SET_TEST_MODE_GREEN_X':
+      error = setTestModeGreenX(action.value);
       break;
     case 'DISCARD_CHIP':
       error = discardChip(socketId, action.chipNumber);

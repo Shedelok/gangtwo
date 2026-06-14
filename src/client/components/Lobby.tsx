@@ -177,6 +177,11 @@ function validateTestMode(state: ClientGameState): string | null {
   // are enforced by the server at game start; this only catches obviously invalid tokens.
   const rankRaw = state.testModeUnsuitedXRank.trim().toUpperCase();
   if (rankRaw !== '' && !RANK_TOKENS.has(rankRaw)) return 'Invalid rank for Unsuited X';
+  // Green X value input: a single number, or empty (random). The exact valid range depends on the
+  // round-4 chip count and is enforced by the server; this only catches obviously invalid tokens
+  // (anything that is not a positive integer).
+  const greenXRaw = state.testModeGreenX.trim();
+  if (greenXRaw !== '' && (!/^\d+$/.test(greenXRaw) || parseInt(greenXRaw, 10) < 1)) return 'Invalid value for Green X';
   return null;
 }
 

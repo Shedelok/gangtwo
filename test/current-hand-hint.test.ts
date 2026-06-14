@@ -12,7 +12,7 @@ import {
   setEnabledPositiveAddons,
   setTestModeCommonCards,
   setTestModePlayerCards,
-  setTestModeUnsuitedXRank,
+  setTestModeAddonInput,
   takeAnyChip,
   useDestroyAllRsActionCard,
   waitForNthCommonCardToAppear,
@@ -252,7 +252,7 @@ for (const {
 
       await clickTestModeCheckbox(checkerPage);
       await setTestModePlayerCards(checkerPage, 'Checker', checkerCards);
-      await setTestModeUnsuitedXRank(checkerPage, unsuitedXRank);
+      await setTestModeAddonInput(checkerPage, '[A] Unsuited X', unsuitedXRank);
       await setTestModeCommonCards(checkerPage, commonCards);
 
       await pressStartGameInLobby([checkerPage, afkPage]);

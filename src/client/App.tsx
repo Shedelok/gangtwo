@@ -822,6 +822,19 @@ export default function App() {
             style={{ width: 36, flexShrink: 0, padding: '2px 6px', borderRadius: 4, border: '1px solid #333', background: '#0a2540', color: 'white', fontSize: 12, outline: 'none', textAlign: 'center' }}
           />
         )}
+        {isLobby && state.testMode && addon.id === 'green-x' && (
+          // Spec (Green X): "When Test Mode is enabled, an additional text input appears to the
+          // right of the checkbox and text for this addon in the addons list. It accepts a single
+          // number." Empty means X is chosen randomly as usual.
+          <input
+            type="text"
+            value={state.testModeGreenX}
+            onChange={(e) => sendAction({ type: 'SET_TEST_MODE_GREEN_X', value: e.target.value })}
+            placeholder="X"
+            spellCheck={false}
+            style={{ width: 36, flexShrink: 0, padding: '2px 6px', borderRadius: 4, border: '1px solid #333', background: '#0a2540', color: 'white', fontSize: 12, outline: 'none', textAlign: 'center' }}
+          />
+        )}
       </div>
     );
   };

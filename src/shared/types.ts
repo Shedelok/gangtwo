@@ -41,6 +41,9 @@ export interface ClientGameState {
   // Raw rank-token text for the [A] Unsuited X addon. When Test Mode is enabled, a single rank
   // token (2–9, 10, J, Q, K, A) can be specified to force X; empty means X is chosen randomly.
   testModeUnsuitedXRank: string;
+  // Raw number text for the Green X addon. When Test Mode is enabled, a single number can be
+  // specified to force the green chip number X; empty means X is chosen randomly as usual.
+  testModeGreenX: string;
   restartVotes: number;       // how many players have voted to restart
   restartVoterIds: string[];  // IDs of players who have voted to restart
   myRestartVote: boolean;     // whether the current player has voted to restart
@@ -123,6 +126,13 @@ export interface ClientGameState {
   shareInfoLabel: string;        // label shown on the table during the share-info phase
   prisonPlayerId: string | null; // player currently imprisoned (null if not prison round)
   prisonRound: number | null;    // the round number where prison takes effect (null if addon not active)
+  // [A] Green X addon: the round-4 chip number that is currently green (rendered with a green
+  // background instead of red). Null when the addon is inactive, it is not the last round, or the
+  // green chip was taken by a "wrong" player and reverted to a normal red chip.
+  greenChipNumber: number | null;
+  // True when the green chip is locked to its holder (taken by the "correct" player): it cannot be
+  // stolen or dropped. The chip stays green while locked.
+  greenChipLocked: boolean;
   showCardCone: { sourceId: string; targetId: string } | null; // cone of light from source to target during show-card animation
   passCardPhase: boolean;        // true during the pass-1-card pre-game phase (after dealing pocket cards, before share info / chip distribution)
   passCardChoices: Record<string, number>; // playerId → index of card chosen to pass (0 or 1); only populated during passCardPhase
@@ -148,6 +158,7 @@ export type ClientAction =
   | { type: 'SET_TEST_MODE_PLAYER_CARDS'; playerId: string; cards: string }
   | { type: 'SET_TEST_MODE_COMMON_CARDS'; cards: string }
   | { type: 'SET_TEST_MODE_UNSUITED_X_RANK'; rank: string }
+  | { type: 'SET_TEST_MODE_GREEN_X'; value: string }
   | { type: 'DISCARD_CHIP'; chipNumber: number }
   | { type: 'TAKE_FROM_MIDDLE'; chipNumber: number }
   | { type: 'STEAL_CHIP'; fromPlayerId: string; chipNumber: number }

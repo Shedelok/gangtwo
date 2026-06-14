@@ -187,7 +187,7 @@ function SwapFlyingCard({ from, to, faceUp, card, blackAndRed, shortDeck, unsuit
 }
 
 // ── Flying chip overlay (animates from old position to new) ───────────────────
-interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to: { x: number; y: number }; blackInside: boolean; guessTarget: boolean; }
+interface AnimEntry { id: string; chip: Chip; from: { x: number; y: number }; to: { x: number; y: number }; blackInside: boolean; guessTarget: boolean; green: boolean; }
 
 const noopCtx: ChipAnimCtxValue = { register: () => {}, hiding: new Set() };
 
@@ -218,7 +218,7 @@ function FlyingChip({ entry, flyingElsRef, onDone }: { entry: AnimEntry; flyingE
         pointerEvents: 'none',
         zIndex: 200,
       }}>
-        <ChipCircle chip={entry.chip} size={32} blackInside={entry.blackInside} guessTarget={entry.guessTarget} />
+        <ChipCircle chip={entry.chip} size={32} blackInside={entry.blackInside} guessTarget={entry.guessTarget} green={entry.green} />
       </div>
     </ChipAnimContext.Provider>
   );
@@ -262,6 +262,11 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
   if (state.enabledAddons.includes('ones-are-black')) blackNumbers.push(1);
   if (state.enabledAddons.includes('ns-are-black')) blackNumbers.push(n);
   if (state.enabledAddons.includes('xs-are-black') && state.blackXValue !== null) blackNumbers.push(state.blackXValue);
+  // Green X addon: the round-4 chip numbered `greenChipNumber` is rendered green. Green takes
+  // precedence over black for that chip during the last round.
+  const greenChipNumber = state.greenChipNumber;
+  const isGreenChip = (chip: Chip): boolean => greenChipNumber !== null && chip.round === 4 && chip.number === greenChipNumber;
+  const isBlackChip = (chip: Chip): boolean => blackNumbers.includes(chip.number) && !isGreenChip(chip);
   const blackAndRed = state.enabledAddons.includes('clubs-spades-diamonds-hearth');
   const shortDeck = state.enabledAddons.includes('short-deck');
 
@@ -589,7 +594,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
               }
             }
             if (fromPos) {
-              newAnims.push({ id: `${key}-${Date.now()}`, chip, from: fromPos, to: currPos, blackInside: blackNumbers.includes(chip.number), guessTarget: chip.round === 4 && guessTargetedRedChipNumbers.has(chip.number) });
+              newAnims.push({ id: `${key}-${Date.now()}`, chip, from: fromPos, to: currPos, blackInside: isBlackChip(chip), guessTarget: chip.round === 4 && guessTargetedRedChipNumbers.has(chip.number), green: isGreenChip(chip) });
               newHiding.push(key);
             }
           }
@@ -705,7 +710,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                           ref={el => { if (el) tableSlotElsRef.current.set(key, el); else tableSlotElsRef.current.delete(key); }}
                           style={{ visibility: (inMiddle && !hidingChips.has(key)) ? 'visible' : 'hidden' }}>
                           <ChipAnimContext.Provider value={noopCtx}>
-                            <ChipCircle chip={chip} size={30} blackInside={blackNumbers.includes(chip.number)} guessTarget={chip.round === 4 && guessTargetedRedChipNumbers.has(chip.number)} />
+                            <ChipCircle chip={chip} size={30} blackInside={isBlackChip(chip)} guessTarget={chip.round === 4 && guessTargetedRedChipNumbers.has(chip.number)} green={isGreenChip(chip)} />
                           </ChipAnimContext.Provider>
                         </div>
                         {!readOnly && !amIImprisoned && !amIOnVacationLastRound && (
@@ -835,6 +840,8 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
             onVacation={state.vacationPlayerId === player.id}
             vacationLines={!readOnly && state.vacationPlayerId === player.id && state.currentRound === 4 && !state.blackjackPhase && !state.passCardPhase}
             guessTargetedRedChipNumbers={guessTargetedRedChipNumbers}
+            greenChipNumber={state.greenChipNumber}
+            greenChipLocked={state.greenChipLocked}
             tryAnotherCards={isMe ? state.myTryAnotherCards ?? undefined : undefined}
             tryAnotherFaceDownCount={(!isMe && state.otherPlayerCardCount[player.id]) ? state.otherPlayerCardCount[player.id] : undefined}
             tryAnotherDropIndex={isMe ? tryAnotherDropIndex ?? undefined : undefined}

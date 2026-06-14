@@ -207,6 +207,39 @@ export async function takeChip(page: Page, value: number): Promise<void> {
   throw new Error(`No takeable chip with value ${value} found`);
 }
 
+export const GREEN_CHIP_COLOR = 'rgb(46, 204, 113)';
+
+export interface SeatChip {
+  // The chip's value, i.e. its number of stars.
+  value: number;
+  // The chip's background color, as the browser's computed rgb() string.
+  color: string;
+}
+
+// Returns the chips held by the page's own player ("(you)" seat). Each chip is rendered as a
+// circle (ChipCircle) containing one star <svg> whose <polygon> count is the chip's value.
+export async function getOwnChips(page: Page): Promise<SeatChip[]> {
+  const seat = page
+    .locator('div')
+    .filter({ has: page.getByText('(you)') })
+    .filter({ hasNot: page.locator('.cc-flip-container') })
+    .first();
+  return seat.evaluate((el: HTMLElement) => {
+    const chips: { value: number; color: string }[] = [];
+    for (const svg of Array.from(el.querySelectorAll('svg'))) {
+      const stars = svg.querySelectorAll('polygon').length;
+      if (stars === 0) continue; // not a chip's star svg
+      const circle = svg.parentElement;
+      if (!circle) continue;
+      chips.push({
+        value: stars,
+        color: getComputedStyle(circle).backgroundColor,
+      });
+    }
+    return chips;
+  });
+}
+
 export async function pressReadyForNextRound(pages: Page[]): Promise<void> {
   for (const page of pages) {
     await page.getByRole('button', { name: 'Move to next round' }).click();
@@ -262,8 +295,11 @@ export async function clickTestModeCheckbox(page: Page): Promise<void> {
   await page.getByLabel('Test Mode').click();
 }
 
-export async function setTestModeUnsuitedXRank(page: Page, rank: string): Promise<void> {
-  await page.getByPlaceholder('X').fill(rank);
+export async function setTestModeAddonInput(page: Page, addonName: string, value: string): Promise<void> {
+  const { positive } = await getAddonLists(page);
+  const addon = positive.addons.find(a => a.name === addonName);
+  if (!addon) throw new Error(`Addon "${addonName}" not found`);
+  await addon.checkbox.locator('xpath=following-sibling::input[@type="text"]').fill(value);
 }
 
 export async function pressStartGameInLobby(pages: Page[]): Promise<void> {
