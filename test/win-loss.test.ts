@@ -2,11 +2,15 @@ import { expect, test } from '@playwright/test';
 import {
   clickTestModeCheckbox,
   completelyResetGameState,
+  getActionCards,
+  getOwnPocketCards,
   joinLobby,
   pressReadyForNextRound,
   pressRevealCards,
   pressStartGameInLobby,
   setEnabledNegativeAddons,
+  setEnabledPositiveAddons,
+  setTestModeAddonInput,
   setTestModeCommonCards,
   setTestModePlayerCards,
   submitHandGuess,
@@ -300,5 +304,87 @@ test('shows WIN when two tied-strength hands hold the 2nd and 3rd chips in rever
     await twoPairAPage.close();
     await twoPairBPage.close();
     await tripsPage.close();
+  }
+});
+
+test('shows WIN when the stronger four-of-a-kind (with kicker of same rank as the four) holds the bigger chip', async ({ page: fiveAcesPage, browser }) => {
+  const fourAcesPage = await browser.newPage();
+  try {
+    await setEnabledPositiveAddons(fiveAcesPage, ['[A] Unsuited X']);
+
+    await joinLobby(fiveAcesPage, 'FiveAces');
+    await joinLobby(fourAcesPage, 'FourAces');
+
+    await clickTestModeCheckbox(fiveAcesPage);
+    await setTestModeAddonInput(fiveAcesPage, '[A] Unsuited X', 'A');
+    await setTestModeCommonCards(fiveAcesPage, 'As, Ah, Ac, Ad, Kd');
+    await setTestModePlayerCards(fiveAcesPage, 'FiveAces', '2h, 3c');
+    await setTestModePlayerCards(fiveAcesPage, 'FourAces', '2d, 3s');
+
+    await pressStartGameInLobby([fiveAcesPage, fourAcesPage]);
+
+    for (let round = 1; round <= 3; round++) {
+      await takeAnyChip(fiveAcesPage);
+      await takeAnyChip(fourAcesPage);
+      await pressReadyForNextRound([fiveAcesPage, fourAcesPage]);
+    }
+
+    const unsuitedXCard = (await getActionCards(fiveAcesPage)).find(c => c.name === '[A] Unsuited X')!;
+    await unsuitedXCard.click();
+    await (await getOwnPocketCards(fiveAcesPage))[0].click();
+    await expect(async () => {
+      expect((await getOwnPocketCards(fiveAcesPage)).some(c => c.suit === '')).toBe(true);
+    }).toPass({ timeout: 5000 });
+
+    await takeChip(fiveAcesPage, 2);
+    await takeChip(fourAcesPage, 1);
+    await pressReadyForNextRound([fiveAcesPage, fourAcesPage]);
+    await pressRevealCards(fourAcesPage);
+    await pressRevealCards(fiveAcesPage);
+
+    await expect(fiveAcesPage.getByText('WIN', { exact: true })).toBeVisible();
+  } finally {
+    await fourAcesPage.close();
+  }
+});
+
+test('shows LOSS when the stronger four-of-a-kind (with kicker of same rank as the four) holds the smaller chip', async ({ page: fiveAcesPage, browser }) => {
+  const fourAcesPage = await browser.newPage();
+  try {
+    await setEnabledPositiveAddons(fiveAcesPage, ['[A] Unsuited X']);
+
+    await joinLobby(fiveAcesPage, 'FiveAces');
+    await joinLobby(fourAcesPage, 'FourAces');
+
+    await clickTestModeCheckbox(fiveAcesPage);
+    await setTestModeAddonInput(fiveAcesPage, '[A] Unsuited X', 'A');
+    await setTestModeCommonCards(fiveAcesPage, 'As, Ah, Ac, Ad, Kd');
+    await setTestModePlayerCards(fiveAcesPage, 'FiveAces', '2h, 3c');
+    await setTestModePlayerCards(fiveAcesPage, 'FourAces', '2d, 3s');
+
+    await pressStartGameInLobby([fiveAcesPage, fourAcesPage]);
+
+    for (let round = 1; round <= 3; round++) {
+      await takeAnyChip(fiveAcesPage);
+      await takeAnyChip(fourAcesPage);
+      await pressReadyForNextRound([fiveAcesPage, fourAcesPage]);
+    }
+
+    const unsuitedXCard = (await getActionCards(fiveAcesPage)).find(c => c.name === '[A] Unsuited X')!;
+    await unsuitedXCard.click();
+    await (await getOwnPocketCards(fiveAcesPage))[0].click();
+    await expect(async () => {
+      expect((await getOwnPocketCards(fiveAcesPage)).some(c => c.suit === '')).toBe(true);
+    }).toPass({ timeout: 5000 });
+
+    await takeChip(fiveAcesPage, 1);
+    await takeChip(fourAcesPage, 2);
+    await pressReadyForNextRound([fiveAcesPage, fourAcesPage]);
+    await pressRevealCards(fiveAcesPage);
+    await pressRevealCards(fourAcesPage);
+
+    await expect(fiveAcesPage.getByText('LOSS', { exact: true })).toBeVisible();
+  } finally {
+    await fourAcesPage.close();
   }
 });

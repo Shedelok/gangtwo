@@ -187,7 +187,11 @@ export async function getOwnPocketCards(page: Page): Promise<PocketCard[]> {
 }
 
 export async function takeAnyChip(page: Page): Promise<void> {
-  await page.locator('button:visible', { hasText: 'Take' }).first().click();
+  const takeButtons = page.locator('button:visible', { hasText: 'Take' });
+  await expect(async () => {
+    await takeButtons.first().click();
+    await expect(takeButtons).toHaveCount(0, { timeout: 2000 });
+  }).toPass({ timeout: 15000 });
 }
 
 export async function takeChip(page: Page, value: number): Promise<void> {

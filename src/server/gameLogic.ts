@@ -202,7 +202,15 @@ export function evaluateHandStrength(cards: RankedCard[]): number[] {
 
   if (counts[0] >= 4) {
     const quad = groups[0][0];
-    const kicker = sortedValuesDesc.find((v) => v !== quad) ?? 0;
+    // Only traditional poker combinations are used even when unusual situations arise from
+    // unsuited cards. Exactly four cards form the quad; the kicker is the best remaining card.
+    // With e.g. five Aces, the fifth Ace is the kicker, so the kicker can share the quad's rank.
+    const remaining = [...sortedValuesDesc];
+    for (let removed = 0; removed < 4; removed++) {
+      const idx = remaining.indexOf(quad);
+      if (idx !== -1) remaining.splice(idx, 1);
+    }
+    const kicker = remaining[0] ?? 0;
     return [HAND_CATEGORY.FOUR_OF_A_KIND, quad, kicker];
   }
   if (counts[0] >= 3 && counts.length >= 2 && counts[1] >= 2) {

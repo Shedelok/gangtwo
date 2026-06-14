@@ -277,6 +277,40 @@ for (const {
   });
 }
 
+test('five aces is four of a kind', async ({ page: checkerPage, browser }) => {
+  const afkPage = await browser.newPage();
+  try {
+    await setEnabledPositiveAddons(checkerPage, ['[A] Unsuited X']);
+
+    await joinLobby(checkerPage, 'Checker');
+    await joinLobby(afkPage, 'Afk');
+
+    await clickTestModeCheckbox(checkerPage);
+    await setTestModePlayerCards(checkerPage, 'Checker', 'As, 2h');
+    await setTestModeAddonInput(checkerPage, '[A] Unsuited X', 'A');
+    await setTestModeCommonCards(checkerPage, 'Ah, Ac, Ad, 5s, 7d');
+
+    await pressStartGameInLobby([checkerPage, afkPage]);
+
+    for (let round = 1; round <= 3; round++) {
+      await takeAnyChip(checkerPage);
+      await takeAnyChip(afkPage);
+      await pressReadyForNextRound([checkerPage, afkPage]);
+    }
+
+    const unsuitedXCard = (await getActionCards(checkerPage)).find(c => c.name === '[A] Unsuited X')!;
+    await unsuitedXCard.click();
+    await (await getOwnPocketCards(checkerPage))[1].click();
+    await expect(async () => {
+      expect((await getOwnPocketCards(checkerPage)).some(c => c.suit === '')).toBe(true);
+    }).toPass({ timeout: 5000 });
+
+    expect(await getCurrentHandHintText(checkerPage)).toBe('Four of a Kind');
+  } finally {
+    await afkPage.close();
+  }
+});
+
 test('hand is determined correctly when fewer than 5 cards remain', async ({ page: checkerPage, browser }) => {
   const afkPage = await browser.newPage();
   try {

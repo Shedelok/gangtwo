@@ -340,6 +340,9 @@ invalid or conflicts with the current game configuration the game cannot start. 
 When multiple unsuited action cards are put on the action cards table, they are sorted by rank (top to bottom A, K, Q,
 J, 10, 9, 8, 7, 6, 5, 4, 3, 2).
 
+Unsuited card can lead to unusual situations in combinations. Despite that, only traditional poker combinations are used
+in the game. For example, having 5 Aces is a 'Four of a Kind' with Ace kicker.
+
 ## Addon: Prison
 
 Short description: "Prison"
