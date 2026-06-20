@@ -81,6 +81,7 @@ const STRINGS = {
   sound_PRISON_TAKEN_EFFECT: { en: 'Prison taken effect', ru: 'Тюрьма сработала' },
   sound_CARD_DISCARDED: { en: 'Card discarded', ru: 'Карта сброшена' },
   sound_VACATION_STARTED: { en: 'Vacation started', ru: 'Отпуск начался' },
+  sound_GREEN_X_FAIL: { en: 'Green X fail', ru: 'Зелёный X провал' },
 
   // Addons panel
   addons: { en: 'Addons', ru: 'Дополнения' },

@@ -8,9 +8,9 @@ import type { ClientGameState, Rank } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
 import { useLang, tAddonShort, tAddonLong, tHandRank, tRankPlural, type TKey } from './i18n';
 
-const AVAILABLE_MP3S = ['airbus-cabin-beep.mp3', 'bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'moving-plant.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3'];
+const AVAILABLE_MP3S = ['airbus-cabin-beep.mp3', 'bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'moving-plant.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3', 'sad-horn.m4a'];
 
-type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN' | 'PRISON_TAKEN_EFFECT' | 'CARD_DISCARDED' | 'VACATION_STARTED';
+type SoundKey = 'STEAL_FROM_YOU' | 'CHIP_MOVE' | 'CARD_FLIP' | 'GAME_START' | 'ACTION_CARD_PLAYED' | 'ACTION_CARD_TAKEN' | 'PRISON_TAKEN_EFFECT' | 'CARD_DISCARDED' | 'VACATION_STARTED' | 'GREEN_X_FAIL';
 const SOUND_DEFAULTS: Record<SoundKey, string> = {
   STEAL_FROM_YOU: 'bell-1.mp3',
   CHIP_MOVE: 'fast-woosh.mp3',
@@ -21,6 +21,8 @@ const SOUND_DEFAULTS: Record<SoundKey, string> = {
   PRISON_TAKEN_EFFECT: 'prison-close.mp3',
   CARD_DISCARDED: 'moving-plant.mp3',
   VACATION_STARTED: 'airbus-cabin-beep.mp3',
+  // Spec names the default as sad-horn.mp3, but the provided resource is sad-horn.m4a.
+  GREEN_X_FAIL: 'sad-horn.m4a',
 };
 const SOUND_LABEL_KEYS: Record<SoundKey, TKey> = {
   STEAL_FROM_YOU: 'sound_STEAL_FROM_YOU',
@@ -32,6 +34,7 @@ const SOUND_LABEL_KEYS: Record<SoundKey, TKey> = {
   PRISON_TAKEN_EFFECT: 'sound_PRISON_TAKEN_EFFECT',
   CARD_DISCARDED: 'sound_CARD_DISCARDED',
   VACATION_STARTED: 'sound_VACATION_STARTED',
+  GREEN_X_FAIL: 'sound_GREEN_X_FAIL',
 };
 const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   STEAL_FROM_YOU: 1,
@@ -43,6 +46,7 @@ const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   PRISON_TAKEN_EFFECT: 1,
   CARD_DISCARDED: 1,
   VACATION_STARTED: 1,
+  GREEN_X_FAIL: 1,
 };
 
 const preloadedAudio: Record<string, HTMLAudioElement> = {};
@@ -616,6 +620,14 @@ export default function App() {
     const vacationEffectActivePrev = !!prev.vacationPlayerId && prev.currentRound === 4 && !prev.blackjackPhase && !prev.passCardPhase;
     if (vacationEffectActiveNow && !vacationEffectActivePrev) {
       playSound(files.VACATION_STARTED, vol, SOUND_VOLUME_MULTIPLIER.VACATION_STARTED);
+    }
+
+    // Green X fail sound: when the green chip is taken by a "wrong" player it becomes a normal red
+    // chip. The server stops exposing the green chip number (greenChipNumber becomes null) while it
+    // was never locked. Spec: "the chip becomes normal (red) chip and GREEN_X_FAIL sound is played".
+    const greenChipFailed = prev.greenChipNumber !== null && state.greenChipNumber === null && !prev.greenChipLocked && !state.greenChipLocked;
+    if (greenChipFailed) {
+      playSound(files.GREEN_X_FAIL, vol, SOUND_VOLUME_MULTIPLIER.GREEN_X_FAIL);
     }
   }, [state]);
 

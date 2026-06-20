@@ -537,7 +537,8 @@ chip X is black due to other addons, green takes precedence and chip is not blac
 table, green chip is just like others. Once taken by the player, the server secretly checks if the player is actually at
 Xs position (i.e. if there's a situation in which this player holds X at the end and players win), the green
 chip stays with them and can't be stolen nor dropped. If the player is actually not at Xs position (not possible to win
-with them having X), the chip becomes normal (red) chip.
+with them having X), the chip becomes normal (red) chip and "GREEN_X_FAIL" sound is played, which defaults to
+spec/base/resources/sounds/sad-horn.m4a.
 
 The green chip is determined and works correctly even if the last round is the only round in the game (all previous are
 skipped).
