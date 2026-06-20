@@ -1,6 +1,7 @@
 import React from 'react';
 import type { ClientGameState } from '@shared/types';
 import { ADDONS } from '@shared/addons';
+import { useLang, tAddonShort } from '../i18n';
 
 export type ActionWorkflowStep = 'idle' | 'select-card' | 'select-player' | 'select-common-card' | 'confirm-try-another' | 'confirm-vacation' | 'confirm-destroy-all-xs' | 'confirm-check-number-of-ranks';
 
@@ -120,6 +121,7 @@ function getUnsuitedSortKey(addonId: string, state: ClientGameState): number | n
 }
 
 export default function ActionCardPanel({ state, step, activeAddonId, returningAddonId, onStart, onCancel, onCardElRef }: Props) {
+  const { lang, t } = useLang();
   const actionAddons = ADDONS.filter(a =>
     a.hasAction && state.enabledAddons.includes(a.id) && !isAddonUsed(a.id, state)
   ).sort((a, b) => {
@@ -154,7 +156,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
         padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6,
         minWidth: CARD_W + 20,
       }}>
-        <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Actions</div>
+        <div style={{ fontSize: 10, color: '#888', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>{t('actions')}</div>
         {actionAddons.map(addon => {
           const active = step !== 'idle' && activeAddonId === addon.id;
           const locked = (lockedByOther && state.actionCardLock?.addonId === addon.id) || returningAddonId === addon.id;
@@ -165,7 +167,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
               key={addon.id}
               ref={el => onCardElRef(addon.id, el)}
               onClick={() => handleCardClick(addon.id)}
-              title={addon.short}
+              title={tAddonShort(addon.id, addon.short, lang)}
               style={{
                 width: CARD_W, height: CARD_H,
                 borderRadius: 6,
@@ -246,7 +248,7 @@ export default function ActionCardPanel({ state, step, activeAddonId, returningA
               )}
               {!active && addon.id !== 'action-unsuited-jack' && addon.id !== 'action-unsuited-x' && addon.id !== 'show-1-card-to-1-player' && addon.id !== 'action-reroll-common' && addon.id !== 'action-swap-with-common' && addon.id !== 'action-try-another-card' && addon.id !== 'action-vacation' && addon.id !== 'action-destroy-all-xs' && addon.id !== 'action-check-number-of-ranks' && (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#90c090', lineHeight: 1.4, textAlign: 'center' }}>
-                  {addon.short}
+                  {tAddonShort(addon.id, addon.short, lang)}
                 </div>
               )}
               {active && (

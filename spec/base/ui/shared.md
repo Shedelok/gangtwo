@@ -13,9 +13,16 @@ sounds (one mp3 can be used any number of times).
 All sounds are preloaded when the application starts and are kept always ready to be played so that there is never
 a delay between an action and a corresponding sound.
 
+# Russian Language Toggle
+
+To the right of the sound control elements there is a small toggle button. This
+button switches all the text in the app for the current player from English to Russian (except for the text/letters on
+the cards). The button displayed as Russian flag emoji By default, the button is inactive. When clicked, the button becomes active, becomes gray and all text in
+the app switches to Russian. If clicked again, the button becomes inactive again.
+
 # Hand Rankings Hint
 
-To the right of the sound control elements there is a hoverable "Hand Ranking" text. When hovered over that text,
+To the right of the Russian language toggle there is a hoverable "Hand Ranking" text. When hovered over that text,
 spec/base/resources/images/hand-ranking.png is displayed to the user. The hand ranking should be
 displayed on top of any other
 UI element (including table and players), so it's fully visible and nothing blocks it.

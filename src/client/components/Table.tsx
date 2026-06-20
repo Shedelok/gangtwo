@@ -4,6 +4,7 @@ import PlayerSeat from './PlayerSeat';
 import ChipCircle from './ChipCircle';
 import CommunityCards from './CommunityCards';
 import { ChipAnimContext, type ChipAnimCtxValue } from './ChipAnimContext';
+import { useLang, tRankPlural, tRankSingular, tShareInfoLabel } from '../i18n';
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 const CONTAINER_W = 860;
@@ -245,6 +246,7 @@ interface Props {
 function getScale() { return (window.innerWidth * 0.6) / CONTAINER_W; }
 
 export default function Table({ state, sendAction, readOnly, onCardSelect, onPlayerSelect, onCommonCardClick, actionInProgress, onSeatElRef, tryAnotherDropIndex, onTryAnotherCardSelect, onTryAnotherDropConfirm, onPassCardSelect, onPassCardSubmit, onPassCardCancel }: Props) {
+  const { lang, t } = useLang();
   const currentRound = (state.currentRound ?? 1) as RoundNumber;
   const myIndex = state.players.findIndex(p => p.id === state.myId);
   const rotated = myIndex >= 0
@@ -645,7 +647,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                 displayed on the table at this time). */}
             {!state.blackjackPhase && !state.passCardPhase && !state.gameResult && (
               <div style={{ background: 'rgba(0,0,0,0.45)', color: '#f0c040', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
-                {readOnly ? 'GAME OVER' : `ROUND ${currentRound} / 4`}
+                {readOnly ? t('gameOver') : t('round', { n: currentRound })}
               </div>
             )}
 
@@ -658,21 +660,21 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                 fontSize: 28, fontWeight: 'bold', letterSpacing: 2,
                 textShadow: '0 2px 6px rgba(0,0,0,0.6)',
               }}>
-                {state.gameResult === 'win' ? 'WIN' : 'LOSS'}
+                {state.gameResult === 'win' ? t('win') : t('loss')}
               </div>
             )}
 
             {/* Share info phase label */}
             {state.blackjackPhase && (
               <div style={{ background: 'rgba(0,0,0,0.45)', color: '#a0d8ff', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
-                {state.shareInfoLabel}
+                {tShareInfoLabel(state.shareInfoLabel, t)}
               </div>
             )}
 
             {/* Pass 1 Card phase label */}
             {state.passCardPhase && (
               <div style={{ background: 'rgba(0,0,0,0.45)', color: '#a0d8ff', borderRadius: 12, padding: '2px 12px', fontSize: 12, fontWeight: 'bold', letterSpacing: 1 }}>
-                Pass 1 Card
+                {t('pass1Card')}
               </div>
             )}
 
@@ -717,7 +719,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                           <button
                             onClick={inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? () => sendAction({ type: 'TAKE_FROM_MIDDLE', chipNumber: chip.number }) : undefined}
                             style={{ padding: '2px 7px', borderRadius: 10, border: 'none', fontSize: 10, fontWeight: 'bold', background: '#166534', color: '#bbf7d0', visibility: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'visible' : 'hidden', cursor: inMiddle && !iHaveCurrentRoundChip && !actionInProgress ? 'pointer' : 'default' }}>
-                            Take
+                            {t('take')}
                           </button>
                         )}
                       </div>
@@ -917,18 +919,6 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
           const { x, y } = getSeatPos(playerIdx, n);
           const isPlayerMe = cloud.playerId === state.myId;
           const cloudBottom = isPlayerMe ? y - 92 : y - 82;
-          // Pluralization mirrors the confirm-button label in App.tsx ("Destroy Jacks",
-          // "Destroy 8s", etc.). "J" → "Jacks", "Q" → "Queens", "K" → "Kings", "A" → "Aces",
-          // numeric ranks just add 's'.
-          const rankPluralLabel = (r: string): string => {
-            switch (r) {
-              case 'A': return 'Aces';
-              case 'K': return 'Kings';
-              case 'Q': return 'Queens';
-              case 'J': return 'Jacks';
-              default: return `${r}s`;
-            }
-          };
           return (
             <div style={{
               position: 'absolute', left: x, top: cloudBottom,
@@ -942,7 +932,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                 border: '1px solid #333',
                 whiteSpace: 'nowrap',
               }}>
-                {`Destroyed ${rankPluralLabel(cloud.rank)}`}
+                {t('destroyed', { ranks: tRankPlural(cloud.rank, lang) })}
               </div>
             </div>
           );
@@ -962,31 +952,12 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
           const { x, y } = getSeatPos(playerIdx, n);
           const isPlayerMe = cloud.playerId === state.myId;
           const cloudBottom = isPlayerMe ? y - 92 : y - 82;
-          // Pluralization mirrors the picker labels ("J" → "Jacks", "Q" → "Queens", "K" →
-          // "Kings", "A" → "Aces", numeric ranks add 's'). Singular form (count == 1) drops
-          // the trailing 's' (e.g. "There is 1 Queen", "There is 1 8").
-          const rankPluralLabel = (r: string): string => {
-            switch (r) {
-              case 'A': return 'Aces';
-              case 'K': return 'Kings';
-              case 'Q': return 'Queens';
-              case 'J': return 'Jacks';
-              default: return `${r}s`;
-            }
-          };
-          const rankSingularLabel = (r: string): string => {
-            switch (r) {
-              case 'A': return 'Ace';
-              case 'K': return 'King';
-              case 'Q': return 'Queen';
-              case 'J': return 'Jack';
-              default: return r;
-            }
-          };
+          // Singular form (count == 1) uses the singular rank word; plural otherwise.
+          // Both translate with the active language via tRankSingular/tRankPlural.
           const isOne = cloud.count === 1;
           const mainText = isOne
-            ? `There is ${cloud.count} ${rankSingularLabel(cloud.rank)} in the game right now`
-            : `There are ${cloud.count} ${rankPluralLabel(cloud.rank)} in the game right now`;
+            ? t('thereIsOne', { count: cloud.count, rank: tRankSingular(cloud.rank, lang) })
+            : t('thereAreN', { count: cloud.count, ranks: tRankPlural(cloud.rank, lang) });
           return (
             <div style={{
               position: 'absolute', left: x, top: cloudBottom,
@@ -1002,7 +973,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                 textAlign: 'center',
               }}>
                 <div>{mainText}</div>
-                <div style={{ fontStyle: 'italic' }}>{'(Only visible to you)'}</div>
+                <div style={{ fontStyle: 'italic' }}>{t('onlyVisibleToYou')}</div>
               </div>
             </div>
           );

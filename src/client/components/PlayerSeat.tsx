@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { PlayerPublicState, Card, RoundNumber, ClientAction } from '@shared/types';
 import PlayerHand from './PlayerHand';
 import ChipCircle from './ChipCircle';
+import { useLang, tHandRank, tCardValue, tGuessVote } from '../i18n';
 
 const HAND_RANKS = [
   'Royal Flush', 'Straight Flush', 'Four of a Kind', 'Full House',
@@ -102,6 +103,7 @@ export default function PlayerSeat({
   destroyedRanks, destroyedSlots, destroyAllXsAnimatingRank,
   style,
 }: Props) {
+  const { lang, t } = useLang();
   const [activePickerAddon, setActivePickerAddon] = useState<string | null>(null);
   useEffect(() => {
     if (activePickerAddon !== null) {
@@ -158,7 +160,7 @@ export default function PlayerSeat({
               border: `1px solid ${cloud.locked ? (cloud.winner ? '#ca8a04' : '#374151') : '#94a3b8'}`,
               whiteSpace: 'nowrap',
             }}>
-              {cloud.text}
+              {tGuessVote(cloud.text, lang)}
             </div>
           ))}
         </div>
@@ -168,7 +170,7 @@ export default function PlayerSeat({
       <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ fontSize: 12, fontWeight: 'bold', color: isMe ? '#90c0ff' : '#bbb', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>
           {/* Vacation: palm tree emoji before and after the name */}
-          {onVacation ? '\u{1F334} ' : ''}{player.name}{isMe ? ' (you)' : ''}{onVacation ? ' \u{1F334}' : ''}
+          {onVacation ? '\u{1F334} ' : ''}{player.name}{isMe ? ` ${t('you')}` : ''}{onVacation ? ' \u{1F334}' : ''}
         </div>
         {showRestartTick && (
           <span style={{ position: 'absolute', left: '100%', marginLeft: 3, fontSize: 11, color: hasRestartVoted ? '#4ade80' : '#f87171', pointerEvents: 'none' }}>{hasRestartVoted ? '✓' : '✕'}</span>
@@ -229,13 +231,13 @@ export default function PlayerSeat({
                 {!readOnly && isCurrent && isMe && !isImmovable && !actionInProgress && (
                   <button style={{ ...btn, background: '#7f1c1c', color: '#fca5a5' }}
                     onClick={() => sendAction({ type: 'DISCARD_CHIP', chipNumber: chip.number })}>
-                    Return
+                    {t('returnChip')}
                   </button>
                 )}
                 {!readOnly && isCurrent && !isMe && !iHaveCurrentRoundChip && !isImmovable && !actionInProgress && (
                   <button style={{ ...btn, background: '#5b21b6', color: '#ddd6fe' }}
                     onClick={() => sendAction({ type: 'STEAL_CHIP', fromPlayerId: player.id, chipNumber: chip.number })}>
-                    Steal
+                    {t('steal')}
                   </button>
                 )}
               </div>
@@ -245,8 +247,12 @@ export default function PlayerSeat({
 
       {/* Guess UI — one per feature targeting this seat (shown for non-target viewers) */}
       {guessRankUIs.map(ui => {
-        const options = ui.feature === 'card-value' ? (shortDeck ? SHORT_DECK_CARD_VALUES : CARD_VALUES) : HAND_RANKS;
-        const buttonLabel = ui.feature === 'card-value' ? 'Guess Card' : 'Guess Hand';
+        const isCardValue = ui.feature === 'card-value';
+        const options = isCardValue ? (shortDeck ? SHORT_DECK_CARD_VALUES : CARD_VALUES) : HAND_RANKS;
+        // Options carry the canonical English value (the vote payload / server key); only the
+        // displayed text is translated.
+        const displayOption = (r: string) => isCardValue ? tCardValue(r, lang) : tHandRank(r, lang);
+        const buttonLabel = isCardValue ? t('guessCard') : t('guessHand');
         return (
           <div key={ui.addonId} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {activePickerAddon === ui.addonId && (
@@ -263,7 +269,7 @@ export default function PlayerSeat({
                     color: '#e2e8f0', textAlign: 'left', whiteSpace: 'nowrap',
                   }}
                     onClick={() => { sendAction({ type: 'SUBMIT_RANK_GUESS', addonId: ui.addonId, rank: r }); setActivePickerAddon(null); }}>
-                    {r}
+                    {displayOption(r)}
                   </button>
                 ))}
               </div>
@@ -271,7 +277,7 @@ export default function PlayerSeat({
             {ui.myVote ? (
               <button style={{ ...btn, background: '#1e3a5f', color: '#93c5fd', cursor: ui.locked ? 'default' : 'pointer' }}
                 onClick={(e) => { if (!ui.locked) { e.stopPropagation(); setActivePickerAddon(prev => prev === ui.addonId ? null : ui.addonId); } }}>
-                {ui.myVote}{!ui.locked && <span style={{ marginLeft: 4 }}>{'\u{1F589}'}</span>}
+                {displayOption(ui.myVote)}{!ui.locked && <span style={{ marginLeft: 4 }}>{'\u{1F589}'}</span>}
               </button>
             ) : (
               <button style={{ ...btn, background: '#7c3aed', color: '#ede9fe' }}
@@ -288,7 +294,7 @@ export default function PlayerSeat({
         <button style={{ ...btn, background: canReveal ? '#166534' : '#374151', color: canReveal ? '#bbf7d0' : '#9ca3af', cursor: canReveal ? 'pointer' : 'not-allowed' }}
           disabled={!canReveal}
           onClick={() => sendAction({ type: 'REVEAL_CARDS' })}>
-          Reveal cards
+          {t('revealCards')}
         </button>
       )}
 
@@ -305,7 +311,7 @@ export default function PlayerSeat({
           }}
           disabled={tryAnotherDropIndex === undefined || tryAnotherDropIndex === null}
           onClick={onTryAnotherDropConfirm}>
-          {tryAnotherDropIndex !== undefined && tryAnotherDropIndex !== null ? 'Drop card' : 'Pick card to drop'}
+          {tryAnotherDropIndex !== undefined && tryAnotherDropIndex !== null ? t('dropCard') : t('pickCardToDrop')}
         </button>
       )}
 
@@ -333,7 +339,7 @@ export default function PlayerSeat({
                 if (onPassCardSubmit) onPassCardSubmit();
               }
             }}>
-            {isReady ? 'Waiting' : 'Pass card'}
+            {isReady ? t('waiting') : t('passCard')}
           </button>
         );
       })()}
@@ -349,7 +355,7 @@ export default function PlayerSeat({
             color: player.readyForNextRound ? '#aaa' : '#fff',
           }}
           onClick={() => sendAction({ type: 'SET_READY', ready: !player.readyForNextRound })}>
-          {player.readyForNextRound ? 'Waiting' : 'Move to next round'}
+          {player.readyForNextRound ? t('waiting') : t('moveToNextRound')}
         </button>
       )}
 

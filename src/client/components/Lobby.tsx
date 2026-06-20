@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { ClientGameState, ClientAction } from '@shared/types';
 import { ADDONS, NEGATIVE_ADDON_TREE, POSITIVE_ADDON_TREE, countAvailableInTree } from '@shared/addons';
+import { useLang, type TKey } from '../i18n';
 
 const s: Record<string, React.CSSProperties> = {
   container: {
@@ -147,18 +148,24 @@ function parseCardList(text: string): ParsedCard[] | null {
   return cards;
 }
 
+// A test-mode validation error: a translation key plus optional interpolation params.
+// `label` is a player name or the special "common cards" label (the latter is itself a
+// translation key so it switches language too).
+type TestModeError = { key: TKey; params?: Record<string, string> };
+
 /**
- * Client-side mirror of the server's Test Mode validation. Returns an error string if the
- * configuration is invalid, or null if it is valid (or Test Mode is disabled).
+ * Client-side mirror of the server's Test Mode validation. Returns a structured error if the
+ * configuration is invalid, or null if it is valid (or Test Mode is disabled). The error is
+ * translated at render time so the message follows the current language.
  */
-function validateTestMode(state: ClientGameState): string | null {
+function validateTestMode(state: ClientGameState, commonCardsLabel: string): TestModeError | null {
   if (!state.testMode) return null;
   const seen = new Set<string>();
-  const collect = (cards: ParsedCard[] | null, label: string): string | null => {
-    if (cards === null) return `Invalid cards for ${label}`;
+  const collect = (cards: ParsedCard[] | null, label: string): TestModeError | null => {
+    if (cards === null) return { key: 'invalidCardsFor', params: { label } };
     for (const c of cards) {
       const key = `${c.rank}-${c.suit}`;
-      if (seen.has(key)) return 'Duplicate card in Test Mode configuration';
+      if (seen.has(key)) return { key: 'duplicateCard' };
       seen.add(key);
     }
     return null;
@@ -166,26 +173,27 @@ function validateTestMode(state: ClientGameState): string | null {
   for (const p of state.players) {
     const raw = state.testModePlayerCards[p.id] ?? '';
     const cards = parseCardList(raw);
-    if (cards !== null && cards.length > 2) return `Too many cards for ${p.name}`;
+    if (cards !== null && cards.length > 2) return { key: 'tooManyCardsFor', params: { label: p.name } };
     const err = collect(cards, p.name);
     if (err) return err;
   }
-  const commonErr = collect(parseCardList(state.testModeCommonCards), 'common cards');
+  const commonErr = collect(parseCardList(state.testModeCommonCards), commonCardsLabel);
   if (commonErr) return commonErr;
   // [A] Unsuited X rank input: a single rank token, or empty (random). Conflicts that depend on
   // the randomly-picked addon set (e.g. a 2-9 rank under Short Deck) cannot be validated here and
   // are enforced by the server at game start; this only catches obviously invalid tokens.
   const rankRaw = state.testModeUnsuitedXRank.trim().toUpperCase();
-  if (rankRaw !== '' && !RANK_TOKENS.has(rankRaw)) return 'Invalid rank for Unsuited X';
+  if (rankRaw !== '' && !RANK_TOKENS.has(rankRaw)) return { key: 'invalidRankUnsuitedX' };
   // Green X value input: a single number, or empty (random). The exact valid range depends on the
   // round-4 chip count and is enforced by the server; this only catches obviously invalid tokens
   // (anything that is not a positive integer).
   const greenXRaw = state.testModeGreenX.trim();
-  if (greenXRaw !== '' && (!/^\d+$/.test(greenXRaw) || parseInt(greenXRaw, 10) < 1)) return 'Invalid value for Green X';
+  if (greenXRaw !== '' && (!/^\d+$/.test(greenXRaw) || parseInt(greenXRaw, 10) < 1)) return { key: 'invalidValueGreenX' };
   return null;
 }
 
 export default function Lobby({ state, sendAction }: Props) {
+  const { t } = useLang();
   const [nameInput, setNameInput] = useState(() => localStorage.getItem(LAST_NAME_KEY) ?? '');
 
   const hasJoined = state.myId !== '';
@@ -194,7 +202,7 @@ export default function Lobby({ state, sendAction }: Props) {
   const negativePoolCount = countAvailableInTree(NEGATIVE_ADDON_TREE, addonPoolSet);
   const positivePoolCount = countAvailableInTree(POSITIVE_ADDON_TREE, addonPoolSet);
 
-  const testModeError = validateTestMode(state);
+  const testModeError = validateTestMode(state, t('commonCardsLabel'));
 
   const canStart =
     state.players.length >= 2 &&
@@ -212,36 +220,38 @@ export default function Lobby({ state, sendAction }: Props) {
 
   return (
     <div style={s.container}>
-      <div style={s.title}>GANG GAME</div>
-      <div style={s.subtitle}>A multiplayer card game</div>
+      <div style={s.title}>{t('gangGame')}</div>
+      <div style={s.subtitle}>{t('gameSubtitle')}</div>
 
       {!hasJoined ? (
         <div style={s.card}>
           <form onSubmit={handleJoin}>
-            <label style={s.label}>Enter your display name</label>
+            <label style={s.label}>{t('enterName')}</label>
             <input
               style={s.input}
               type="text"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              placeholder="Your name..."
+              placeholder={t('yourNamePlaceholder')}
               maxLength={20}
               autoFocus
             />
             <button style={s.button} type="submit" disabled={!nameInput.trim()}>
-              Join Lobby ({state.players.length} {state.players.length === 1 ? 'player' : 'players'})
+              {state.players.length === 1
+                ? t('joinLobby1', { n: state.players.length })
+                : t('joinLobbyN', { n: state.players.length })}
             </button>
           </form>
         </div>
       ) : (
         <div style={s.card}>
-          <label style={s.label}>Players in lobby ({state.players.length})</label>
+          <label style={s.label}>{t('playersInLobby', { n: state.players.length })}</label>
           <ul style={s.playerList}>
             {state.players.map((p) => (
               <li key={p.id} style={{ ...s.playerItem, justifyContent: 'space-between' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={s.dot} />
-                  {p.name}{p.id === state.myId && ' (you)'}
+                  {p.name}{p.id === state.myId && ` ${t('you')}`}
                 </span>
                 {state.testMode && (
                   <input
@@ -259,7 +269,7 @@ export default function Lobby({ state, sendAction }: Props) {
           </ul>
           {state.testMode && (
             <div style={{ marginBottom: '8px' }}>
-              <label style={s.label}>Common cards</label>
+              <label style={s.label}>{t('commonCards')}</label>
               <input
                 style={{ ...s.input, marginBottom: 0 }}
                 type="text"
@@ -278,15 +288,17 @@ export default function Lobby({ state, sendAction }: Props) {
             onClick={() => canStart && sendAction({ type: 'START_GAME' })}
             disabled={!canStart}
           >
-            {state.myStartGameVote ? `Waiting (${state.startGameVotes}/${state.players.length})` : `Start Game (${state.startGameVotes}/${state.players.length})`}
+            {state.myStartGameVote
+              ? t('startWaiting', { n: state.startGameVotes, total: state.players.length })
+              : t('startGame', { n: state.startGameVotes, total: state.players.length })}
           </button>
           {!canStart && (
             <div style={s.hint}>
               {state.players.length < 2
-                ? 'Need at least 2 players to start'
+                ? t('needTwoPlayers')
                 : testModeError !== null
-                  ? testModeError
-                  : 'Too many addons requested for the selected pool'}
+                  ? t(testModeError.key, testModeError.params)
+                  : t('tooManyAddons')}
             </div>
           )}
         </div>

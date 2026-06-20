@@ -6,6 +6,7 @@ import Game from './components/Game';
 import ActionCardPanel, { type ActionWorkflowStep, CARD_W, CARD_H, PalmIcon, SkullIcon, QuestionMarkIcon } from './components/ActionCardPanel';
 import type { ClientGameState, Rank } from '@shared/types';
 import { ADDONS, type AddonDef } from './addons';
+import { useLang, tAddonShort, tAddonLong, tHandRank, tRankPlural, type TKey } from './i18n';
 
 const AVAILABLE_MP3S = ['airbus-cabin-beep.mp3', 'bell-1.mp3', 'car-engine-start.mp3', 'card-flip.mp3', 'ding-dong.mp3', 'fast-woosh.mp3', 'honk-honk.mp3', 'kick-1.mp3', 'kick-2.mp3', 'magic-1.mp3', 'minutochku.mp3', 'moving-plant.mp3', 'prison-close.mp3', 'punch-1.mp3', 'punch-2.mp3'];
 
@@ -21,16 +22,16 @@ const SOUND_DEFAULTS: Record<SoundKey, string> = {
   CARD_DISCARDED: 'moving-plant.mp3',
   VACATION_STARTED: 'airbus-cabin-beep.mp3',
 };
-const SOUND_LABELS: Record<SoundKey, string> = {
-  STEAL_FROM_YOU: 'Steal from you',
-  CHIP_MOVE: 'Chip move',
-  CARD_FLIP: 'Card flip',
-  GAME_START: 'Game start',
-  ACTION_CARD_PLAYED: 'Action card played',
-  ACTION_CARD_TAKEN: 'Action card taken',
-  PRISON_TAKEN_EFFECT: 'Prison taken effect',
-  CARD_DISCARDED: 'Card discarded',
-  VACATION_STARTED: 'Vacation started',
+const SOUND_LABEL_KEYS: Record<SoundKey, TKey> = {
+  STEAL_FROM_YOU: 'sound_STEAL_FROM_YOU',
+  CHIP_MOVE: 'sound_CHIP_MOVE',
+  CARD_FLIP: 'sound_CARD_FLIP',
+  GAME_START: 'sound_GAME_START',
+  ACTION_CARD_PLAYED: 'sound_ACTION_CARD_PLAYED',
+  ACTION_CARD_TAKEN: 'sound_ACTION_CARD_TAKEN',
+  PRISON_TAKEN_EFFECT: 'sound_PRISON_TAKEN_EFFECT',
+  CARD_DISCARDED: 'sound_CARD_DISCARDED',
+  VACATION_STARTED: 'sound_VACATION_STARTED',
 };
 const SOUND_VOLUME_MULTIPLIER: Record<SoundKey, number> = {
   STEAL_FROM_YOU: 1,
@@ -452,6 +453,7 @@ function FlyingActionCard({ from, to, addonId, label, snap = false, unsuitedXRan
 
 export default function App() {
   const { state, sendAction, lastError, status } = useWebSocket();
+  const { lang, toggle: toggleLang, t } = useLang();
   const [volume, setVolume] = useState(0.5);
   const volumeRef = useRef(volume);
   volumeRef.current = volume;
@@ -631,7 +633,7 @@ export default function App() {
         const sr = seatEl.getBoundingClientRect();
         const addonDef = ADDONS.find(a => a.id === addonId);
         const pos = { x: sr.left + sr.width / 2 - CARD_W / 2, y: sr.top + sr.height / 2 - CARD_H / 2 };
-        setFlyingCard({ from: pos, to: pos, addonId, label: addonDef?.short ?? addonId, snap: true });
+        setFlyingCard({ from: pos, to: pos, addonId, label: addonDef ? tAddonShort(addonDef.id, addonDef.short, lang) : addonId, snap: true });
       }
     };
 
@@ -675,7 +677,7 @@ export default function App() {
             from: { x: cr.left, y: cr.top },
             to: { x: sr.left + sr.width / 2 - CARD_W / 2, y: sr.top + sr.height / 2 - CARD_H / 2 },
             addonId: curr.addonId,
-            label: addonDef?.short ?? curr.addonId,
+            label: addonDef ? tAddonShort(addonDef.id, addonDef.short, lang) : curr.addonId,
           });
         }
       }
@@ -740,7 +742,7 @@ export default function App() {
   if (status === 'disconnected' && !state) {
     return (
       <div style={styles.container}>
-        <div style={styles.status}>Disconnected. Reconnecting...</div>
+        <div style={styles.status}>{t('disconnected')}</div>
       </div>
     );
   }
@@ -748,7 +750,7 @@ export default function App() {
   if (!state) {
     return (
       <div style={styles.container}>
-        <div style={styles.status}>Connecting...</div>
+        <div style={styles.status}>{t('connecting')}</div>
       </div>
     );
   }
@@ -801,13 +803,13 @@ export default function App() {
           />
         )}
         <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={styles.addonShort}>{addon.short}</span>
+          <span style={styles.addonShort}>{tAddonShort(addon.id, addon.short, lang)}</span>
           <span
             style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 14, height: 14, borderRadius: '50%', border: '1px solid #555', color: '#888', fontSize: 10, cursor: 'default', userSelect: 'none', flexShrink: 0 }}
             onMouseEnter={() => setHoveredAddon(addon.id)}
             onMouseLeave={() => setHoveredAddon(null)}
           >?</span>
-          {hovered && <div style={styles.addonTooltip} onMouseEnter={() => setHoveredAddon(null)}>{addon.long}</div>}
+          {hovered && <div style={styles.addonTooltip} onMouseEnter={() => setHoveredAddon(null)}>{tAddonLong(addon.id, addon.long, lang)}</div>}
         </div>
         {isLobby && state.testMode && addon.id === 'action-unsuited-x' && (
           // Spec ([A] Unsuited X): "When Test Mode is enabled, an additional text input appears
@@ -843,14 +845,28 @@ export default function App() {
     <div style={styles.container}>
       <div style={styles.leftPanel}>
         <div style={styles.soundBarRow}>
-          <span>Volume</span>
+          <span>{t('volume')}</span>
           <input type="range" min={0} max={1} step={0.01} value={volume}
             onChange={e => setVolume(parseFloat(e.target.value))}
             style={{ width: 80 }} />
           <button
             onClick={() => setSoundPanelOpen(o => !o)}
             style={{ padding: '2px 8px', fontSize: 11, cursor: 'pointer', borderRadius: 4, border: '1px solid #444', background: '#2a3a4a', color: '#ccc' }}>
-            {soundPanelOpen ? 'Close sounds' : 'Sounds'}
+            {soundPanelOpen ? t('closeSounds') : t('sounds')}
+          </button>
+          {/* Russian Language Toggle — small toggle button that looks like the Russian flag emoji.
+              Inactive by default; when active it turns gray and all text switches to Russian.
+              Placed to the right of the sound control elements, to the left of "Hand Ranking". */}
+          <button
+            onClick={toggleLang}
+            title="Русский"
+            style={{
+              padding: '2px 6px', fontSize: 14, lineHeight: 1, cursor: 'pointer', borderRadius: 4,
+              border: '1px solid #444',
+              background: lang === 'ru' ? '#888' : '#2a3a4a',
+              filter: lang === 'ru' ? 'grayscale(1)' : 'none',
+            }}>
+            {'\u{1F1F7}\u{1F1FA}'}
           </button>
           <div ref={handHintRef} style={{ display: 'inline-block' }}
             onMouseEnter={() => {
@@ -859,9 +875,9 @@ export default function App() {
               setHandHintVisible(true);
             }}
             onMouseLeave={() => setHandHintVisible(false)}>
-            <span style={{ color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none', textDecoration: 'underline dotted' }}>Hand Ranking</span>
+            <span style={{ color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none', textDecoration: 'underline dotted' }}>{t('handRanking')}</span>
             {handHintVisible && handHintPos && createPortal(
-              <img src="/hand-ranking.png" alt="Hand rankings"
+              <img src="/hand-ranking.png" alt={t('handRanking')}
                 style={{ position: 'fixed', top: handHintPos.top, left: handHintPos.left, maxWidth: 320, borderRadius: 6, boxShadow: '0 4px 16px rgba(0,0,0,0.6)', zIndex: 20000 }} />,
               document.body
             )}
@@ -870,10 +886,10 @@ export default function App() {
             <div style={{ display: 'inline-block', position: 'relative' }}
               onMouseEnter={() => setCurrentHandHintVisible(true)}
               onMouseLeave={() => setCurrentHandHintVisible(false)}>
-              <span style={{ color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none', textDecoration: 'underline dotted' }}>My Current Hand</span>
+              <span style={{ color: '#aaa', fontSize: 11, cursor: 'default', userSelect: 'none', textDecoration: 'underline dotted' }}>{t('myCurrentHand')}</span>
               {currentHandHintVisible && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: 6, background: '#1a2030', color: '#ddd', border: '1px solid #444', borderRadius: 6, padding: '4px 8px', fontSize: 12, whiteSpace: 'nowrap', boxShadow: '0 4px 16px rgba(0,0,0,0.6)', zIndex: 20000 }}>
-                  {evaluateHandName(buildMyHandCards(state))}
+                  {tHandRank(evaluateHandName(buildMyHandCards(state)), lang)}
                 </div>
               )}
             </div>
@@ -886,7 +902,7 @@ export default function App() {
                 onChange={(e) => sendAction({ type: 'SET_TEST_MODE', enabled: e.target.checked })}
                 style={{ cursor: 'pointer' }}
               />
-              Test Mode
+              {t('testMode')}
             </label>
           )}
         </div>
@@ -894,7 +910,7 @@ export default function App() {
           <div style={styles.soundPanel}>
             {(Object.keys(SOUND_DEFAULTS) as SoundKey[]).map(key => (
               <div key={key} style={styles.soundPanelRow}>
-                <span style={{ minWidth: 110 }}>{SOUND_LABELS[key]}</span>
+                <span style={{ minWidth: 110 }}>{t(SOUND_LABEL_KEYS[key])}</span>
                 <select
                   value={soundFiles[key]}
                   onChange={e => setSoundFiles(prev => ({ ...prev, [key]: e.target.value }))}
@@ -910,7 +926,7 @@ export default function App() {
         {visibleAddons.length > 0 && (
           <div style={styles.addonPanel}>
             <div style={{ ...styles.addonTitle, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>Addons</span>
+              <span>{t('addons')}</span>
               {isLobby ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <input
@@ -920,13 +936,13 @@ export default function App() {
                     onBlur={() => { setCodeFocused(false); setCodeInput(currentCode); }}
                     spellCheck={false}
                     style={{ width: 48, fontSize: 10, fontFamily: 'monospace', background: '#1a2030', color: '#aaa', border: '1px solid #444', borderRadius: 3, padding: '1px 4px' }}
-                    placeholder="code"
+                    placeholder={t('codePlaceholder')}
                   />
                   <button
                     onClick={() => navigator.clipboard.writeText(currentCode).then(() => { setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); }).catch(() => {})}
                     style={{ padding: '1px 5px', fontSize: 10, cursor: 'pointer', borderRadius: 3, border: '1px solid #444', background: '#2a3a4a', color: '#aaa', position: 'relative' }}
                     title="Copy setup code"
-                  ><span style={{ visibility: 'hidden' }}>Copy</span><span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{codeCopied ? '✓' : 'Copy'}</span></button>
+                  ><span style={{ visibility: 'hidden' }}>{t('copy')}</span><span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{codeCopied ? '✓' : t('copy')}</span></button>
                 </div>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -935,7 +951,7 @@ export default function App() {
                     onClick={() => navigator.clipboard.writeText(currentCode).then(() => { setCodeCopied(true); setTimeout(() => setCodeCopied(false), 2000); }).catch(() => {})}
                     style={{ padding: '1px 5px', fontSize: 10, cursor: 'pointer', borderRadius: 3, border: '1px solid #444', background: '#2a3a4a', color: '#aaa', position: 'relative' }}
                     title="Copy setup code"
-                  ><span style={{ visibility: 'hidden' }}>Copy</span><span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{codeCopied ? '✓' : 'Copy'}</span></button>
+                  ><span style={{ visibility: 'hidden' }}>{t('copy')}</span><span style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{codeCopied ? '✓' : t('copy')}</span></button>
                 </div>
               )}
             </div>
@@ -943,7 +959,7 @@ export default function App() {
               {negativeAddons.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#2d1515', borderRadius: 6, padding: '4px 6px', width: isLobby ? '14vw' : '10vw' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: '#a05050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
-                    <span>Negative</span>
+                    <span>{t('negative')}</span>
                     {isLobby && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                         <button onClick={() => adjustCount('negative', -1)} style={{ width: 16, height: 16, padding: 0, fontSize: 12, lineHeight: 1, cursor: 'pointer', borderRadius: 3, border: '1px solid #7a3030', background: '#3d1a1a', color: '#a05050' }}>−</button>
@@ -958,7 +974,7 @@ export default function App() {
               {positiveAddons.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', background: '#152d15', borderRadius: 6, padding: '4px 6px', width: isLobby ? '14vw' : '10vw' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 10, color: '#50a050', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>
-                    <span>Positive</span>
+                    <span>{t('positive')}</span>
                     {isLobby && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                         <button onClick={() => adjustCount('positive', -1)} style={{ width: 16, height: 16, padding: 0, fontSize: 12, lineHeight: 1, cursor: 'pointer', borderRadius: 3, border: '1px solid #307a30', background: '#1a3d1a', color: '#50a050' }}>−</button>
@@ -978,10 +994,12 @@ export default function App() {
         <button
           style={{ ...styles.restartButton, ...(state.myRestartVote ? { background: '#555', borderColor: '#444', color: '#aaa' } : {}) }}
           onClick={() => sendAction({ type: 'TOGGLE_RESTART_VOTE' })}>
-          {state.myRestartVote ? `Waiting (${state.restartVotes}/${state.players.length})` : `Restart (${state.restartVotes}/${state.players.length})`}
+          {state.myRestartVote
+            ? t('restartWaiting', { n: state.restartVotes, total: state.players.length })
+            : t('restart', { n: state.restartVotes, total: state.players.length })}
         </button>
         <button style={styles.stopButton} onClick={() => sendAction({ type: 'FINISH_GAME' })}>
-          Stop the game
+          {t('stopTheGame')}
         </button>
       </div>
       {lastError && <div style={styles.error}>{lastError}</div>}
@@ -1081,7 +1099,7 @@ export default function App() {
               gap: 10,
               boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
             }}>
-              <div style={{ color: '#e2e8f0', fontSize: 13, textAlign: 'center' }}>Take 'Vacation' card?</div>
+              <div style={{ color: '#e2e8f0', fontSize: 13, textAlign: 'center' }}>{t('takeVacation')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => {
@@ -1099,7 +1117,7 @@ export default function App() {
                     fontWeight: 'bold',
                     cursor: 'pointer',
                   }}>
-                  Confirm
+                  {t('confirm')}
                 </button>
                 <button
                   onClick={() => {
@@ -1117,7 +1135,7 @@ export default function App() {
                     fontWeight: 'bold',
                     cursor: 'pointer',
                   }}>
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             </div>
@@ -1150,19 +1168,10 @@ export default function App() {
           ? ['A', 'K', 'Q', 'J', '10']
           : ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
         // Confirm button label depends on the chosen rank. Spec: "Destroy Jacks" or "Destroy 8s"
-        // or similar. "J" pluralizes as "Jacks", "Q" as "Queens", etc.; numeric ranks just add 's'.
-        const rankPluralLabel = (r: string): string => {
-          switch (r) {
-            case 'A': return 'Aces';
-            case 'K': return 'Kings';
-            case 'Q': return 'Queens';
-            case 'J': return 'Jacks';
-            default: return `${r}s`;
-          }
-        };
+        // or similar. Pluralization (and translation) is handled by tRankPlural.
         const confirmLabel = destroyAllXsRank === null
-          ? 'Select rank to destroy'
-          : `Destroy ${rankPluralLabel(destroyAllXsRank)}`;
+          ? t('selectRankToDestroy')
+          : t('destroyRanks', { ranks: tRankPlural(destroyAllXsRank, lang) });
         return createPortal(
           <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{
@@ -1192,7 +1201,7 @@ export default function App() {
                     cursor: 'pointer',
                     minWidth: 140,
                   }}>
-                  {destroyAllXsRank === null ? 'Choose rank' : destroyAllXsRank}
+                  {destroyAllXsRank === null ? t('chooseRank') : destroyAllXsRank}
                 </button>
                 {destroyAllXsPickerOpen && (
                   <div
@@ -1265,7 +1274,7 @@ export default function App() {
                     fontWeight: 'bold',
                     cursor: 'pointer',
                   }}>
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             </div>
@@ -1298,19 +1307,10 @@ export default function App() {
           ? ['A', 'K', 'Q', 'J', '10']
           : ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
         // Confirm button label depends on the chosen rank. Spec: "Check number of Jacks" or
-        // "Check number of 8s" or similar.
-        const rankPluralLabel = (r: string): string => {
-          switch (r) {
-            case 'A': return 'Aces';
-            case 'K': return 'Kings';
-            case 'Q': return 'Queens';
-            case 'J': return 'Jacks';
-            default: return `${r}s`;
-          }
-        };
+        // "Check number of 8s" or similar. Pluralization (and translation) via tRankPlural.
         const confirmLabel = checkNumberRank === null
-          ? 'Select rank to check'
-          : `Check number of ${rankPluralLabel(checkNumberRank)}`;
+          ? t('selectRankToCheck')
+          : t('checkNumberOf', { ranks: tRankPlural(checkNumberRank, lang) });
         return createPortal(
           <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
             <div style={{
@@ -1340,7 +1340,7 @@ export default function App() {
                     cursor: 'pointer',
                     minWidth: 140,
                   }}>
-                  {checkNumberRank === null ? 'Choose rank' : checkNumberRank}
+                  {checkNumberRank === null ? t('chooseRank') : checkNumberRank}
                 </button>
                 {checkNumberPickerOpen && (
                   <div
@@ -1413,7 +1413,7 @@ export default function App() {
                     fontWeight: 'bold',
                     cursor: 'pointer',
                   }}>
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             </div>
@@ -1451,7 +1451,7 @@ export default function App() {
               gap: 10,
               boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
             }}>
-              <div style={{ color: '#e2e8f0', fontSize: 13, textAlign: 'center' }}>Use 'Try Another Card'?</div>
+              <div style={{ color: '#e2e8f0', fontSize: 13, textAlign: 'center' }}>{t('useTryAnother')}</div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   onClick={() => {
@@ -1470,7 +1470,7 @@ export default function App() {
                     fontWeight: 'bold',
                     cursor: 'pointer',
                   }}>
-                  Confirm
+                  {t('confirm')}
                 </button>
                 <button
                   onClick={() => {
@@ -1489,7 +1489,7 @@ export default function App() {
                     fontWeight: 'bold',
                     cursor: 'pointer',
                   }}>
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             </div>
