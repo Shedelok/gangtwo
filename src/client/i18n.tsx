@@ -139,6 +139,9 @@ const STRINGS = {
   // Share info labels
   shareBlackjackSum: { en: 'Blackjack Sum', ru: 'Сумма блэкджека' },
   shareNumberOfFaces: { en: 'Number of Faces', ru: 'Количество картинок' },
+  shareSuitedOffsuit: { en: 'Suited/Offsuit', ru: 'Одной масти/Разных мастей' },
+  suited: { en: 'Suited', ru: 'Одной масти' },
+  offsuit: { en: 'Offsuit', ru: 'Разных мастей' },
 
   // Action panel
   actions: { en: 'Actions', ru: 'Действия' },
@@ -338,6 +341,10 @@ const ADDON_RU: Record<string, AddonText> = {
     short: 'Сообщить количество картинок',
     long: 'После раздачи карманных карт в 1-м раунде каждый игрок говорит, сколько у него «картинок» (J, Q, K). Это делается как отдельный предыгровой раунд, который заканчивается, когда все нажали кнопку готовности.',
   },
+  'share-suited-offsuit': {
+    short: 'Сообщить одной масти/разных мастей',
+    long: 'После раздачи карманных карт в 1-м раунде каждый игрок говорит, все ли его карманные карты одной масти или нет.',
+  },
   'green-x': {
     short: 'Зелёный X',
     long: 'В последнем раунде случайная фишка X становится зелёной. Зелёную фишку, взятую правильным игроком (тем, у кого действительно X-я по силе комбинация), нельзя украсть или сбросить. Если зелёную фишку взял неправильный игрок, она становится обычной.',
@@ -395,5 +402,16 @@ export function tAddonLong(id: string, en: string, lang: Lang): string {
 export function tShareInfoLabel(english: string, t: (k: TKey) => string): string {
   if (english === 'Number of Faces') return t('shareNumberOfFaces');
   if (english === 'Blackjack Sum') return t('shareBlackjackSum');
+  if (english === 'Suited/Offsuit') return t('shareSuitedOffsuit');
   return english;
+}
+
+// Share-info dialogue cloud text. Numeric values (Blackjack Sum, Number of Faces) are
+// language-independent and returned as-is. The Suited/Offsuit addon sends the English
+// word wrapped in colored circles (e.g. "\u{1F7E2}Suited\u{1F7E2}"); translate the word
+// while preserving the surrounding circle emoji.
+export function tShareInfoCloud(value: string, t: (k: TKey) => string): string {
+  if (value.includes('Suited')) return value.replace('Suited', t('suited'));
+  if (value.includes('Offsuit')) return value.replace('Offsuit', t('offsuit'));
+  return value;
 }

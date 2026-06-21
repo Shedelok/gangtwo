@@ -342,6 +342,41 @@ export async function getCurrentHandHintText(page: Page): Promise<string> {
   return result;
 }
 
+export async function getSuitedOffsuitClouds(page: Page): Promise<Map<string, SuitedOffsuit>> {
+  const entries = await page.evaluate(() => {
+    const cloudStatus = (s: string) => (s.includes('\u{1F7E2}') ? 'Suited' : s.includes('\u{1F534}') ? 'Offsuit' : null);
+
+    const textLeaves = Array.from(document.querySelectorAll('body *'))
+      .filter((el) => el.children.length === 0 && /\p{L}/u.test(el.textContent ?? ''))
+      .map((el) => ({ el, text: el.textContent ?? '', rect: el.getBoundingClientRect() }));
+
+    const result: Record<string, 'Suited' | 'Offsuit'> = {};
+    for (const cloud of textLeaves) {
+      const status = cloudStatus(cloud.text);
+      if (!status) continue;
+      const cx = cloud.rect.left + cloud.rect.width / 2;
+      const cy = cloud.rect.top + cloud.rect.height / 2;
+
+      let name: { text: string; gap: number } | null = null;
+      for (const cand of textLeaves) {
+        if (cand === cloud || cloudStatus(cand.text)) continue;
+        const top = cand.rect.top + cand.rect.height / 2;
+        if (top <= cy) continue;                                  // must be below the cloud
+        if (cx < cand.rect.left || cx > cand.rect.right) continue; // cloud must sit over it
+        const gap = top - cy;
+        if (!name || gap < name.gap) name = { text: cand.text, gap };
+      }
+      if (!name) continue;
+
+      const playerName = name.text.replace(/\u{1F334}/gu, '').replace(/\(you\)\s*$/u, '').trim();
+      result[playerName] = status;
+    }
+    return result;
+  });
+
+  return new Map(Object.entries(entries));
+}
+
 export async function getUnsuitedXRank(card: ActionCard): Promise<string> {
   return (await card.locator.locator('span').first().textContent())!.trim();
 }

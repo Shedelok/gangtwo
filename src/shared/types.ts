@@ -122,7 +122,7 @@ export interface ClientGameState {
   // seconds after the action is committed.
   checkNumberOfRanksCloud: { playerId: string; rank: string; count: number } | null;
   blackjackPhase: boolean;       // true during any share-info pre-game round
-  blackjackSums: Record<string, number>; // playerId → share-info value (only populated during blackjackPhase)
+  blackjackSums: Record<string, string>; // playerId → share-info display text (only populated during blackjackPhase)
   shareInfoLabel: string;        // label shown on the table during the share-info phase
   prisonPlayerId: string | null; // player currently imprisoned (null if not prison round)
   prisonRound: number | null;    // the round number where prison takes effect (null if addon not active)

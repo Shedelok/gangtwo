@@ -54,6 +54,7 @@ export const POSITIVE_ADDON_TREE: AddonGroupNode[] = [
   { children: [
     { addonId: 'share-blackjack-sum' },
     { addonId: 'share-number-of-faces' },
+    { addonId: 'share-suited-offsuit' },
   ]},
   { addonId: 'green-x' },
   { addonId: 'show-1-card-to-1-player' },
@@ -257,6 +258,12 @@ export const ADDONS: AddonDef[] = [
     id: 'share-number-of-faces',
     short: "Share Number of Faces",
     long: "Once the pocket cards have been dealt in Round 1, each player says how many \"face cards\" (J, Q, K) they have. This is done as a separate pre-game round, which ends when everyone has the ready button pressed.",
+    type: 'positive',
+  },
+  {
+    id: 'share-suited-offsuit',
+    short: "Share Suited/Offsuit",
+    long: "Once the pocket cards have been dealt in Round 1, each player says whether their pocket cards are all the same suit or not.",
     type: 'positive',
   },
   {

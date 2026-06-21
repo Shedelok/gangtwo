@@ -4,7 +4,7 @@ import PlayerSeat from './PlayerSeat';
 import ChipCircle from './ChipCircle';
 import CommunityCards from './CommunityCards';
 import { ChipAnimContext, type ChipAnimCtxValue } from './ChipAnimContext';
-import { useLang, tRankPlural, tRankSingular, tShareInfoLabel } from '../i18n';
+import { useLang, tRankPlural, tRankSingular, tShareInfoLabel, tShareInfoCloud } from '../i18n';
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 const CONTAINER_W = 860;
@@ -881,6 +881,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
         {state.blackjackPhase && rotated.map((player, i) => {
           const sum = state.blackjackSums[player.id];
           if (sum === undefined) return null;
+          const cloudText = tShareInfoCloud(sum, t);
           const { x, y } = getSeatPos(i, n);
           // Seat height: others ~175px (padding 8+10, name 15, gap 5, cards 78, gap 5, chips-min 54)
           // Me: ~195px (30px bottom padding). Name is 8px from seat top.
@@ -900,7 +901,7 @@ export default function Table({ state, sendAction, readOnly, onCardSelect, onPla
                 border: '1px solid #94a3b8',
                 whiteSpace: 'nowrap',
               }}>
-                {String(sum)}
+                {cloudText}
               </div>
             </div>
           );

@@ -254,6 +254,17 @@ they have.
 Functionality: The functionality is as described in General Details of this addon. The number for each player is the
 total number of J, Q and K in their cards. The text on the table for the round is "Number of Faces".
 
+### Addon: Share Suited/Offsuit
+
+Short description: "Share Suited/Offsuit"
+
+Long description: Once the pocket cards have been dealt in Round 1, each player says whether their pocket cards are
+all the same suit or not.
+
+Functionality: The functionality is as described in General Details of this addon. The text for each player is either
+"Suited" with the green circle (U+1F7E2) before and after it if all pocket cards are the same suit or "Offsuit" with the
+red circle (U+1F534) before and after it otherwise. The text on the table for the round is "Suited/Offsuit".
+
 ### General Details
 
 Each share info addon works as follows: After the pocket cards in the beginning of the game are dealt, but before any
@@ -593,6 +604,7 @@ addon names mean leaf nodes with that addon.
 2.
     1. Share Blackjack Sum
     2. Share Number of Faces
+    3. Share Suited/Offsuit
 3. Green X
 4. [A] Show 1 Card to 1 Player
 5.

@@ -535,7 +535,7 @@ export function startGame(shufflePlayers = true): string | null {
   }
 
   state.communityCards = [];
-  const SHARE_INFO_ADDON_IDS = ['share-blackjack-sum', 'share-number-of-faces'];
+  const SHARE_INFO_ADDON_IDS = ['share-blackjack-sum', 'share-number-of-faces', 'share-suited-offsuit'];
   state.shareInfoQueue = SHARE_INFO_ADDON_IDS.filter(id => state.enabledAddons.has(id));
   state.shareInfoIndex = 0;
   const passCardActive = state.enabledAddons.has('pass-1-card');
@@ -2083,8 +2083,9 @@ export function buildClientState(socketId: string): ClientGameState {
     blackjackSums: (() => {
       if (!state.blackjackPhase) return {};
       const currentAddon = state.shareInfoQueue[state.shareInfoIndex];
-      const sums: Record<string, number> = {};
+      const sums: Record<string, string> = {};
       const isFaces = currentAddon === 'share-number-of-faces';
+      const isSuited = currentAddon === 'share-suited-offsuit';
       for (const p of state.players) {
         const cards = state.holeCards[p.id];
         if (cards) {
@@ -2108,16 +2109,36 @@ export function buildClientState(socketId: string): ClientGameState {
           const r1 = effRank(1);
           if (isFaces) {
             const isFace = (r: string | null) => r !== null && (r === 'J' || r === 'Q' || r === 'K');
-            sums[p.id] = (isFace(r0) ? 1 : 0) + (isFace(r1) ? 1 : 0);
+            sums[p.id] = String((isFace(r0) ? 1 : 0) + (isFace(r1) ? 1 : 0));
+          } else if (isSuited) {
+            // Spec: "Suited" with green circle (U+1F7E2) before and after if all pocket
+            // cards are the same suit, otherwise "Offsuit" with red circle (U+1F534).
+            // An unsuited card (jack/X override) has no suit and so is never the same suit
+            // as any other card, making the pocket cards offsuit. The "Suited"/"Offsuit"
+            // words are translated client-side via tShareInfoCloud.
+            const suitOf = (idx: 0 | 1): string | null => {
+              if (jackIdx === idx) return null;
+              if (xIdx === idx) return null;
+              return cards[idx].suit;
+            };
+            const s0 = suitOf(0);
+            const s1 = suitOf(1);
+            const suited = s0 !== null && s1 !== null && s0 === s1;
+            sums[p.id] = suited ? '\u{1F7E2}Suited\u{1F7E2}' : '\u{1F534}Offsuit\u{1F534}';
           } else {
-            sums[p.id] = (r0 !== null ? bjValue(r0) : 0) + (r1 !== null ? bjValue(r1) : 0);
+            sums[p.id] = String((r0 !== null ? bjValue(r0) : 0) + (r1 !== null ? bjValue(r1) : 0));
           }
         }
       }
       return sums;
     })(),
     shareInfoLabel: state.blackjackPhase
-      ? (state.shareInfoQueue[state.shareInfoIndex] === 'share-number-of-faces' ? 'Number of Faces' : 'Blackjack Sum')
+      ? (() => {
+          const a = state.shareInfoQueue[state.shareInfoIndex];
+          if (a === 'share-number-of-faces') return 'Number of Faces';
+          if (a === 'share-suited-offsuit') return 'Suited/Offsuit';
+          return 'Blackjack Sum';
+        })()
       : '',
     prisonPlayerId: (state.enabledAddons.has('prison') && state.prisonRound === state.currentRound && state.prisonPlayerId && !state.blackjackPhase && !state.passCardPhase)
       ? state.prisonPlayerId
