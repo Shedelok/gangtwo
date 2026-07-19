@@ -118,8 +118,8 @@ Long description: Instead of 4 logical suits, there are only 2: black (represent
 represented by diamonds and hearths).
 
 Functionality: All cards revert their colors, meaning the following: cards have the background of their suit color
-(red or black) and card's rank and suit symbols become white. For hand resolution, all red cards are considered the
-same suit and all black cards are considered the same suit. So there are 2 suits instead of normal 4.
+(red or black) and card's rank and suit symbols become white. Everywhere the game considers a card's suit, all red cards
+are considered the same suit and all black cards are considered the same suit. So there are 2 suits instead of normal 4.
 
 ## Addon: Short Deck
 

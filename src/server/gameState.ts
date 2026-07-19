@@ -2116,10 +2116,16 @@ export function buildClientState(socketId: string): ClientGameState {
             // An unsuited card (jack/X override) has no suit and so is never the same suit
             // as any other card, making the pocket cards offsuit. The "Suited"/"Offsuit"
             // words are translated client-side via tShareInfoCloud.
+            // Spec (Black & Red): "Everywhere the game considers a card's suit, all red
+            // cards are considered the same suit and all black cards are considered the
+            // same suit." So the same-suit check uses the effective (collapsed) suit.
+            const blackRed = state.enabledAddons.has('clubs-spades-diamonds-hearth');
+            const effSuit = (suit: string): string =>
+              blackRed ? ((suit === 'hearts' || suit === 'diamonds') ? 'red' : 'black') : suit;
             const suitOf = (idx: 0 | 1): string | null => {
               if (jackIdx === idx) return null;
               if (xIdx === idx) return null;
-              return cards[idx].suit;
+              return effSuit(cards[idx].suit);
             };
             const s0 = suitOf(0);
             const s1 = suitOf(1);

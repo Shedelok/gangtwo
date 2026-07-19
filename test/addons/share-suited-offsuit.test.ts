@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { clickTestModeCheckbox, completelyResetGameState, getActionCards, getOwnPocketCards, getSuitedOffsuitClouds, joinLobby, pressStartGameInLobby, setEnabledPositiveAddons, setTestModePlayerCards } from '../helpers';
+import { clickTestModeCheckbox, completelyResetGameState, getActionCards, getOwnPocketCards, getSuitedOffsuitClouds, joinLobby, pressStartGameInLobby, setEnabledNegativeAddons, setEnabledPositiveAddons, setTestModePlayerCards } from '../helpers';
 
 test.beforeEach(async ({ page }) => {
   await completelyResetGameState(page);
@@ -46,6 +46,29 @@ test('suited player who takes unsuited cards becomes and stays offsuit', async (
     await expect(async () => {
       const clouds = await getSuitedOffsuitClouds(checkerPage);
       expect(clouds.get('Checker')).toBe('Offsuit');
+    }).toPass({ timeout: 5000 });
+  } finally {
+    await afkPage.close();
+  }
+});
+
+test('with Black & Red, cards of different suits but same color are Suited', async ({ page: checkerPage, browser }) => {
+  const afkPage = await browser.newPage();
+  try {
+    await setEnabledPositiveAddons(checkerPage, ['Share Suited/Offsuit']);
+    await setEnabledNegativeAddons(checkerPage, ['Black & Red']);
+
+    await joinLobby(checkerPage, 'Checker');
+    await joinLobby(afkPage, 'Afk');
+
+    await clickTestModeCheckbox(checkerPage);
+    await setTestModePlayerCards(checkerPage, 'Checker', 'As, Ac');
+
+    await pressStartGameInLobby([checkerPage, afkPage]);
+
+    await expect(async () => {
+      const clouds = await getSuitedOffsuitClouds(checkerPage);
+      expect(clouds.get('Checker')).toBe('Suited');
     }).toPass({ timeout: 5000 });
   } finally {
     await afkPage.close();
